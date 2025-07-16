@@ -1,0 +1,6 @@
+<?xml version="1.7"?>
+<sdf version="1.7">
+  <world name="default">
+    <plugin name="gz::sim::systems::RosInterface" filename="libros_gz_sim.so"/>
+  </world>
+</sdf>
