@@ -252,4 +252,31 @@ world（例如office_env_large.world）中添加模型后，需要将world文件
 根据各个单位颜色显示运动状态，运动中、等待、故障？
 
 
-是的，你说得对：在 Gazebo Harmonic / Ionic（即 gz-sim9/gz-sim10） 这一代 Gazebo 中，.world 文件已经不再使用或推荐，取而代之的是标准的 .sdf 文件。
+# 250718, 由ubuntu 22.04转到24.04
+
+在 Gazebo Harmonic / Ionic（即 gz-sim9/gz-sim10） 这一代 Gazebo 中，.world 文件已经不再使用或推荐，取而代之的是标准的 .sdf 文件。
+
+
+## Spawn, set pose and delete entities using ROS 2 #705 
+
+https://github.com/gazebosim/ros_gz/pull/705
+
+
+Launch Gazebo:
+`
+gz sim code/ros2_ws/src/ros_gz/ros_gz_sim_demos/worlds/default.sdf
+`
+
+Run the ROS-Gazebo bridge for entity creation:
+
+`
+    ros2 run ros_gz_bridge parameter_bridge /world/default/create@ros_gz_interfaces/srv/SpawnEntity
+`
+
+Spawn an entity:
+
+`
+  ros2 run ros_gz_sim spawn_entity --name box --sdf_filename $(ros2 pkg prefix ros_gz_sim_demos)/share/ros_gz_sim_demos/models/cardboard_box/model.sdf
+`
+Similarly, you can test set_entity_pose and delete_entity with their respective bridge services.
+
