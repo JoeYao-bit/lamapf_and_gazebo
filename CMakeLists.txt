@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(lamapf_and_gazebo)
 
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+
 
 install(DIRECTORY
 launch
@@ -14,9 +16,18 @@ DESTINATION share/${PROJECT_NAME}/
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(ros_gz_interfaces REQUIRED)
+find_package(tf2 REQUIRED)
 
-add_executable(spawn_entity src/spawn_entity.cpp)
-ament_target_dependencies(spawn_entity rclcpp ros_gz_interfaces)
+
+include_directories(include 
+                    )
+
+
+add_executable(spawn_entity src/test_spawn_entity.cpp)
+
+ament_target_dependencies(spawn_entity rclcpp ros_gz_interfaces tf2)
+
+
 install(TARGETS spawn_entity DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

@@ -256,13 +256,17 @@ world（例如office_env_large.world）中添加模型后，需要将world文件
 
 在 Gazebo Harmonic / Ionic（即 gz-sim9/gz-sim10） 这一代 Gazebo 中，.world 文件已经不再使用或推荐，取而代之的是标准的 .sdf 文件。
 
+## Launch Gazebo from ROS 2
+https://gazebosim.org/docs/harmonic/ros2_launch_gazebo/
+
 
 ## Spawn, set pose and delete entities using ROS 2 #705 
 
 https://github.com/gazebosim/ros_gz/pull/705
 
 
-Launch Gazebo:
+# Launch Gazebo: （添加实体、设置实体位置、删除实体，通过服务）
+
 `
 gz sim code/ros2_ws/src/ros_gz/ros_gz_sim_demos/worlds/default.sdf
 `
@@ -273,6 +277,14 @@ Run the ROS-Gazebo bridge for entity creation:
     ros2 run ros_gz_bridge parameter_bridge /world/default/create@ros_gz_interfaces/srv/SpawnEntity
 `
 
+`
+    ros2 run ros_gz_bridge parameter_bridge /world/default/create@ros_gz_interfaces/srv/SetEntityPose
+`
+
+`
+    ros2 run ros_gz_bridge parameter_bridge /world/default/create@ros_gz_interfaces/srv/DeleteEntity
+`
+
 Spawn an entity:
 
 `
@@ -280,3 +292,59 @@ Spawn an entity:
 `
 Similarly, you can test set_entity_pose and delete_entity with their respective bridge services.
 
+测试成功
+# Launch Gazebo from ROS 2
+
+https://gazebosim.org/docs/harmonic/ros2_launch_gazebo/
+
+The package ros_gz_sim contains two launch files named gz_server.launch.py and gz_sim.launch.py. You can use them to start Gazebo server or Gazebo (server and GUI) respectively.
+ 
+ `
+ros2 launch ros_gz_sim gz_sim.launch.py gz_args:=empty.sdf
+ `
+Or you can just start the server:
+`
+ros2 launch ros_gz_sim gz_server.launch.py world_sdf_file:=empty.sdf
+`
+
+# Launching with ros_gz_bridge(不涉及添加实体，设置实体位置，删除实体等操作)
+
+An example launch file for XML can be viewed here An example launch file for Python can be viewed here
+
+Example command for directly using these launch files from the terminal:
+
+`
+ros2 launch ros_gz_sim ros_gz_sim.launch.py world_sdf_file:=empty.sdf bridge_name:=ros_gz_bridge config_file:=<path_to_your_YAML_file> use_composition:=True create_own_container:=True
+`
+
+In the above launch files you may notice that the create_own_container argument for ros_gz_bridge is hardcoded to False. This has been done to prevent two duplicate containers from getting created (one for gz_server and another one for ros_gz_bridge), and instead make ros_gz_bridge use the container created by gz_server. More info about this can be viewed here
+
+建立ros2和gazebo之间的桥接联系
+
+https://github.com/gazebosim/ros_gz/blob/jazzy/ros_gz_bridge/README.md
+
+# 另一种办法启动gazebo并添加实体的方法
+启动gazebo
+`
+ros2 launch ros_gz_sim gz_sim.launch.py gz_args:=empty.sdf
+`
+
+添加实体
+
+`
+ros2 launch ros_gz_sim gz_spawn_model.launch.py world:=empty file:=$(ros2 pkg prefix --share ros_gz_sim_demos)/models/vehicle/model.sdf entity_name:=my_vehicle x:=5.0 y:=5.0 z:=0.5
+`
+
+# 250718
+
+启动gazebo，以及添加实体、删除实体、设置实体位姿的服务
+
+`
+ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
+`
+
+添加实体
+
+`
+ros2 run ros_gz_sim spawn_entity --name box --sdf_filename $(ros2 pkg prefix ros_gz_sim_demos)/share/ros_gz_sim_demos/models/cardboard_box/model.sdf
+`
