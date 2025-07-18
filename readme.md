@@ -371,3 +371,36 @@ Once you get the name of the model you want to see, you may run the following co
 gz model -m <model_name> to get the complete information of the model. e.g.
 
 gz model -m vehicle_blue
+
+如何添加指定sdf文件（原world文件）
+
+如果.world 文件已经是完整的 SDF 格式（以 <sdf> 为根元素），可以直接重命名
+
+
+如何配置gazebo harmonic查找文件的路径
+
+https://2048.csdn.net/682c4ba6606a8318e858358a.html?dp_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6NTQ5MDAxOSwiZXhwIjoxNzUzNDY4MzQwLCJpYXQiOjE3NTI4NjM1NDAsInVzZXJuYW1lIjoid2VpeGluXzM5NDkwNTM1In0.wqacTiG9_g7jKR2quf6-T-E3eTU9oqzLB0nKBVTd3Nc#:~:text=%E6%8A%8A%E4%B8%8B%E8%BD%BD%E7%9A%84%E6%A8%A1%E5%9E%8B%E6%96%87%E4%BB%B6%E5%A4%B9%E5%A4%8D%E5%88%B6%E5%88%B0gz_models%E4%B8%8B%EF%BC%9B%E7%84%B6%E5%90%8E%E5%9C%A8%E7%BB%88%E7%AB%AF%E4%B8%AD%E8%BE%93%E5%85%A5%20%28%E7%9C%81%E7%95%A5%E5%8F%B7%E4%B8%BAgz_models%E7%9A%84%E7%BB%9D%E5%AF%B9%E8%B7%AF%E5%BE%84%EF%BC%89%20%E6%88%96%E8%80%85%E8%BF%9B%E5%85%A5%EF%BD%9E%2F.bashrc%2C%E8%BE%93%E5%85%A5%E4%B8%8A%E8%BF%B0%E8%B7%AF%E5%BE%84%EF%BC%8C%E4%BB%A5%E5%90%8E%E5%B0%B1%E4%B8%8D%E7%94%A8%E9%87%8D%E5%A4%8D%E8%BE%93%E5%85%A5%EF%BC%9B%20%E6%8E%A5%E4%B8%8B%E6%9D%A5%EF%BC%8C%E8%BF%9B%E5%85%A5Gazebo,3.%E6%8F%92%E4%BB%B6%E5%AF%BC%E5%85%A5%E6%9C%AC%E5%9C%B0%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%BB%8EGazebo%E5%8F%B3%E4%B8%8A%E8%A7%92%E7%9A%84%E6%90%9C%E7%B4%A2%E4%B8%AD%EF%BC%8C%E6%89%93%E5%BC%80Resource%20Spawner%E6%8F%92%E4%BB%B6%EF%BC%8C%E5%8F%B3%E6%A0%8F%E4%B8%8B%E6%8B%89%E6%98%BE%E7%A4%BA%EF%BC%88%E6%B3%A8%E6%84%8F%E8%BF%99%E9%87%8C%E6%9C%89%E6%97%B6%E4%BE%AF%E6%BB%91%E5%8A%A8%E6%9D%A1%E6%B2%A1%E6%98%BE%E7%A4%BA%E7%9A%84%E8%AF%9D%EF%BC%8C%E6%9C%80%E5%A4%A7%E5%8C%96%E9%A1%B5%E9%9D%A2%E5%B0%B1%E8%83%BD%E7%9C%8B%E5%88%B0%20%EF%BC%89%E6%AD%A4%E6%97%B6%E5%B0%B1%E8%83%BD%E5%9C%A8Local%20Resorece%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BD%A0%E5%AF%BC%E5%85%A5%E7%9A%84%E6%A8%A1%E5%9E%8B%E5%BA%93%EF%BC%9B
+
+
+首先在终端中新建你的Models库：
+
+mkdir gz_models
+cd gz_models
+
+把下载的模型文件夹复制到gz_models下；然后在终端中输入(省略号为gz_models的绝对路径）
+ 
+
+export GZ_SIM_RESOURCE_PATH=~/……/gz_models/
+
+ 或者进入～/.bashrc,输入上述路径，以后就不用重复输入；
+
+ 接下来，进入Gazebo
+
+gz sim
+
+3.插件导入本地模型：从Gazebo右上角的搜索中，打开Resource Spawner插件，右栏下拉显示（注意这里有时侯滑动条没显示的话，最大化页面就能看到 ）此时就能在Local Resorece中看到你导入的模型库；
+
+
+![alt text](image.png)
+
+gazebo 右上角搜索 view angle，控制视角 

@@ -63,10 +63,9 @@ from launch.actions import ExecuteProcess
 
 def generate_launch_description():
 
-    # warehouse.world empty.world office_small.world simple_env_1.world office_env_large.world （ok）
+    # empty.sdf  office_small.sdf （ok）
     
-    # file_path = /home/yaozhuo/software/gazebo/PLAN-Carrier-Type-4.world
-    world = 'code/ros2_ws/src/ros_gz/ros_gz_sim_demos/worlds/default.sdf'
+    world = 'code/ros2_ws/src/lamapf_and_gazebo/world/office_small.sdf'
 
     gazebo = ExecuteProcess(cmd=['gz', 'sim', world], output='screen')
 
