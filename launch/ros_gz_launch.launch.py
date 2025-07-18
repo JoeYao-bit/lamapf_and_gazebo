@@ -72,9 +72,9 @@ def generate_launch_description():
 
     spawn_entity_srv = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', '/world/default/create@ros_gz_interfaces/srv/SpawnEntity'], output='screen')
 
-    set_entity_pose_srv = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', '/world/default/create@ros_gz_interfaces/srv/SetEntityPose'], output='screen')
+    set_entity_pose_srv = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', '/world/default/set_pose@ros_gz_interfaces/srv/SetEntityPose'], output='screen')
 
-    delete_entity_srv = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', '/world/default/create@ros_gz_interfaces/srv/DeleteEntity'], output='screen')
+    delete_entity_srv = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', '/world/default/remove@ros_gz_interfaces/srv/DeleteEntity'], output='screen')
 
     return LaunchDescription([
         gazebo,

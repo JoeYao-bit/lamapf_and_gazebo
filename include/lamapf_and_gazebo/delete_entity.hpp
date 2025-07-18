@@ -29,12 +29,17 @@
 class EntityDeleter : public rclcpp::Node {
 public:
   /// \brief Default constructor. Initializes the node and delete entity client.
-  EntityDeleter();
+  EntityDeleter(): Node("entity_deleter")
+  {
+    client_ = create_client<ros_gz_interfaces::srv::DeleteEntity>(
+      "/world/default/remove");
+  }
 
   /// \brief Constructor that accepts an external delete service client.
   /// \param[in] client Shared pointer to the delete entity service client.
   explicit EntityDeleter(
-    rclcpp::Client<ros_gz_interfaces::srv::DeleteEntity>::SharedPtr client);
+    rclcpp::Client<ros_gz_interfaces::srv::DeleteEntity>::SharedPtr client)
+    : Node("entity_deleter"), client_(client) {}
 
   /// \brief Deletes an entity from the simulation.
   /// \param[in] entity_name Name of the entity.
@@ -43,7 +48,61 @@ public:
   /// \return True if the entity was deleted successfully, false otherwise.
   bool delete_entity(
     const std::string & entity_name, int entity_id,
-    int entity_type);
+    int entity_type) {
+    // Wait for the service to be available
+    while (!client_->wait_for_service(std::chrono::seconds(1))) {
+      if (!rclcpp::ok()) {
+        RCLCPP_ERROR(this->get_logger(),
+                    "Interrupted while waiting for the service. Exiting.");
+        return false;
+      }
+      RCLCPP_INFO(this->get_logger(), "Service not available, waiting...");
+    }
+
+    // Create the request
+    auto request =
+      std::make_shared<ros_gz_interfaces::srv::DeleteEntity::Request>();
+    auto entity = ros_gz_interfaces::msg::Entity();
+
+    // Set entity identification (name or ID)
+    if (entity_id > 0) {
+      entity.id = entity_id;
+      RCLCPP_INFO(this->get_logger(), "Deleting entity with ID: %d", entity_id);
+    } else if (!entity_name.empty()) {
+      entity.name = entity_name;
+      RCLCPP_INFO(this->get_logger(), "Deleting entity with name: %s",
+                  entity_name.c_str());
+    } else {
+      RCLCPP_ERROR(this->get_logger(),
+                    "Either entity name or ID must be provided");
+      return false;
+    }
+
+    entity.type = entity_type;
+    request->entity = entity;
+
+    // Send the request
+    auto future = client_->async_send_request(request);
+
+    // Wait for the result
+    if (rclcpp::spin_until_future_complete(this->get_node_base_interface(),
+                                            future) ==
+      rclcpp::FutureReturnCode::SUCCESS)
+    {
+      auto response = future.get();
+      RCLCPP_INFO(this->get_logger(), "Result: %s",
+                  response->success ? "true" : "false");
+
+      if (!response->success) {
+        RCLCPP_ERROR(this->get_logger(), "Failed to delete entity");
+        return false;
+      }
+      return true;
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Failed to call service");
+      return false;
+    }
+  }
 
 protected:
   /// \brief Client used to call the delete entity service.

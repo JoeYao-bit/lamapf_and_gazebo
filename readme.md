@@ -348,3 +348,26 @@ ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
 `
 ros2 run ros_gz_sim spawn_entity --name box --sdf_filename $(ros2 pkg prefix ros_gz_sim_demos)/share/ros_gz_sim_demos/models/cardboard_box/model.sdf
 `
+
+# https://gazebosim.org/api/sim/7/model_command.html
+
+To try out this command we need first a running simulation. Let's load the diff_drive example world. In a terminal, run:
+
+gz sim diff_drive.sdf
+
+Once Gazebo is up, we can use the gz model command to get information of the simulation. Open a new terminal and enter:
+
+gz model --list
+
+And available models should be printed:
+
+Available models:
+    - ground_plane
+    - vehicle_blue
+    - vehicle_green
+
+Once you get the name of the model you want to see, you may run the following commands to get its properties.
+
+gz model -m <model_name> to get the complete information of the model. e.g.
+
+gz model -m vehicle_blue

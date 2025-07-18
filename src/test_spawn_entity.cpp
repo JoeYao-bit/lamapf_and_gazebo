@@ -1,4 +1,6 @@
  #include "lamapf_and_gazebo/spawn_entity.hpp"
+ #include "lamapf_and_gazebo/delete_entity.hpp"
+ #include "lamapf_and_gazebo/set_entity_pose.hpp"
 
 
  /// \brief Main entry point for the entity spawner node.
@@ -47,8 +49,37 @@ int main(int argc, char **argv)
   pose.position.y = 2.0;
   pose.position.z = 0.0;
 
-  bool result2 =
-    spawner->spawn_entity(model_name, sdf_filename, pose);
+  bool result2 = spawner->spawn_entity(model_name, sdf_filename, pose);
+
+
+  model_name = "my_vehicle_yz";  
+
+  // // Create deleter and call service
+  // auto deleter = std::make_shared<EntityDeleter>();
+  // bool result = deleter->delete_entity(model_name, 0, 0);  
+
+    // Set defaults for orientation
+  double qx = 0.0, qy = 0.0, qz = 0.0, qw = 1.0;
+  bool use_quaternion = true;
+
+  // // Apply orientation if provided
+  // if (!quaternion.empty()) {
+  //   qx = quaternion[0];
+  //   qy = quaternion[1];
+  //   qz = quaternion[2];
+  //   qw = quaternion[3];
+  //   use_quaternion = true;
+  // } else if (!euler.empty()) {
+  //   qx = euler[0];    // roll
+  //   qy = euler[1];    // pitch
+  //   qz = euler[2];    // yaw
+  //   use_quaternion = false;
+  // }
+
+  // Create pose setter and call service
+  auto pose_setter = std::make_shared<EntityPoseSetter>();
+  bool result = pose_setter->set_entity_pose(model_name, 0, 6, 0, 0, 2,
+                                  0, 0, 0, 1.0, false);
 
   rclcpp::shutdown();
   return result1 ? 0 : 1;
