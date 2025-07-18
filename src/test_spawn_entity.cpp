@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   
   // Create spawner and call service
   auto spawner = std::make_shared<EntitySpawner>();
-  bool result1 =
+  bool result =
     spawner->spawn_entity(model_name, sdf_filename, pose);
 
   model_name = "my_vehicle_yz_2";
@@ -49,14 +49,14 @@ int main(int argc, char **argv)
   pose.position.y = 2.0;
   pose.position.z = 0.0;
 
-  bool result2 = spawner->spawn_entity(model_name, sdf_filename, pose);
+  result = spawner->spawn_entity(model_name, sdf_filename, pose);
 
 
-  model_name = "my_vehicle_yz";  
+  model_name = "my_vehicle_yz_2";  
 
-  // // Create deleter and call service
-  // auto deleter = std::make_shared<EntityDeleter>();
-  // bool result = deleter->delete_entity(model_name, 0, 0);  
+  // Create deleter and call service
+  auto deleter = std::make_shared<EntityDeleter>();
+  result = deleter->delete_entity(model_name, 0, 6);  
 
     // Set defaults for orientation
   double qx = 0.0, qy = 0.0, qz = 0.0, qw = 1.0;
@@ -75,12 +75,13 @@ int main(int argc, char **argv)
   //   qz = euler[2];    // yaw
   //   use_quaternion = false;
   // }
+  model_name = "my_vehicle_yz";  
 
   // Create pose setter and call service
   auto pose_setter = std::make_shared<EntityPoseSetter>();
-  bool result = pose_setter->set_entity_pose(model_name, 0, 6, 0, 0, 2,
+  result = pose_setter->set_entity_pose(model_name, 0, 6, 0, 0, 2,
                                   0, 0, 0, 1.0, false);
 
   rclcpp::shutdown();
-  return result1 ? 0 : 1;
+  return result ? 0 : 1;
 }
