@@ -63,9 +63,9 @@ from launch.actions import ExecuteProcess
 
 def generate_launch_description():
 
-    # empty.sdf  office_small.sdf （ok）
+    # empty  industrial-warehouse tugbot_warehouse tugbot_depot living_room （ok）
     
-    world = 'code/ros2_ws/src/lamapf_and_gazebo/world/office_small.sdf'
+    world =  'code/ros2_ws/src/lamapf_and_gazebo/world/living_room.sdf'
 
     gazebo = ExecuteProcess(cmd=['gz', 'sim', world], output='screen')
 

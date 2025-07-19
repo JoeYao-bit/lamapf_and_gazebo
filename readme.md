@@ -404,3 +404,14 @@ gz sim
 ![alt text](image.png)
 
 gazebo 右上角搜索 view angle，控制视角 
+
+
+gazebo模型网站
+https://app.gazebosim.org/fuel/worlds
+
+
+构造虚拟instance,单独运行以下代码即可
+
+```
+ros2 run lamapf_and_gazebo generate_instance_node
+```
