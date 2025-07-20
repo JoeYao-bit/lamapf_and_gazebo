@@ -162,4 +162,7 @@ protected:
   rclcpp::Client<ros_gz_interfaces::srv::SetEntityPose>::SharedPtr client_;
 };
 
+typedef std::shared_ptr<EntityPoseSetter> EntityPoseSetterPtr;
+
+
 #endif  // ROS_GZ_SIM__SET_ENTITY_POSE_HPP_

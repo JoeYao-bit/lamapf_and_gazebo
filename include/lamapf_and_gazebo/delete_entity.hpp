@@ -109,4 +109,7 @@ protected:
   rclcpp::Client<ros_gz_interfaces::srv::DeleteEntity>::SharedPtr client_;
 };
 
+typedef std::shared_ptr<EntityDeleter> EntityDeleterPtr;
+
+
 #endif  // ROS_GZ_SIM__DELETE_ENTITY_HPP_

@@ -1,14 +1,12 @@
 #include <cstdio>
 // #include <LA-MAPF/algorithm/LA-MAPF/action_dependency_graph.h>
 
-#include "common_interfaces.h"
+#include "lamapf_and_gazebo/common_interfaces.h"
 
-#include "controller.h"
+#include "lamapf_and_gazebo/controller.h"
 #include <gtest/gtest.h>
-#include "common_interfaces.h"
-#include "fake_agents.h"
-#include "gazebo_msgs/srv/get_model_list.hpp"
-#include "gazebo_msgs/srv/delete_entity.hpp"
+
+#include "lamapf_and_gazebo/fake_agents.h"
 
 //#include "../../algorithm/LA-MAPF/LaCAM/large_agent_lacam.h"
 
@@ -23,9 +21,11 @@ std::pair<AgentPtrs<2>, InstanceOrients<2> >  instances;
 
 std::vector<LAMAPF_Path> allAgentPaths;
 
-LargeAgentMAPFInstanceDecompositionPtr<2> decomposer_ptr = nullptr;
+std::shared_ptr<PrecomputationOfLAMAPFDecomposition<2, HyperGraphNodeDataRaw<2>>> pre_dec = nullptr;
 
-rclcpp::Client<gazebo_msgs::srv::SetEntityState>::SharedPtr set_pose_clinet;
+EntityPoseSetterPtr set_pose_clinet = nullptr;
+
+EntitySpawnerPtr entity_pawner_clinet = nullptr;
 
 bool paused = true;
 bool gazebo_gui = true;
@@ -72,7 +72,7 @@ bool gazebo_gui = true;
 // };
 
 // set all poses of agent in gazebo to allAgentPoses
-void updateAllAgentPoseInGazebo(const SetPoseClientPtr& set_pose_clinet_ptr,
+void updateAllAgentPoseInGazebo(const EntityPoseSetterPtr& set_pose_clinet_ptr,
                                 const rclcpp::Node::SharedPtr& node) {
     assert(allAgentPoses.size() == instances.second.size());
     for (int id=0; id<instances.first.size(); id++) {
@@ -97,8 +97,8 @@ void updateAllAgentPoseInGazebo(const SetPoseClientPtr& set_pose_clinet_ptr,
 int PathVisualize() {
     Canvas canvas("LA-MAPF visualization", dim[0], dim[1], 1./reso, 5);
     canvas.resolution_ = 1./reso;
-    assert(decomposer_ptr != nullptr);
-    const auto& all_poses = decomposer_ptr->getAllPoses();
+    assert(pre_dec != nullptr);
+    const auto& all_poses = pre_dec->all_poses_;
     while(true) {
         canvas.resetCanvas();
         canvas.drawEmptyGrid();
@@ -110,8 +110,8 @@ int PathVisualize() {
             if(path.empty()) { continue; }
             for(int t=ctl->progress_of_agents_[i]; t<path.size()-1; t++) {
                 ctl;
-                Pointi<2> pt1 = all_poses[path[t]]->pt_,
-                          pt2 = all_poses[path[t+1]]->pt_;
+                Pointi<2> pt1 = all_poses[path[t]]->pt_;
+                Pointi<2> pt2 = all_poses[path[t+1]]->pt_;
                 canvas.drawLineInt(pt1[0], pt1[1], pt2[0], pt2[1], true, std::max(1, zoom_ratio/10), COLOR_TABLE[(i) % 30]);
             }
         }
@@ -138,86 +138,81 @@ int PathVisualize() {
 
 void gazeboInitialize(const std::string& file_path, const rclcpp::Node::SharedPtr& node) {
     // 创建服务客户端
-    rclcpp::Client<gazebo_msgs::srv::SpawnEntity>::SharedPtr client =
-    node->create_client<gazebo_msgs::srv::SpawnEntity>("/spawn_entity");
+    // rclcpp::Client<gazebo_msgs::srv::SpawnEntity>::SharedPtr client =
+    // node->create_client<gazebo_msgs::srv::SpawnEntity>("/spawn_entity");
 
     // 等待服务可用
-    while (!client->wait_for_service(std::chrono::seconds(1))) {
-        RCLCPP_INFO(node->get_logger(), "等待 /spawn_entity 服务...");
-    }
+    // while (!client->wait_for_service(std::chrono::seconds(1))) {
+    //     RCLCPP_INFO(node->get_logger(), "等待 /spawn_entity 服务...");
+    // }
 
-    set_pose_clinet =
-            node->create_client<gazebo_msgs::srv::SetEntityState>("/gazebo/set_entity_state"); // /gazebo/set_entity_state
+    set_pose_clinet = std::make_shared<EntityPoseSetter>();
+    entity_pawner_clinet = std::make_shared<EntitySpawner>();
 
-    // 等待服务可用
-    while (!set_pose_clinet->wait_for_service(std::chrono::seconds(1))) {
-        RCLCPP_INFO(node->get_logger(), "等待 /gazebo/set_entity_state 服务...");
-        rclcpp::spin_some(node);  // 关键：允许节点处理发现消息
-    }
 
-    rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedPtr get_model_list_clinet =
-            node->create_client<gazebo_msgs::srv::GetModelList>("/get_model_list");
+    // rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedPtr get_model_list_clinet =
+    //         node->create_client<gazebo_msgs::srv::GetModelList>("/get_model_list");
 
-    // 等待服务可用
-    while (!get_model_list_clinet->wait_for_service(std::chrono::seconds(1))) {
-        RCLCPP_INFO(node->get_logger(), "等待 /get_model_list 服务...");
-        rclcpp::spin_some(node);  // 关键：允许节点处理发现消息
-    }
+    // // 等待服务可用
+    // while (!get_model_list_clinet->wait_for_service(std::chrono::seconds(1))) {
+    //     RCLCPP_INFO(node->get_logger(), "等待 /get_model_list 服务...");
+    //     rclcpp::spin_some(node);  // 关键：允许节点处理发现消息
+    // }
 
-    // 发送请求
-    auto request = std::make_shared<gazebo_msgs::srv::GetModelList::Request>();
-    using ServiceResponseFuture = rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture;
+    // // 发送请求
+    // auto request = std::make_shared<gazebo_msgs::srv::GetModelList::Request>();
+    // using ServiceResponseFuture = rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture;
 
-    // auto future = get_model_list_clinet->async_send_request(request, response_received_callback);
-    auto future = get_model_list_clinet->async_send_request(request);
-    // 处理响应
-    std::vector<std::string> delete_model_list;
-    if (rclcpp::spin_until_future_complete(node->shared_from_this(), future) == 
-        rclcpp::FutureReturnCode::SUCCESS) {
-        auto response = future.get();
-        RCLCPP_INFO(node->get_logger(), "当前模型列表:");
-        for (const auto& name : response->model_names) {
-            RCLCPP_INFO(node->get_logger(), "%s", name.c_str());
-            std::string copy_of_line = name;
-            std::vector<std::string> strs;
-            boost::split(strs, copy_of_line, boost::is_any_of("_"), boost::token_compress_on);
-            if(strs[0] == "Circle" || strs[0] == "Block") {
-                delete_model_list.push_back(name);
-                RCLCPP_INFO(node->get_logger(), "try delete %s", name.c_str());
-            }
-        }
-    } else {
-        RCLCPP_ERROR(node->get_logger(), "获取模型列表失败");
-    }
+    // // auto future = get_model_list_clinet->async_send_request(request, response_received_callback);
+    // auto future = get_model_list_clinet->async_send_request(request);
+    // // 处理响应
+    // std::vector<std::string> delete_model_list;
+    // if (rclcpp::spin_until_future_complete(node->shared_from_this(), future) == 
+    //     rclcpp::FutureReturnCode::SUCCESS) {
+    //     auto response = future.get();
+    //     RCLCPP_INFO(node->get_logger(), "当前模型列表:");
+    //     for (const auto& name : response->model_names) {
+    //         RCLCPP_INFO(node->get_logger(), "%s", name.c_str());
+    //         std::string copy_of_line = name;
+    //         std::vector<std::string> strs;
+    //         boost::split(strs, copy_of_line, boost::is_any_of("_"), boost::token_compress_on);
+    //         if(strs[0] == "Circle" || strs[0] == "Block") {
+    //             delete_model_list.push_back(name);
+    //             RCLCPP_INFO(node->get_logger(), "try delete %s", name.c_str());
+    //         }
+    //     }
+    // } else {
+    //     RCLCPP_ERROR(node->get_logger(), "获取模型列表失败");
+    // }
 
-    // delete model of agent
-    rclcpp::Client<gazebo_msgs::srv::DeleteEntity>::SharedPtr delete_model_clinet =
-            node->create_client<gazebo_msgs::srv::DeleteEntity>("/delete_entity");
-    // 等待服务可用
-    while (!delete_model_clinet->wait_for_service(std::chrono::seconds(1))) {
-        RCLCPP_INFO(node->get_logger(), "等待delete_entity服务就绪...");
-    }
-    for(const auto& model_name : delete_model_list) {
-        // 构造请求
-        auto request2 = std::make_shared<gazebo_msgs::srv::DeleteEntity::Request>();
-        request2->name = model_name;
+    // // delete model of agent
+    // rclcpp::Client<gazebo_msgs::srv::DeleteEntity>::SharedPtr delete_model_clinet =
+    //         node->create_client<gazebo_msgs::srv::DeleteEntity>("/delete_entity");
+    // // 等待服务可用
+    // while (!delete_model_clinet->wait_for_service(std::chrono::seconds(1))) {
+    //     RCLCPP_INFO(node->get_logger(), "等待delete_entity服务就绪...");
+    // }
+    // for(const auto& model_name : delete_model_list) {
+    //     // 构造请求
+    //     auto request2 = std::make_shared<gazebo_msgs::srv::DeleteEntity::Request>();
+    //     request2->name = model_name;
 
-        // 发送请求
-        auto future2 = delete_model_clinet->async_send_request(request2);
+    //     // 发送请求
+    //     auto future2 = delete_model_clinet->async_send_request(request2);
 
-        // 处理响应
-        if (rclcpp::spin_until_future_complete(node->shared_from_this(), future2) == 
-            rclcpp::FutureReturnCode::SUCCESS) {
-            auto response = future2.get();
-            if (response->success) {
-                RCLCPP_INFO(node->get_logger(), "模型 %s 删除成功", model_name.c_str());
-            } else {
-                RCLCPP_ERROR(node->get_logger(), "模型 %s 删除失败", model_name.c_str());
-            }
-        } else {
-            RCLCPP_ERROR(node->get_logger(), "服务调用失败");
-        }
-    }
+    //     // 处理响应
+    //     if (rclcpp::spin_until_future_complete(node->shared_from_this(), future2) == 
+    //         rclcpp::FutureReturnCode::SUCCESS) {
+    //         auto response = future2.get();
+    //         if (response->success) {
+    //             RCLCPP_INFO(node->get_logger(), "模型 %s 删除成功", model_name.c_str());
+    //         } else {
+    //             RCLCPP_ERROR(node->get_logger(), "模型 %s 删除失败", model_name.c_str());
+    //         }
+    //     } else {
+    //         RCLCPP_ERROR(node->get_logger(), "服务调用失败");
+    //     }
+    // }
 
     // add instance to gazebo
     geometry_msgs::msg::Pose initial_pose;
@@ -254,9 +249,9 @@ void gazeboInitialize(const std::string& file_path, const rclcpp::Node::SharedPt
         // do not spawn circle or block, but spawn real robots
         std::string file_path3 = ROBOT_SDFS[REAL_ROBOTS[id]];
         if(agent->type_ == "Circle") {
-            spawnAgentGazebo(file_path3, std::string("Circle_")+std::to_string(agent->id_), initial_pose, client, node);
+            spawnAgentGazebo(file_path3, std::string("Circle_")+std::to_string(agent->id_), initial_pose, entity_pawner_clinet, node);
         } else if(agent->type_ == "Block_2D") {
-            spawnAgentGazebo(file_path3, std::string("Block_2D_")+std::to_string(agent->id_), initial_pose, client, node);
+            spawnAgentGazebo(file_path3, std::string("Block_2D_")+std::to_string(agent->id_), initial_pose, entity_pawner_clinet, node);
         } else {
             RCLCPP_INFO(node->get_logger(), "undefined agent type");
             std::exit(0);
@@ -276,7 +271,7 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
     }
     std::stringstream ss;
     ss << "map scale = " << dim[0] << "*" << dim[1];
-    RCLCPP_INFO(node->get_logger(), ss.str());
+    RCLCPP_INFO(node->get_logger(), ss.str().c_str());
 
     instances = deserializer.getTestInstance({25}, 1).front(); // get all instances
 
@@ -303,14 +298,30 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
 
     std::vector<std::vector<int> > grid_visit_count_table;
     auto start_t = clock();
+    MSTimer mst;
 
-    auto layered_paths = layeredLargeAgentMAPF<2>(instances.second,
-                                                  instances.first,
-                                                  dim, is_occupied,
-                                                  CBS::LargeAgentCBS_func<2>,
-                                                  grid_visit_count_table,
-                                                  60, decomposer_ptr,
-                                                  false);
+    pre_dec =
+            std::make_shared<PrecomputationOfLAMAPFDecomposition<2, HyperGraphNodeDataRaw<2>>>(
+                    instances.second,
+                    instances.first,
+                    dim, is_occupied);
+
+    auto bl_decompose = std::make_shared<MAPFInstanceDecompositionBreakLoop<2, HyperGraphNodeDataRaw<2>, Pose<int, 2>>>(
+            dim,
+            pre_dec->connect_graphs_,
+            pre_dec->agent_sub_graphs_,
+            pre_dec->heuristic_tables_sat_,
+            pre_dec->heuristic_tables_,
+            60);
+
+    bool detect_loss_solvability = false;        
+    auto layered_paths = layeredLargeAgentMAPF<2, Pose<int, 2>>(bl_decompose->all_levels_,
+                                                           CBS::LargeAgentCBS_func<2, Pose<int, 2> >, //
+                                                           grid_visit_count_table,
+                                                           detect_loss_solvability,
+                                                           pre_dec,
+                                                           60 - mst.elapsed()/1e3,
+                                                           false);        
 
     auto end_t = clock();
 
@@ -319,7 +330,7 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
     std::stringstream ss2;
     ss2 << (layered_paths.size() == instances.first.size() ? "success" : "failed")
               << " layered large agent mapf in " << time_cost << "s " << std::endl;
-    RCLCPP_INFO(node->get_logger(), ss2.str());
+    RCLCPP_INFO(node->get_logger(), ss2.str().c_str());
 
     if(layered_paths.empty()) {
         exit(0);
@@ -332,9 +343,9 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
     std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
     std::vector<RotateControllerPtr> rot_ctls(instances.first.size(), std::make_shared<ConstantRotateController>(MotionConfig()));
 
-    std::cout << "decomposer_ptr->getAllPoses().size() = " << decomposer_ptr->getAllPoses().size() << std::endl;
+    std::cout << "pre_dec->all_poses_.size() = " << pre_dec->all_poses_.size() << std::endl;
 
-    ctl = new CenteralController(layered_paths, instances.first, decomposer_ptr->getAllPoses(), line_ctls, rot_ctls, node);
+    ctl = new CenteralController(layered_paths, instances.first, pre_dec->all_poses_, line_ctls, rot_ctls, node);
 
 
     // InstanceVisualization(instances.front().first, decomposer_ptr->getAllPoses(),

@@ -19,6 +19,7 @@ find_package(ros_gz_interfaces REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 set(EXTERNAL_LIBS
         libcanvas_ex.a
@@ -32,7 +33,7 @@ set(EXTERNAL_LIBS
 include_directories(include 
                     )
 
-set(dependencies rclcpp ros_gz_interfaces tf2 std_msgs)        
+set(dependencies rclcpp ros_gz_interfaces tf2 std_msgs geometry_msgs)        
 
 
 add_executable(spawn_entity src/test_spawn_entity.cpp)
@@ -45,7 +46,10 @@ ament_target_dependencies(generate_instance_node ${dependencies})
 install(TARGETS generate_instance_node DESTINATION lib/${PROJECT_NAME})
 
 
-
+add_executable(lamapf_planner_node src/lamapf_planner.cpp)
+target_link_libraries(lamapf_planner_node ${EXTERNAL_LIBS} )
+ament_target_dependencies(lamapf_planner_node ${dependencies})
+install(TARGETS lamapf_planner_node DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -4,8 +4,7 @@
 #include <cstdio>
 //#include <LA-MAPF/algorithm/LA-MAPF/action_dependency_graph.h>
 #include <rclcpp/rclcpp.hpp>
-#include <gazebo_msgs/srv/spawn_entity.hpp>
-#include <gazebo_msgs/srv/set_entity_state.hpp>
+
 
 #include <fstream>
 #include <sstream>
@@ -13,6 +12,10 @@
 
 #include "common_interfaces.h"
 #include  "tinyxml.h"
+
+ #include "lamapf_and_gazebo/spawn_entity.hpp"
+ #include "lamapf_and_gazebo/delete_entity.hpp"
+ #include "lamapf_and_gazebo/set_entity_pose.hpp"
 
 void createCylinderSDFFile(const std::string& model_name, const std::string& file_path, double radius, double height,
                            cv::Vec3b color = cv::Vec3b::all(0)) {
@@ -213,71 +216,19 @@ std::string createBlockAgent(const std::string& model_name,
     return file_path;
 }
 
-typedef rclcpp::Client<gazebo_msgs::srv::SpawnEntity>::SharedPtr SpawnClientPtr;
-
-typedef rclcpp::Client<gazebo_msgs::srv::SetEntityState>::SharedPtr SetPoseClientPtr;
 
 bool spawnAgentGazebo(const std::string& file_path, const std::string model_name, 
                       const geometry_msgs::msg::Pose& initial_pose, 
-                      const SpawnClientPtr& client, const rclcpp::Node::SharedPtr& node
+                      const EntitySpawnerPtr& client, const rclcpp::Node::SharedPtr& node
                       ) {
 
+    return client->spawn_entity(model_name, file_path, initial_pose);
 
-    // 读取SDF文件内容
-    //std::string model_xml = loadSDFFile(file_path);
-    // 加载 XML 文件
-    TiXmlDocument doc(file_path);
-    if (!doc.LoadFile()) {
-        std::cerr << "unable to load sdf file " << file_path <<  ", error code " << doc.ErrorDesc() << std::endl;
-        return 1;
-    }
-    std::cout << " file_path = " << file_path << std::endl;
-    // std::cout << " model_xml = " << model_xml << std::endl;
-
-    // set name in xml file to model_name
-    // 获取根元素
-    TiXmlElement* root = doc.FirstChildElement("sdf");
-    if (!root) {
-        std::cerr << "cannot find element sdf" << std::endl;
-        return 1;
-    }
-    TiXmlElement* model_element = root->FirstChildElement("model");
-    if (!model_element) {
-        std::cerr << "cannot find element model" << std::endl;
-        return 1;
-    } else {
-        //std::cerr << "find element model" << std::endl;
-        std::cout << model_element->GetText() << std::endl;
-    }
-    model_element->SetAttribute("name", model_name.c_str());
-
-    TiXmlPrinter printer;
-    doc.Accept(&printer);
-    std::string xmlContent = printer.Str();
-    std::cout << "XML content:\n" << xmlContent << std::endl;
-
-    // 创建SpawnEntity请求
-    auto request = std::make_shared<gazebo_msgs::srv::SpawnEntity::Request>();
-    request->name = model_name;              // 设置模型名称
-    request->xml = xmlContent;                // SDF文件内容
-    request->robot_namespace = "";           // 机器人命名空间，可留空
-    request->initial_pose = initial_pose;    // 设置模型初始位置
-    request->reference_frame = "world";      // 设置参考坐标系
-
-    // 发送请求并等待响应
-    auto result = client->async_send_request(request);
-    if (rclcpp::spin_until_future_complete(node, result, std::chrono::seconds(10)) == rclcpp::FutureReturnCode::SUCCESS) {
-        RCLCPP_INFO(node->get_logger(), "Successfully spawned model: %s", model_name.c_str());
-    } else {
-        RCLCPP_ERROR(node->get_logger(), "Failed to spawn model: %s", model_name.c_str());
-        return false;
-    }
-    return true;
 }
 
 
-void setModelPose(std::string model_name, double x, double y, double z, double theta, 
-                  const SetPoseClientPtr& client,
+bool setModelPose(std::string model_name, double x, double y, double z, double theta, 
+                  const EntityPoseSetterPtr& client,
                   const rclcpp::Node::SharedPtr& node) {
 
     geometry_msgs::msg::Pose pose;
@@ -293,24 +244,13 @@ void setModelPose(std::string model_name, double x, double y, double z, double t
     pose.orientation.z = orientation.z();
     pose.orientation.w = orientation.w();
 
-    // 创建请求
-    auto request = std::make_shared<gazebo_msgs::srv::SetEntityState::Request>();
-    request->state.name = model_name.c_str();
-    request->state.pose = pose;
-
-    // 异步发送请求
-    auto result_future = client->async_send_request(request);
-
-    // 等待服务响应
-    if (rclcpp::spin_until_future_complete(node->get_node_base_interface(), result_future) ==
-        rclcpp::FutureReturnCode::SUCCESS)
-    {
-        // RCLCPP_INFO(node->get_logger(), "模型 %s 位姿已更新", model_name.c_str());
-    }
-    else
-    {
-        RCLCPP_ERROR(node->get_logger(), "无法更新模型位姿");
-    }
+    return client->set_entity_pose(model_name, 0, 6,
+                                        x, y, z,
+                                        pose.orientation.x,
+                                        pose.orientation.y,
+                                        pose.orientation.z,
+                                        pose.orientation.w,
+                                        true);                
 }
 
 #endif

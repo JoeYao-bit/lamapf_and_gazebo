@@ -129,4 +129,7 @@ protected:
   rclcpp::Client<ros_gz_interfaces::srv::SpawnEntity>::SharedPtr client_;
 };
 
+typedef std::shared_ptr<EntitySpawner> EntitySpawnerPtr;
+
+
 #endif  // LAMAPF_AND_GAZEBO__SPAWN_ENTITY_HPP_
