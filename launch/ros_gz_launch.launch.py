@@ -67,9 +67,10 @@ def generate_launch_description():
     # industrial-warehouse （ok）
     # tugbot_warehouse （ok）
     # tugbot_depot (not ok）
-    #  living_room （not ok）
+    # living_room （not ok）
+    # office_env_large （not ok）
     
-    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/empty.sdf'
+    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/industrial-warehouse.sdf'
 
     print("world path = ", world)
 

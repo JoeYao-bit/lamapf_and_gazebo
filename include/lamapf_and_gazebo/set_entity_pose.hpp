@@ -82,12 +82,12 @@ public:
     // Set entity identification (name or ID)
     if (entity_id > 0) {
       entity.id = entity_id;
-      RCLCPP_INFO(this->get_logger(), "Setting pose for entity with ID: %d",
-                  entity_id);
+      // RCLCPP_INFO(this->get_logger(), "Setting pose for entity with ID: %d",
+      //             entity_id);
     } else if (!entity_name.empty()) {
       entity.name = entity_name;
-      RCLCPP_INFO(this->get_logger(), "Setting pose for entity with name: %s",
-                  entity_name.c_str());
+      // RCLCPP_INFO(this->get_logger(), "Setting pose for entity with name: %s",
+      //             entity_name.c_str());
     } else {
       RCLCPP_ERROR(this->get_logger(),
                   "Either entity name or ID must be provided");
@@ -127,12 +127,12 @@ public:
 
     request->pose = pose;
 
-    RCLCPP_INFO(this->get_logger(), "Position: x=%f, y=%f, z=%f",
-                pose.position.x, pose.position.y, pose.position.z);
+    // RCLCPP_INFO(this->get_logger(), "Position: x=%f, y=%f, z=%f",
+    //             pose.position.x, pose.position.y, pose.position.z);
 
-    RCLCPP_INFO(this->get_logger(), "Orientation: x=%f, y=%f, z=%f, w=%f",
-                pose.orientation.x, pose.orientation.y, pose.orientation.z,
-                pose.orientation.w);
+    // RCLCPP_INFO(this->get_logger(), "Orientation: x=%f, y=%f, z=%f, w=%f",
+    //             pose.orientation.x, pose.orientation.y, pose.orientation.z,
+    //             pose.orientation.w);
 
     // Send the request
     auto future = client_->async_send_request(request);
@@ -143,8 +143,8 @@ public:
       rclcpp::FutureReturnCode::SUCCESS)
     {
       auto response = future.get();
-      RCLCPP_INFO(this->get_logger(), "Result: %s",
-                  response->success ? "true" : "false");
+      // RCLCPP_INFO(this->get_logger(), "Result: %s",
+      //             response->success ? "true" : "false");
 
       if (!response->success) {
         RCLCPP_ERROR(this->get_logger(), "Failed to set entity pose");

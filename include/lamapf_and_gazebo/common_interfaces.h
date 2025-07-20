@@ -75,13 +75,20 @@ SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
         {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_second.txt"},
 };
 
+SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
+{
+        {"map_name",     "IndustrialWarehouse"},
+        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
+        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
+};
+
 //std::string map_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.png";
 //std::string ins_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.scen";
 
 double reso = 0.1; // how long a grid occupied in real world ?
 
 // following file path related to .world file office_env_large.world
-auto map_test_config = MAPFTestConfig_LargeOfficeEnvSecond;//MAPFTestConfig_LargeOfficeEnv
+auto map_test_config = MAPFTestConfig_IndustrialWarehouse;//MAPFTestConfig_LargeOfficeEnv
 
 auto is_grid_occupied = [](const cv::Vec3b& color) -> bool {
     if (color == cv::Vec3b::all(255)) { return false; }
@@ -830,7 +837,7 @@ double global_offset_x, global_offset_y;
 
 int sub_count_ = 0;
 
-float agent_height = 0.15;
+float agent_height = 0.05;
 
 struct CenteralController;
 
@@ -860,14 +867,14 @@ std::vector<std::string> ROBOT_SDFS = {
 };
 
 // what above robot are used to generate instance
-std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0
-                                };
+// std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0
+//                                 };
 
-// std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0,
-//                                 1,1,1,1,1,1,
-//                                 //2,2,2,
-//                                 3,3,3,3,3,3,
-//                                 4,4,4,4,4,4};
+std::vector<int> REAL_ROBOTS = {0,0,0,0,0,
+                                1,1,1,1,1,
+                                //2,2,2,
+                                3,3,3,3,
+                                4,4,4,4};
 
 // related agent ptrs of above agents. in grid
 // AgentPtrs<2> agents = {

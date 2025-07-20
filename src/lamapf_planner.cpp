@@ -27,7 +27,7 @@ EntityPoseSetterPtr set_pose_clinet = nullptr;
 
 EntitySpawnerPtr entity_pawner_clinet = nullptr;
 
-bool paused = false;
+bool paused = true;
 bool gazebo_gui = true;
 // class InitExecutionSubscriber : public rclcpp::Node
 // {

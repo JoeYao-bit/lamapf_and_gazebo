@@ -410,6 +410,9 @@ gazebo模型网站
 https://app.gazebosim.org/fuel/worlds
 
 
+https://github.com/gazebosim/gz-sim/tree/main/examples/worlds
+
+
 构造虚拟instance,单独运行以下代码即可
 
 ```
@@ -433,3 +436,21 @@ ros2 run lamapf_and_gazebo lamapf_planner_node
 ```
 ros2 run lamapf_and_gazebo spawn_entity
 ```
+
+空地图添加模型成功，但有sdf world添加失败，为什么？
+
+. **ROS 2服务名称冲突**：
+    在加载不同世界时，服务名称可能发生变化（特别是当世界名称不同时）。
+    **解决方案**：
+    - 检查服务名称：在加载有模型的世界后，运行`ros2 service list`，确认`/spawn_entity`服务是否存在。
+    - 注意：服务名称可能包含世界名称，例如`/world/your_world_name/spawn_entity`。在调用服务时，确保使用正确的服务名称。
+
+SDF文件中的世界名称，统一设置为default
+
+  <world name='default'>
+
+## 生成地图
+
+gazebo sim 选择俯视图，正交视角
+截图后生成规划用地图时考虑栅格对应的分辨率，并顺时针转90度，以对其坐标系
+涂白（255,255,255）区域为可通行区域
