@@ -27,7 +27,7 @@ EntityPoseSetterPtr set_pose_clinet = nullptr;
 
 EntitySpawnerPtr entity_pawner_clinet = nullptr;
 
-bool paused = true;
+bool paused = false;
 bool gazebo_gui = true;
 // class InitExecutionSubscriber : public rclcpp::Node
 // {
@@ -313,9 +313,10 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
             pre_dec->heuristic_tables_sat_,
             pre_dec->heuristic_tables_,
             60);
-
+ 
     bool detect_loss_solvability = false;        
-    auto layered_paths = layeredLargeAgentMAPF<2, Pose<int, 2>>(bl_decompose->all_levels_,
+    LAMAPF_Paths layered_paths;
+    layered_paths = layeredLargeAgentMAPF<2, Pose<int, 2>>(bl_decompose->all_levels_,
                                                            CBS::LargeAgentCBS_func<2, Pose<int, 2> >, //
                                                            grid_visit_count_table,
                                                            detect_loss_solvability,
@@ -324,7 +325,7 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
                                                            false);        
 
     auto end_t = clock();
-
+ 
     double time_cost = ((double)end_t-start_t)/CLOCKS_PER_SEC;
 
     std::stringstream ss2;
@@ -335,7 +336,7 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
     if(layered_paths.empty()) {
         exit(0);
     }
-
+ 
     allAgentPaths = layered_paths;
 
     rclcpp::WallRate loop_rate(control_frequency);

@@ -1,7 +1,7 @@
  #include "lamapf_and_gazebo/spawn_entity.hpp"
  #include "lamapf_and_gazebo/delete_entity.hpp"
  #include "lamapf_and_gazebo/set_entity_pose.hpp"
-
+ #include "lamapf_and_gazebo/common_interfaces.h"
 
  /// \brief Main entry point for the entity spawner node.
  /// \details Parses arguments, constructs a pose, and calls the spawn service.
@@ -35,7 +35,8 @@ int main(int argc, char **argv)
   pose.orientation.w = tf2_quat.w();
 
   std::string model_name = "my_vehicle_yz";
-  std::string sdf_filename = "/home/yaozhuo/code/ros2_ws/src/ros_gz/ros_gz_sim_demos/models/cardboard_box/model.sdf";
+  std::string sdf_filename = ROBOT_SDFS[1];
+  //"/home/yaozhuo/code/ros2_ws/src/ros_gz/ros_gz_sim_demos/models/cardboard_box/model.sdf";
   
   // Create spawner and call service
   auto spawner = std::make_shared<EntitySpawner>();
@@ -43,7 +44,8 @@ int main(int argc, char **argv)
     spawner->spawn_entity(model_name, sdf_filename, pose);
 
   model_name = "my_vehicle_yz_2";
-  sdf_filename = "/home/yaozhuo/code/ros2_ws/src/ros_gz/ros_gz_sim_demos/models/vehicle/model.sdf";
+  sdf_filename = ROBOT_SDFS[1];
+  //"/home/yaozhuo/code/ros2_ws/src/ros_gz/ros_gz_sim_demos/models/vehicle/model.sdf";
   
   pose.position.x = 2.0;
   pose.position.y = 2.0;

@@ -852,19 +852,22 @@ Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose) {
 
 // sdf file path of real robot Circle/Block2D agents in LA-MAPF
 std::vector<std::string> ROBOT_SDFS = {
-    "/home/yaozhuo/.gazebo/models/youbot/model.sdf",
-    "/home/yaozhuo/.gazebo/models/turtlebot/model.sdf",
-    "/home/yaozhuo/.gazebo/models/cleanerbote/model.sdf",
-    "/home/yaozhuo/.gazebo/models/tinyrobot/model.sdf",
-    "/home/yaozhuo/.gazebo/models/deliveryrobotwithconveyor/model.sdf"
+    "/home/yaozhuo/.gz_models_yz/youbot/model.sdf", // ok
+    "/home/yaozhuo/.gz_models_yz/atmos/model.sdf", // ok
+    "/home/yaozhuo/.gz_models_yz/cleanerbote/model.sdf", // ok
+    "/home/yaozhuo/.gz_models_yz/tinyrobot/model.sdf",  // ok
+    "/home/yaozhuo/.gz_models_yz/deliveryrobotwithconveyor/model.sdf" // ok
 };
 
 // what above robot are used to generate instance
-std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0,
-                                1,1,1,1,1,1,
-                                //2,2,2,
-                                3,3,3,3,3,3,
-                                4,4,4,4,4,4};
+std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0
+                                };
+
+// std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0,
+//                                 1,1,1,1,1,1,
+//                                 //2,2,2,
+//                                 3,3,3,3,3,3,
+//                                 4,4,4,4,4,4};
 
 // related agent ptrs of above agents. in grid
 // AgentPtrs<2> agents = {

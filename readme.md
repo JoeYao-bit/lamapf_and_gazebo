@@ -415,3 +415,21 @@ https://app.gazebosim.org/fuel/worlds
 ```
 ros2 run lamapf_and_gazebo generate_instance_node
 ```
+
+启动gazebo，以及添加实体、删除实体、设置实体位姿的服务
+
+```
+ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
+```
+
+启动MAPF，并在gazebo中可视化
+
+```
+ros2 run lamapf_and_gazebo lamapf_planner_node
+```
+
+测试加载实体
+
+```
+ros2 run lamapf_and_gazebo spawn_entity
+```
