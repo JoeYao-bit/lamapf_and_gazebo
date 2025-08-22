@@ -431,11 +431,15 @@ ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
 ros2 run lamapf_and_gazebo lamapf_planner_node
 ```
 
+空格开始移动，按空格暂停移动
+
 测试加载实体
 
 ```
 ros2 run lamapf_and_gazebo spawn_entity
 ```
+
+
 
 空地图添加模型成功，但有sdf world添加失败，为什么？
 
@@ -454,3 +458,9 @@ SDF文件中的世界名称，统一设置为default
 gazebo sim 选择俯视图，正交视角
 截图后生成规划用地图时考虑栅格对应的分辨率，并顺时针转90度，以对其坐标系
 涂白（255,255,255）区域为可通行区域
+
+TODO:
+
+增加单位路径上的碰撞检测
+有碰撞风险则等待至无碰撞或超时报错，超时后更新地图重启规划。
+
