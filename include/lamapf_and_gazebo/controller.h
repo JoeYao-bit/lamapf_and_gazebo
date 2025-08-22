@@ -285,7 +285,182 @@ struct CenteralController {
 
     std::vector<int> progress_of_agents_;
 
+    rclcpp::Node::SharedPtr node_ptr_; // for print log
+
+};
+
+
+// for single robot, receive goal state and target state from CentralController
+// run on single robot
+struct SingleController {
+
+    SingleController(const AgentPtr<2>& agent,
+                     const LineFollowControllerPtr& line_ctl,
+                     const RotateControllerPtr& rot_ctl,
+                     const rclcpp::Node::SharedPtr& node_ptr):
+                     agent_(agent),
+                     line_ctl_(line_ctl),
+                     rot_ctl_(rot_ctl),
+                     node_ptr_(node_ptr)
+    {
+        
+    }
+
+    // calculate vel cmd for each agent
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) {
+        Pointf<3> cmd_vel = {0,0,0};
+        if(wait_) { return cmd_vel; }
+        if(start_ptf_[2] != target_ptf_[2]) {
+            // rotate
+            rot_ctl_->ang_ = target_ptf_[2]; // update target angle
+
+            if(fabs(target_ptf_[2] - start_ptf_[2]) <= 0.5*M_PI + 0.001) {
+                if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = true; }
+                else { rot_ctl_->posi_rot_ = false; }
+            } else {
+                if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = false; }
+                else { rot_ctl_->posi_rot_ = true; }                    
+            }
+            //std::stringstream ss;
+            //ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
+            //RCLCPP_INFO(node_ptr_->get_logger(), ss.str());
+            
+            cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+        } else {
+            // move forward
+            line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
+            line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
+            //std::cout << "current pose " << poses[i] << ", target line = " << line_ctr->pt1_ << ", " << line_ctr->pt2_ << std::endl;
+            cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);
+        }
+        // TODO: predict whether there is obstacle in future path
+        // if is, wait utill run out of time
+        // if run out of time, call central controller to replan  
+        return cmd_vel;
+    }
+
+    bool wait_ = false;
+
+    Pointf<3> start_ptf_, target_ptf_;
+
+    AgentPtr<2> agent_;
+
+    LineFollowControllerPtr line_ctl_;
+
+    RotateControllerPtr rot_ctl_;
+
     rclcpp::Node::SharedPtr node_ptr_;
+};
+
+
+// maintain a action dependency graph, 
+// tell single robots when to move, move to where and when stop
+// 
+struct CenteralControllerADG {
+
+    CenteralControllerADG(const std::vector<LAMAPF_Path>& paths,
+                          const std::vector<AgentPtr<2>>& agents,
+                          const std::vector<PosePtr<int, 2> >& all_poses,
+                          const rclcpp::Node::SharedPtr& node_ptr): 
+                       ADG_(paths, agents, all_poses),
+                       node_ptr_(node_ptr) {
+
+        progress_of_agents_.resize(agents.size(), 0);
+
+        assert(paths.size() == agents.size());
+
+    }
+
+    // calculate vel cmd for each agent
+    Pointfs<3> calculateCMD(Pointfs<3> poses, Pointfs<3> vels, float time_interval) {
+        Pointfs<3> retv(poses.size(), {0, 0, 0});
+        Pointf<3> cmd_vel;
+        Pointf<3> start_ptf, target_ptf;
+        bool all_finished = true;
+        //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0");
+        for(int i=0; i<ADG_.agents_.size(); i++) {
+            //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.1");
+            cmd_vel = Pointf<3>{0, 0, 0};
+            Pointf<3> cur_pose = poses[i];
+            size_t target_pose_id;
+            PosePtr<int, 2> target_pose;
+            bool finished = false;
+            // update progress, considering agent may wait at current position multiple times
+            while(true) {
+                //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.2");
+                if(progress_of_agents_[i] < ADG_.paths_[i].size()-1) {
+                    target_pose_id = ADG_.paths_[i][progress_of_agents_[i] + 1];
+                    //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.3");
+                    target_pose = ADG_.all_poses_[target_pose_id];
+                    target_ptf = PoseIntToPtf(target_pose);
+                    
+                    float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
+                    float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
+                    size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];;
+                    // check whether reach current target, if reach, update progress to next pose
+                    if(fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001) {
+                        // reach current target, move to next target
+                        ADG_.setActionLeave(i, progress_of_agents_[i]);
+                        progress_of_agents_[i]++;
+                        //RCLCPP_INFO(node_ptr_->get_logger(), ss.str());
+                    } else {
+                        //RCLCPP_INFO(node_ptr_->get_logger(), "flag 1.1");
+                        break;
+                    }
+                } else {
+                    //RCLCPP_INFO(node_ptr_->get_logger(), "flag 2");
+                    finished = true;
+                    target_pose_id = ADG_.paths_[i].back();
+                    target_pose = ADG_.all_poses_[target_pose_id];
+                    target_ptf = PoseIntToPtf(target_pose);
+                    break;
+                }
+            }
+            if(finished) { 
+                continue;
+            } else {
+                all_finished = false;
+            }
+            //RCLCPP_INFO(node_ptr_->get_logger(), "flag 3");
+            if(progress_of_agents_[i] < ADG_.paths_[i].size()-1) {
+                // check whether next move valid in ADG, if not valid, wait till valid
+                if(!ADG_.isActionValid(i, progress_of_agents_[i])) {
+                    continue;
+                }
+                // if not finish all pose, get cmd move to next pose, otherwise stop 
+                size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];;
+                PosePtr<int, 2> start_pose = ADG_.all_poses_[start_pose_id];
+                start_ptf = PoseIntToPtf(start_pose);
+                // check whether need wait, via ADG
+                retv[i] = Pointf<3>{0, 0, 0}; 
+                // if move to next pose, current pose and next pose must be different 
+                assert(start_pose_id != target_pose_id); // yz:250412, what if the target repeated in path's end ?
+
+                if(start_pose->pt_ == target_pose->pt_) {
+                    // rotate
+                } else {
+                    // move forward
+                }
+                retv[i] = cmd_vel; 
+            }
+        }
+        if(all_finished) {
+            RCLCPP_INFO(node_ptr_->get_logger(), "all agent reach target");
+        }
+        return retv;
+    }
+
+    void clearAllProgress() {
+        ADG_.clearAllProgress();
+        progress_of_agents_.resize(ADG_.agents_.size(), 0);
+    }
+
+    ActionDependencyGraph<2> ADG_;
+
+    std::vector<int> progress_of_agents_;
+
+    rclcpp::Node::SharedPtr node_ptr_; // for print log
 
 };
 
