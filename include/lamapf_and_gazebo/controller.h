@@ -122,9 +122,9 @@ Pointf<3> updateAgentPose(Pointf<3> pose, Pointf<3> velcmd, float time_interval)
     return Pointf<3>{new_x, new_y, new_theta};
 };
 
-struct CenteralController {
+struct CenteralControllerFull {
 
-    CenteralController(const std::vector<LAMAPF_Path>& paths,
+    CenteralControllerFull(const std::vector<LAMAPF_Path>& paths,
                        const std::vector<AgentPtr<2>>& agents,
                        const std::vector<PosePtr<int, 2> >& all_poses,
                        const std::vector<LineFollowControllerPtr>& line_ctls,
@@ -144,7 +144,7 @@ struct CenteralController {
     }
 
     // calculate vel cmd for each agent
-    Pointfs<3> calculateCMD(Pointfs<3> poses, Pointfs<3> vels, float time_interval) {
+    Pointfs<3> calculateCMD(const Pointfs<3>& poses, const Pointfs<3>& vels, const float& time_interval) {
         Pointfs<3> retv(poses.size(), {0, 0, 0});
         Pointf<3> cmd_vel;
         Pointf<3> start_ptf, target_ptf;
@@ -301,16 +301,24 @@ struct SingleController {
                      agent_(agent),
                      line_ctl_(line_ctl),
                      rot_ctl_(rot_ctl),
-                     node_ptr_(node_ptr)
-    {
-        
-    }
+                     node_ptr_(node_ptr) {}
 
     // calculate vel cmd for each agent
-    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) {
+    Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
         Pointf<3> cmd_vel = {0,0,0};
+        // if is required to wait, then wait
         if(wait_) { return cmd_vel; }
         if(start_ptf_[2] != target_ptf_[2]) {
+            // if out of current position (when rotate), stop and replan
+            float dist_to_target = (Pointf<2>{target_ptf_[0], target_ptf_[1]} - Pointf<2>{pose[0], pose[1]}).Norm();
+            if(dist_to_target > 0.1) {
+                std::stringstream ss;
+                ss << "current pose " << pose << " out of target position " << target_ptf_
+                   << " in rotate, then stop and replan";
+                RCLCPP_INFO(node_ptr_->get_logger(), ss.str().c_str());
+                wait_ = true;
+                return cmd_vel;
+            }
             // rotate
             rot_ctl_->ang_ = target_ptf_[2]; // update target angle
 
@@ -328,6 +336,18 @@ struct SingleController {
             cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
         } else {
+            // if out of current line (when move forward), stop and replan
+            double dist_to_line = pointDistToLine(Pointf<2>{pose[0], pose[1]}, 
+                                                  Pointf<2>{start_ptf_[0], start_ptf_[1]},
+                                                  Pointf<2>{target_ptf_[0], target_ptf_[1]});
+            if(dist_to_line > 0.1) { 
+                std::stringstream ss;
+                ss << "current pose " << pose << " out of target line " << start_ptf_ << "->" << target_ptf_
+                   << " in move forward, then stop and replan";
+                RCLCPP_INFO(node_ptr_->get_logger(), ss.str().c_str());
+                wait_ = true;
+                return cmd_vel;
+            }
             // move forward
             line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
             line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
@@ -340,8 +360,12 @@ struct SingleController {
         return cmd_vel;
     }
 
-    bool wait_ = false;
+    // TODO: 
+    // ros service: update pose in central controller
+    // ros service: call replan in central controller when encounter exception
 
+    bool wait_ = false;
+ 
     Pointf<3> start_ptf_, target_ptf_;
 
     AgentPtr<2> agent_;
@@ -357,31 +381,97 @@ struct SingleController {
 // maintain a action dependency graph, 
 // tell single robots when to move, move to where and when stop
 // 
-struct CenteralControllerADG {
+struct CenteralController {
 
-    CenteralControllerADG(const std::vector<LAMAPF_Path>& paths,
-                          const std::vector<AgentPtr<2>>& agents,
-                          const std::vector<PosePtr<int, 2> >& all_poses,
-                          const rclcpp::Node::SharedPtr& node_ptr): 
-                       ADG_(paths, agents, all_poses),
-                       node_ptr_(node_ptr) {
+    CenteralController(DimensionLength* dim, IS_OCCUPIED_FUNC<2>& is_occupied,
+                       const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
+                       const rclcpp::Node::SharedPtr& node_ptr): 
+                       dim_(dim),
+                       isoc_(is_occupied),
+                       instances_(instances),
+                       node_ptr_(node_ptr) {             
+        
+        std::cout << "construct all possible poses" << std::endl;
+        Id total_index = getTotalIndexOfSpace<2>(this->dim_);
+        all_poses_.resize(total_index * 2 * 2, nullptr); // a position with 2*N orientation
+        Pointi<2> pt;
+        for (Id id = 0; id < total_index; id++) {
+            pt = IdToPointi<2>(id, this->dim_);
+            if (!is_occupied(pt)) {
+                for (int orient = 0; orient < 2 * 2; orient++) {
+                    PosePtr<int, 2> pose_ptr = std::make_shared<Pose<int, 2> >(pt, orient);
+                    all_poses_[id * 2 * 2 + orient] = pose_ptr;
+                }
+            }
+        }
 
-        progress_of_agents_.resize(agents.size(), 0);
+        // calculate initial paths 
+        auto paths = MAPF(dim, is_occupied, instances);
+        
+        if(paths.empty()) {
+            RCLCPP_INFO(node_ptr_->get_logger(), "failed to generate initial paths");
+            return;
+        }
 
-        assert(paths.size() == agents.size());
+        assert(paths.size() == instances.first.size());
+
+        auto agents = instances.first;
+
+        ADG_ = std::make_shared<ActionDependencyGraph<2>>(paths, agents, all_poses_);
+
+        progress_of_agents_.resize(instances.first.size(), 0);
 
     }
 
-    // calculate vel cmd for each agent
-    Pointfs<3> calculateCMD(Pointfs<3> poses, Pointfs<3> vels, float time_interval) {
-        Pointfs<3> retv(poses.size(), {0, 0, 0});
-        Pointf<3> cmd_vel;
+    LAMAPF_Paths MAPF(DimensionLength* dim, IS_OCCUPIED_FUNC<2>& is_occupied,
+                      const std::pair<AgentPtrs<2>, InstanceOrients<2> >&  instances) const {
+
+        std::vector<std::vector<int> > grid_visit_count_table;
+        auto start_t = clock();
+        MSTimer mst;
+
+        std::shared_ptr<PrecomputationOfLAMAPFDecomposition<2, HyperGraphNodeDataRaw<2>>> pre_dec =
+                std::make_shared<PrecomputationOfLAMAPFDecomposition<2, HyperGraphNodeDataRaw<2>>>(
+                        instances.second,
+                        instances.first,
+                        dim, is_occupied);
+
+        auto bl_decompose = std::make_shared<MAPFInstanceDecompositionBreakLoop<2, HyperGraphNodeDataRaw<2>, 
+                                             Pose<int, 2>>>(dim,
+                                                            pre_dec->connect_graphs_,
+                                                            pre_dec->agent_sub_graphs_,
+                                                            pre_dec->heuristic_tables_sat_,
+                                                            pre_dec->heuristic_tables_,
+                                                            60);
+    
+        bool detect_loss_solvability = false;        
+        LAMAPF_Paths layered_paths;
+        layered_paths = layeredLargeAgentMAPF<2, Pose<int, 2>>(bl_decompose->all_levels_,
+                                                            CBS::LargeAgentCBS_func<2, Pose<int, 2> >, //
+                                                            grid_visit_count_table,
+                                                            detect_loss_solvability,
+                                                            pre_dec,
+                                                            60 - mst.elapsed()/1e3,
+                                                            false);        
+
+        auto end_t = clock();
+    
+        double time_cost = ((double)end_t-start_t)/CLOCKS_PER_SEC;
+
+        std::stringstream ss2;
+        ss2 << (layered_paths.size() == instances.first.size() ? "success" : "failed")
+                << " layered large agent mapf in " << time_cost << "s " << std::endl;
+        RCLCPP_INFO(node_ptr_->get_logger(), ss2.str().c_str());
+        return layered_paths;
+    }
+
+    // update progress
+    void updateADG(const Pointfs<3>& poses) {
         Pointf<3> start_ptf, target_ptf;
         bool all_finished = true;
         //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0");
-        for(int i=0; i<ADG_.agents_.size(); i++) {
+        for(int i=0; i<ADG_->agents_.size(); i++) {
             //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.1");
-            cmd_vel = Pointf<3>{0, 0, 0};
             Pointf<3> cur_pose = poses[i];
             size_t target_pose_id;
             PosePtr<int, 2> target_pose;
@@ -389,21 +479,27 @@ struct CenteralControllerADG {
             // update progress, considering agent may wait at current position multiple times
             while(true) {
                 //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.2");
-                if(progress_of_agents_[i] < ADG_.paths_[i].size()-1) {
-                    target_pose_id = ADG_.paths_[i][progress_of_agents_[i] + 1];
+                if(progress_of_agents_[i] < ADG_->paths_[i].size()-1) {
+                    target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
                     //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.3");
-                    target_pose = ADG_.all_poses_[target_pose_id];
+                    target_pose = ADG_->all_poses_[target_pose_id];
                     target_ptf = PoseIntToPtf(target_pose);
                     
                     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
                     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
-                    size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];;
+                    size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];;
                     // check whether reach current target, if reach, update progress to next pose
                     if(fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001) {
+                        // if next action is valid
+                        if(!ADG_->isActionValid(i, progress_of_agents_[i] + 1)) {
+                            continue;
+                        }
                         // reach current target, move to next target
-                        ADG_.setActionLeave(i, progress_of_agents_[i]);
+                        ADG_->setActionLeave(i, progress_of_agents_[i]);
                         progress_of_agents_[i]++;
                         //RCLCPP_INFO(node_ptr_->get_logger(), ss.str());
+                        // TODO: update the agent's start and target state
+
                     } else {
                         //RCLCPP_INFO(node_ptr_->get_logger(), "flag 1.1");
                         break;
@@ -411,9 +507,6 @@ struct CenteralControllerADG {
                 } else {
                     //RCLCPP_INFO(node_ptr_->get_logger(), "flag 2");
                     finished = true;
-                    target_pose_id = ADG_.paths_[i].back();
-                    target_pose = ADG_.all_poses_[target_pose_id];
-                    target_ptf = PoseIntToPtf(target_pose);
                     break;
                 }
             }
@@ -422,41 +515,27 @@ struct CenteralControllerADG {
             } else {
                 all_finished = false;
             }
-            //RCLCPP_INFO(node_ptr_->get_logger(), "flag 3");
-            if(progress_of_agents_[i] < ADG_.paths_[i].size()-1) {
-                // check whether next move valid in ADG, if not valid, wait till valid
-                if(!ADG_.isActionValid(i, progress_of_agents_[i])) {
-                    continue;
-                }
-                // if not finish all pose, get cmd move to next pose, otherwise stop 
-                size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];;
-                PosePtr<int, 2> start_pose = ADG_.all_poses_[start_pose_id];
-                start_ptf = PoseIntToPtf(start_pose);
-                // check whether need wait, via ADG
-                retv[i] = Pointf<3>{0, 0, 0}; 
-                // if move to next pose, current pose and next pose must be different 
-                assert(start_pose_id != target_pose_id); // yz:250412, what if the target repeated in path's end ?
-
-                if(start_pose->pt_ == target_pose->pt_) {
-                    // rotate
-                } else {
-                    // move forward
-                }
-                retv[i] = cmd_vel; 
-            }
         }
         if(all_finished) {
-            RCLCPP_INFO(node_ptr_->get_logger(), "all agent reach target");
+            RCLCPP_INFO(node_ptr_->get_logger(), "all agents reach target");
         }
-        return retv;
+        return;
     }
 
     void clearAllProgress() {
-        ADG_.clearAllProgress();
-        progress_of_agents_.resize(ADG_.agents_.size(), 0);
+        ADG_->clearAllProgress();
+        progress_of_agents_.resize(ADG_->agents_.size(), 0);
     }
 
-    ActionDependencyGraph<2> ADG_;
+    DimensionLength* dim_;
+
+    IS_OCCUPIED_FUNC<2> isoc_;
+
+    std::pair<AgentPtrs<2>, InstanceOrients<2> > instances_;
+
+    std::vector<std::shared_ptr<Pose<int, 2>> > all_poses_;
+
+    std::shared_ptr<ActionDependencyGraph<2> > ADG_;
 
     std::vector<int> progress_of_agents_;
 

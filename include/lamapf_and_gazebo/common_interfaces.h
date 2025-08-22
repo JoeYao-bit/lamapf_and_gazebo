@@ -839,9 +839,9 @@ int sub_count_ = 0;
 
 float agent_height = 0.05;
 
-struct CenteralController;
+struct CenteralControllerFull;
 
-extern CenteralController* ctl;
+extern CenteralControllerFull* ctl;
 
 // assume center of map is (0, 0) in the world coordinate system
 Pointf<3> GridToPtf(const Pointi<2>& pt) {

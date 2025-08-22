@@ -12,7 +12,7 @@
 
 using namespace freeNav::LayeredMAPF::LA_MAPF;
 
-CenteralController* ctl = nullptr;
+CenteralControllerFull* ctl = nullptr;
 
 std::vector<Pointf<3> > allAgentPoses;
 std::vector<Pointf<3> > allAgentVels;
@@ -20,7 +20,7 @@ std::vector<Pointf<3> > allAgentVels;
 std::pair<AgentPtrs<2>, InstanceOrients<2> >  instances;
 
 std::vector<LAMAPF_Path> allAgentPaths;
-
+ 
 std::shared_ptr<PrecomputationOfLAMAPFDecomposition<2, HyperGraphNodeDataRaw<2>>> pre_dec = nullptr;
 
 EntityPoseSetterPtr set_pose_clinet = nullptr;
@@ -109,7 +109,6 @@ int PathVisualize() {
             const auto& path = allAgentPaths[i];
             if(path.empty()) { continue; }
             for(int t=ctl->progress_of_agents_[i]; t<path.size()-1; t++) {
-                ctl;
                 Pointi<2> pt1 = all_poses[path[t]]->pt_;
                 Pointi<2> pt2 = all_poses[path[t+1]]->pt_;
                 canvas.drawLineInt(pt1[0], pt1[1], pt2[0], pt2[1], true, std::max(1, zoom_ratio/10), COLOR_TABLE[(i) % 30]);
@@ -346,7 +345,8 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
 
     std::cout << "pre_dec->all_poses_.size() = " << pre_dec->all_poses_.size() << std::endl;
 
-    ctl = new CenteralController(layered_paths, instances.first, pre_dec->all_poses_, line_ctls, rot_ctls, node);
+
+    ctl = new CenteralControllerFull(layered_paths, instances.first, pre_dec->all_poses_, line_ctls, rot_ctls, node);
 
 
     // InstanceVisualization(instances.front().first, decomposer_ptr->getAllPoses(),
