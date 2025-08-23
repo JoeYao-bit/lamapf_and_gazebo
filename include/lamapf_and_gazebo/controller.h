@@ -3,6 +3,7 @@
 
 #include "common_interfaces.h"
 #include "action_dependency_graph.h"
+#include "lamapf_and_gazebo_msgs/msg/update_pose.hpp"
 
 // m/s, rad/s
 struct MotionConfig {
@@ -122,8 +123,8 @@ Pointf<3> updateAgentPose(Pointf<3> pose, Pointf<3> velcmd, float time_interval)
     return Pointf<3>{new_x, new_y, new_theta};
 };
 
-struct CenteralControllerFull {
-
+class CenteralControllerFull {
+public:
     CenteralControllerFull(const std::vector<LAMAPF_Path>& paths,
                        const std::vector<AgentPtr<2>>& agents,
                        const std::vector<PosePtr<int, 2> >& all_poses,
@@ -292,16 +293,30 @@ struct CenteralControllerFull {
 
 // for single robot, receive goal state and target state from CentralController
 // run on single robot
-struct SingleController {
+class LocalController : public rclcpp::Node {
+public:
 
-    SingleController(const AgentPtr<2>& agent,
-                     const LineFollowControllerPtr& line_ctl,
-                     const RotateControllerPtr& rot_ctl,
-                     const rclcpp::Node::SharedPtr& node_ptr):
+    LocalController(const AgentPtr<2>& agent,
+                    const LineFollowControllerPtr& line_ctl,
+                    const RotateControllerPtr& rot_ctl,
+                    const float& time_interval = 0.1):
                      agent_(agent),
                      line_ctl_(line_ctl),
                      rot_ctl_(rot_ctl),
-                     node_ptr_(node_ptr) {}
+                     Node((std::string("agent_")+std::to_string(agent->id_)).c_str()) {
+        RCLCPP_INFO(this->get_logger(), "flag 1");
+        pose_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 10);
+        // std::chrono::milliseconds(int(1000*time_interval))
+        timer_ = this->create_wall_timer(std::chrono::seconds(1), [this,time_interval,agent]() {
+            std::stringstream ss;
+            ss << "during LocalController loop, agent id = " << agent->id_;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            publishPoseMsgSim(time_interval);
+        });
+        std::stringstream ss;
+        ss << "init LocalController, agent id = " << agent->id_;
+        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+    }
 
     // calculate vel cmd for each agent
     Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
@@ -315,7 +330,7 @@ struct SingleController {
                 std::stringstream ss;
                 ss << "current pose " << pose << " out of target position " << target_ptf_
                    << " in rotate, then stop and replan";
-                RCLCPP_INFO(node_ptr_->get_logger(), ss.str().c_str());
+                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
                 return cmd_vel;
             }
@@ -331,7 +346,7 @@ struct SingleController {
             }
             //std::stringstream ss;
             //ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-            //RCLCPP_INFO(node_ptr_->get_logger(), ss.str());
+            //RCLCPP_INFO(this->get_logger(), ss.str());
             
             cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
@@ -344,7 +359,7 @@ struct SingleController {
                 std::stringstream ss;
                 ss << "current pose " << pose << " out of target line " << start_ptf_ << "->" << target_ptf_
                    << " in move forward, then stop and replan";
-                RCLCPP_INFO(node_ptr_->get_logger(), ss.str().c_str());
+                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
                 return cmd_vel;
             }
@@ -360,11 +375,32 @@ struct SingleController {
         return cmd_vel;
     }
 
+    // publish simulated pose msg
+    void publishPoseMsgSim(const float& time_interval) {
+        velcmd_ = calculateCMD(cur_pose_, velcmd_, time_interval);
+        // Pointf<3> pose, Pointf<3> velcmd, float time_interval
+        cur_pose_ = updateAgentPose(cur_pose_, velcmd_, time_interval);
+        lamapf_and_gazebo_msgs::msg::UpdatePose msg;
+        msg.x   = cur_pose_[0];
+        msg.y   = cur_pose_[1];
+        msg.yaw = cur_pose_[2];
+        msg.agent_id = agent_->id_;
+        pose_publisher_->publish(msg);
+        std::stringstream ss;
+        ss << "agent " << agent_->id_ << " pub pose(x,y,yaw) = " << msg.x << ", " << msg.y << ", " << msg.yaw;
+        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+    }
+
+    // TODO: publish pose by localization
+    void publishPoseMsg() const {
+        //
+    }
+
     // TODO: 
     // ros service: update pose in central controller
     // ros service: call replan in central controller when encounter exception
 
-    bool wait_ = false;
+    bool wait_ = true;
  
     Pointf<3> start_ptf_, target_ptf_;
 
@@ -374,22 +410,29 @@ struct SingleController {
 
     RotateControllerPtr rot_ctl_;
 
-    rclcpp::Node::SharedPtr node_ptr_;
+    Pointf<3> cur_pose_;
+
+    Pointf<3> velcmd_;
+
+    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
+
+    rclcpp::TimerBase::SharedPtr timer_;
+
 };
 
 
 // maintain a action dependency graph, 
 // tell single robots when to move, move to where and when stop
 // 
-struct CenteralController {
-
+class CenteralController : public rclcpp::Node  {
+public:
     CenteralController(DimensionLength* dim, IS_OCCUPIED_FUNC<2>& is_occupied,
                        const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
                        const rclcpp::Node::SharedPtr& node_ptr): 
                        dim_(dim),
                        isoc_(is_occupied),
                        instances_(instances),
-                       node_ptr_(node_ptr) {             
+                       rclcpp::Node("central_controller") {             
         
         std::cout << "construct all possible poses" << std::endl;
         Id total_index = getTotalIndexOfSpace<2>(this->dim_);
@@ -409,7 +452,7 @@ struct CenteralController {
         auto paths = MAPF(dim, is_occupied, instances);
         
         if(paths.empty()) {
-            RCLCPP_INFO(node_ptr_->get_logger(), "failed to generate initial paths");
+            RCLCPP_INFO(this->get_logger(), "failed to generate initial paths");
             return;
         }
 
@@ -421,6 +464,12 @@ struct CenteralController {
 
         progress_of_agents_.resize(instances.first.size(), 0);
 
+    }
+
+    // TODO: when single agent failed to complete its task, update all agent's path and search path again
+    bool reupdate(const Pointfs<3>& poses) {
+        // get current state as start of planning
+        
     }
 
     LAMAPF_Paths MAPF(DimensionLength* dim, IS_OCCUPIED_FUNC<2>& is_occupied,
@@ -461,7 +510,7 @@ struct CenteralController {
         std::stringstream ss2;
         ss2 << (layered_paths.size() == instances.first.size() ? "success" : "failed")
                 << " layered large agent mapf in " << time_cost << "s " << std::endl;
-        RCLCPP_INFO(node_ptr_->get_logger(), ss2.str().c_str());
+        RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
         return layered_paths;
     }
 
@@ -469,19 +518,19 @@ struct CenteralController {
     void updateADG(const Pointfs<3>& poses) {
         Pointf<3> start_ptf, target_ptf;
         bool all_finished = true;
-        //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0");
+        //RCLCPP_INFO(this->get_logger(), "flag 0");
         for(int i=0; i<ADG_->agents_.size(); i++) {
-            //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.1");
+            //RCLCPP_INFO(this->get_logger(), "flag 0.1");
             Pointf<3> cur_pose = poses[i];
             size_t target_pose_id;
             PosePtr<int, 2> target_pose;
             bool finished = false;
             // update progress, considering agent may wait at current position multiple times
             while(true) {
-                //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.2");
+                //RCLCPP_INFO(this->get_logger(), "flag 0.2");
                 if(progress_of_agents_[i] < ADG_->paths_[i].size()-1) {
                     target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
-                    //RCLCPP_INFO(node_ptr_->get_logger(), "flag 0.3");
+                    //RCLCPP_INFO(this->get_logger(), "flag 0.3");
                     target_pose = ADG_->all_poses_[target_pose_id];
                     target_ptf = PoseIntToPtf(target_pose);
                     
@@ -497,15 +546,15 @@ struct CenteralController {
                         // reach current target, move to next target
                         ADG_->setActionLeave(i, progress_of_agents_[i]);
                         progress_of_agents_[i]++;
-                        //RCLCPP_INFO(node_ptr_->get_logger(), ss.str());
+                        //RCLCPP_INFO(this->get_logger(), ss.str());
                         // TODO: update the agent's start and target state
 
                     } else {
-                        //RCLCPP_INFO(node_ptr_->get_logger(), "flag 1.1");
+                        //RCLCPP_INFO(this->get_logger(), "flag 1.1");
                         break;
                     }
                 } else {
-                    //RCLCPP_INFO(node_ptr_->get_logger(), "flag 2");
+                    //RCLCPP_INFO(this->get_logger(), "flag 2");
                     finished = true;
                     break;
                 }
@@ -517,7 +566,7 @@ struct CenteralController {
             }
         }
         if(all_finished) {
-            RCLCPP_INFO(node_ptr_->get_logger(), "all agents reach target");
+            RCLCPP_INFO(this->get_logger(), "all agents reach target");
         }
         return;
     }
@@ -538,8 +587,6 @@ struct CenteralController {
     std::shared_ptr<ActionDependencyGraph<2> > ADG_;
 
     std::vector<int> progress_of_agents_;
-
-    rclcpp::Node::SharedPtr node_ptr_; // for print log
 
 };
 
