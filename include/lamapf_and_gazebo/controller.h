@@ -293,6 +293,7 @@ public:
 
 // for single robot, receive goal state and target state from CentralController
 // run on single robot
+// compute vel cmd, no decision, except detect route is obstructed
 class LocalController : public rclcpp::Node {
 public:
 
@@ -426,9 +427,9 @@ public:
 // 
 class CenteralController : public rclcpp::Node  {
 public:
-    CenteralController(DimensionLength* dim, IS_OCCUPIED_FUNC<2>& is_occupied,
-                       const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
-                       const rclcpp::Node::SharedPtr& node_ptr): 
+    CenteralController(DimensionLength* dim, 
+                       IS_OCCUPIED_FUNC<2> is_occupied,
+                       const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances): 
                        dim_(dim),
                        isoc_(is_occupied),
                        instances_(instances),
@@ -472,7 +473,7 @@ public:
         
     }
 
-    LAMAPF_Paths MAPF(DimensionLength* dim, IS_OCCUPIED_FUNC<2>& is_occupied,
+    LAMAPF_Paths MAPF(DimensionLength* dim, const IS_OCCUPIED_FUNC<2>& is_occupied,
                       const std::pair<AgentPtrs<2>, InstanceOrients<2> >&  instances) const {
 
         std::vector<std::vector<int> > grid_visit_count_table;
