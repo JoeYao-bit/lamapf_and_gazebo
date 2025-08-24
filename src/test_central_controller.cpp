@@ -125,7 +125,7 @@ int main(int argc, char ** argv) {
         nodes.push_back(agent_node); 
     }
     // start central controller
-    auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances);
+    auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, 1);
     executor.add_node(central_controller);
 
     executor.spin();

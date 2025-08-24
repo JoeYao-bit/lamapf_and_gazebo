@@ -123,8 +123,8 @@
 
 //    private:
 
-        const std::vector<LAMAPF_Path>& paths_;
-        const std::vector<AgentPtr<N> >& agents_;
+        std::vector<LAMAPF_Path> paths_;
+        std::vector<AgentPtr<N> > agents_;
         std::vector<PosePtr<int, N> > all_poses_;
 
         std::vector<std::vector<int> > path_index_to_node_;

@@ -311,7 +311,19 @@ public:
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
                 "GoalUpdate", 10,
                 [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
-                    RCLCPP_INFO(this->get_logger(), "Received: '%i'", msg->agent_id);
+                    if(msg->agent_id == agent_->id_) {    
+                        std::stringstream ss;
+                        ss << "in LocalController, receive goal, agent id = " << agent_->id_ << " ";
+                        start_ptf_[0]  = msg->start_x;    
+                        start_ptf_[1]  = msg->start_y;    
+                        start_ptf_[2]  = msg->start_yaw;    
+                        target_ptf_[0] = msg->target_x;    
+                        target_ptf_[1] = msg->target_y;    
+                        target_ptf_[2] = msg->target_yaw;  
+                        wait_          = msg->wait;
+                        ss << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
+                        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    }
                 });
 
         // std::chrono::milliseconds(int(1000*time_interval))
@@ -471,10 +483,22 @@ public:
 
         auto agents = instances.first;
 
+        for(int i=0; i<agents.size(); i++) {
+            std::cout << "path " << i << " size = " << paths[i].size() << std::endl;
+        }
+
         ADG_ = std::make_shared<ActionDependencyGraph<2>>(paths, agents, all_poses_);
 
         progress_of_agents_.resize(instances.first.size(), 0);
 
+        all_agent_poses_.resize(instances.first.size());
+
+        for(int i=0; i<instances.first.size(); i++) {
+            size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose);
+            all_agent_poses_[i] = start_ptf;
+        }
 
         // RCLCPP_INFO(this->get_logger(), "flag 1");
         goal_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>("GoalUpdate", 10);
@@ -483,6 +507,10 @@ public:
                 [this](lamapf_and_gazebo_msgs::msg::UpdatePose::SharedPtr msg) {
                     std::stringstream ss;
                     ss << "during CentralController loop, receive pose of agent " << msg->agent_id;
+                    all_agent_poses_[msg->agent_id][0] = msg->x;
+                    all_agent_poses_[msg->agent_id][1] = msg->y;
+                    all_agent_poses_[msg->agent_id][2] = msg->yaw;
+                    ss << " = " << all_agent_poses_[msg->agent_id];
                     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 });
 
@@ -491,6 +519,9 @@ public:
             std::stringstream ss;
             ss << "during CentralController loop";
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
+            updateADG(all_agent_poses_);
+
         });
 
     }
@@ -547,7 +578,7 @@ public:
     void updateADG(const Pointfs<3>& poses) {
         Pointf<3> start_ptf, target_ptf;
         bool all_finished = true;
-        //RCLCPP_INFO(this->get_logger(), "flag 0");
+        RCLCPP_INFO(this->get_logger(), "update ADG");
         for(int i=0; i<ADG_->agents_.size(); i++) {
             //RCLCPP_INFO(this->get_logger(), "flag 0.1");
             Pointf<3> cur_pose = poses[i];
@@ -558,14 +589,18 @@ public:
             while(true) {
                 //RCLCPP_INFO(this->get_logger(), "flag 0.2");
                 if(progress_of_agents_[i] < ADG_->paths_[i].size()-1) {
+                    //RCLCPP_INFO(this->get_logger(), "flag 0.21");
+                    //std::cout << "progress_of_agents_.size() = " << progress_of_agents_.size() << std::endl;
+                    //std::cout << "progress_of_agents_[i] = " << progress_of_agents_[i] << std::endl;
+                    //std::cout << "ADG_->paths_[i].size() = " << ADG_->paths_[i].size() << std::endl;
                     target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
                     //RCLCPP_INFO(this->get_logger(), "flag 0.3");
                     target_pose = ADG_->all_poses_[target_pose_id];
                     target_ptf = PoseIntToPtf(target_pose);
                     
-                    float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
+                    float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - 
+                                                    Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
                     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
-                    size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];;
                     // check whether reach current target, if reach, update progress to next pose
                     if(fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001) {
                         // if next action is valid
@@ -575,9 +610,33 @@ public:
                         // reach current target, move to next target
                         ADG_->setActionLeave(i, progress_of_agents_[i]);
                         progress_of_agents_[i]++;
+                        //RCLCPP_INFO(this->get_logger(), "flag 0.4");
+
                         //RCLCPP_INFO(this->get_logger(), ss.str());
                         // TODO: update the agent's start and target state
+                        size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+                        PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+                        start_ptf = PoseIntToPtf(start_pose);
 
+                        size_t target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
+                        PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
+                        target_ptf = PoseIntToPtf(target_pose);
+
+                        lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                        msg.start_x   = start_ptf[0];
+                        msg.start_y   = start_ptf[1];
+                        msg.start_yaw = start_ptf[2];
+
+                        msg.target_x   = target_ptf[0];
+                        msg.target_y   = target_ptf[1];
+                        msg.target_yaw = target_ptf[2];
+
+                        msg.wait       = true;
+                        
+                        std::stringstream ss;
+                        ss << "central controller pub agent " << i << "'s goal " << start_ptf <<"->" << target_ptf;
+                        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                        goal_publisher_->publish(msg);
                     } else {
                         //RCLCPP_INFO(this->get_logger(), "flag 1.1");
                         break;
@@ -614,6 +673,8 @@ public:
     std::vector<std::shared_ptr<Pose<int, 2>> > all_poses_;
 
     std::shared_ptr<ActionDependencyGraph<2> > ADG_;
+
+    Pointfs<3> all_agent_poses_;
 
     std::vector<int> progress_of_agents_;
 
