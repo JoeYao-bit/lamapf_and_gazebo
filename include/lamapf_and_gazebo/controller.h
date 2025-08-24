@@ -4,6 +4,7 @@
 #include "common_interfaces.h"
 #include "action_dependency_graph.h"
 #include "lamapf_and_gazebo_msgs/msg/update_pose.hpp"
+#include "lamapf_and_gazebo_msgs/msg/update_goal.hpp"
 
 // m/s, rad/s
 struct MotionConfig {
@@ -305,10 +306,16 @@ public:
                      line_ctl_(line_ctl),
                      rot_ctl_(rot_ctl),
                      Node((std::string("agent_")+std::to_string(agent->id_)).c_str()) {
-        RCLCPP_INFO(this->get_logger(), "flag 1");
+        // RCLCPP_INFO(this->get_logger(), "flag 1");
         pose_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 10);
+        goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
+                "GoalUpdate", 10,
+                [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
+                    RCLCPP_INFO(this->get_logger(), "Received: '%i'", msg->agent_id);
+                });
+
         // std::chrono::milliseconds(int(1000*time_interval))
-        timer_ = this->create_wall_timer(std::chrono::seconds(1), [this,time_interval,agent]() {
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this,time_interval,agent]() {
             std::stringstream ss;
             ss << "during LocalController loop, agent id = " << agent->id_;
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
@@ -417,6 +424,8 @@ public:
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
 
+    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_subscriber_;
+
     rclcpp::TimerBase::SharedPtr timer_;
 
 };
@@ -429,7 +438,8 @@ class CenteralController : public rclcpp::Node  {
 public:
     CenteralController(DimensionLength* dim, 
                        IS_OCCUPIED_FUNC<2> is_occupied,
-                       const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances): 
+                       const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
+                       const float& time_interval = 0.1): 
                        dim_(dim),
                        isoc_(is_occupied),
                        instances_(instances),
@@ -464,6 +474,24 @@ public:
         ADG_ = std::make_shared<ActionDependencyGraph<2>>(paths, agents, all_poses_);
 
         progress_of_agents_.resize(instances.first.size(), 0);
+
+
+        // RCLCPP_INFO(this->get_logger(), "flag 1");
+        goal_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>("GoalUpdate", 10);
+        pose_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>(
+                "PoseUpdate", 10,
+                [this](lamapf_and_gazebo_msgs::msg::UpdatePose::SharedPtr msg) {
+                    std::stringstream ss;
+                    ss << "during CentralController loop, receive pose of agent " << msg->agent_id;
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                });
+
+        // std::chrono::milliseconds(int(1000*time_interval))
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
+            std::stringstream ss;
+            ss << "during CentralController loop";
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        });
 
     }
 
@@ -588,6 +616,12 @@ public:
     std::shared_ptr<ActionDependencyGraph<2> > ADG_;
 
     std::vector<int> progress_of_agents_;
+
+    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_publisher_;
+
+    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
+
+    rclcpp::TimerBase::SharedPtr timer_;
 
 };
 

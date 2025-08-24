@@ -100,7 +100,7 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({5}, 1).front(); // get all instances
+        deserializer.getTestInstance({3}, 1).front(); // get all instances
 
     std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
     std::vector<RotateControllerPtr> rot_ctls(instances.first.size(), std::make_shared<ConstantRotateController>(MotionConfig()));

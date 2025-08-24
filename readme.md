@@ -455,6 +455,8 @@ SDF文件中的世界名称，统一设置为default
 
 新添加的包需要重开终端，重新source bash setup才能找到
 
+ctrl+shift+T拓展的终端不会重新source
+
 ## 生成地图
 
 gazebo sim 选择俯视图，正交视角
