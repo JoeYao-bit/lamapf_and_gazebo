@@ -120,7 +120,11 @@ int main(int argc, char ** argv) {
 
     std::vector<std::shared_ptr<LocalController> > nodes;
     for(int i=0; i<agents.size(); i++) {
-        auto agent_node = std::make_shared<LocalController>(agents[i], line_ctls[i], rot_ctls[i], 1);
+        std::cout << "i = " << i << ", " << instances.second[i].first << std::endl;
+        PosePtr<int, 2> start_pose = std::make_shared<Pose<int, 2> >(instances.second[i].first);
+        Pointf<3> init_pose = PoseIntToPtf(start_pose);  
+        std::cout << "init_pose = " << init_pose << std::endl;
+        auto agent_node = std::make_shared<LocalController>(agents[i], line_ctls[i], rot_ctls[i], init_pose, 1);
         executor.add_node(agent_node);
         nodes.push_back(agent_node); 
     }

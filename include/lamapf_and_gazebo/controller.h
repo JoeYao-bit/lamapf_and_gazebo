@@ -113,7 +113,7 @@ public:
 
 
 
-Pointf<3> updateAgentPose(Pointf<3> pose, Pointf<3> velcmd, float time_interval) {
+Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 
     double new_x = pose[0] + time_interval*velcmd[0]*cos(pose[2]) - time_interval*velcmd[1]*sin(pose[2]), 
 
@@ -301,19 +301,25 @@ public:
     LocalController(const AgentPtr<2>& agent,
                     const LineFollowControllerPtr& line_ctl,
                     const RotateControllerPtr& rot_ctl,
+                    const Pointf<3>& init_pose,
                     const float& time_interval = 0.1):
                      agent_(agent),
                      line_ctl_(line_ctl),
                      rot_ctl_(rot_ctl),
+                     init_pose_(init_pose),
+                     cur_pose_(init_pose),
                      Node((std::string("agent_")+std::to_string(agent->id_)).c_str()) {
-        // RCLCPP_INFO(this->get_logger(), "flag 1");
+        std::stringstream ss1;
+        ss1 << "agent " << agent->id_ << " init pose " << cur_pose_;                
+        RCLCPP_INFO(this->get_logger(), ss1.str().c_str());
+
         pose_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 10);
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
                 "GoalUpdate", 10,
                 [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
                     if(msg->agent_id == agent_->id_) {    
-                        std::stringstream ss;
-                        ss << "in LocalController, receive goal, agent id = " << agent_->id_ << " ";
+                        std::stringstream ss2;
+                        ss2 << "in LocalController, receive goal, agent id = " << agent_->id_ << " ";
                         start_ptf_[0]  = msg->start_x;    
                         start_ptf_[1]  = msg->start_y;    
                         start_ptf_[2]  = msg->start_yaw;    
@@ -321,8 +327,8 @@ public:
                         target_ptf_[1] = msg->target_y;    
                         target_ptf_[2] = msg->target_yaw;  
                         wait_          = msg->wait;
-                        ss << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
-                        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                        ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
+                        RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
                     }
                 });
 
@@ -364,10 +370,12 @@ public:
                 if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = false; }
                 else { rot_ctl_->posi_rot_ = true; }                    
             }
-            //std::stringstream ss;
-            //ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-            //RCLCPP_INFO(this->get_logger(), ss.str());
+            // std::stringstream ss;
+            // ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
+            // RCLCPP_INFO(this->get_logger(), ss.str());
             
+            std::cout << "agent " << agent_->id_ << "current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
+
             cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
         } else {
@@ -386,7 +394,9 @@ public:
             // move forward
             line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
             line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
-            //std::cout << "current pose " << poses[i] << ", target line = " << line_ctr->pt1_ << ", " << line_ctr->pt2_ << std::endl;
+
+            std::cout << "agent " << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", " << line_ctl_->pt2_ << std::endl;
+
             cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);
         }
         // TODO: predict whether there is obstacle in future path
@@ -397,9 +407,15 @@ public:
 
     // publish simulated pose msg
     void publishPoseMsgSim(const float& time_interval) {
+
         velcmd_ = calculateCMD(cur_pose_, velcmd_, time_interval);
+        std::cout << "agent id = " << agent_->id_ << ", velcmd_ = " << velcmd_ << std::endl;
         // Pointf<3> pose, Pointf<3> velcmd, float time_interval
+        //std::cout << "pre cur_pose_ = " << cur_pose_ << std::endl;
+
         cur_pose_ = updateAgentPose(cur_pose_, velcmd_, time_interval);
+        //std::cout << "after cur_pose_ = " << cur_pose_ << std::endl;
+
         lamapf_and_gazebo_msgs::msg::UpdatePose msg;
         msg.x   = cur_pose_[0];
         msg.y   = cur_pose_[1];
@@ -433,6 +449,8 @@ public:
     Pointf<3> cur_pose_;
 
     Pointf<3> velcmd_;
+
+    Pointf<3> init_pose_;
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
 
@@ -513,6 +531,35 @@ public:
                     ss << " = " << all_agent_poses_[msg->agent_id];
                     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 });
+        // pub all agent's first goal
+        for(int i=0; i<instances_.first.size(); i++) {
+
+            size_t start_pose_id = ADG_->paths_[i][0];
+            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose);
+
+            size_t target_pose_id = ADG_->paths_[i][1];
+            PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
+            Pointf<3> target_ptf = PoseIntToPtf(target_pose);
+
+            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+            msg.start_x   = start_ptf[0];
+            msg.start_y   = start_ptf[1];
+            msg.start_yaw = start_ptf[2];
+
+            msg.target_x   = target_ptf[0];
+            msg.target_y   = target_ptf[1];
+            msg.target_yaw = target_ptf[2];
+            
+            msg.agent_id   = i;
+            msg.wait       = false;
+            
+            std::stringstream ss;
+            ss << "central controller pub agent " << i << "'s goal " << start_ptf <<"->" << target_ptf;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            goal_publisher_->publish(msg);
+
+        }
 
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
@@ -611,38 +658,40 @@ public:
                         ADG_->setActionLeave(i, progress_of_agents_[i]);
                         progress_of_agents_[i]++;
                         //RCLCPP_INFO(this->get_logger(), "flag 0.4");
+                        if(progress_of_agents_[i] + 1 <= ADG_->paths_[i].size() - 1) {
+                            //RCLCPP_INFO(this->get_logger(), ss.str());
+                            // TODO: update the agent's start and target state
+                            size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+                            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+                            start_ptf = PoseIntToPtf(start_pose);
 
-                        //RCLCPP_INFO(this->get_logger(), ss.str());
-                        // TODO: update the agent's start and target state
-                        size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
-                        PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
-                        start_ptf = PoseIntToPtf(start_pose);
+                            size_t target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
+                            PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
+                            target_ptf = PoseIntToPtf(target_pose);
 
-                        size_t target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
-                        PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
-                        target_ptf = PoseIntToPtf(target_pose);
+                            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                            msg.start_x   = start_ptf[0];
+                            msg.start_y   = start_ptf[1];
+                            msg.start_yaw = start_ptf[2];
 
-                        lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
-                        msg.start_x   = start_ptf[0];
-                        msg.start_y   = start_ptf[1];
-                        msg.start_yaw = start_ptf[2];
+                            msg.target_x   = target_ptf[0];
+                            msg.target_y   = target_ptf[1];
+                            msg.target_yaw = target_ptf[2];
 
-                        msg.target_x   = target_ptf[0];
-                        msg.target_y   = target_ptf[1];
-                        msg.target_yaw = target_ptf[2];
-
-                        msg.wait       = true;
-                        
-                        std::stringstream ss;
-                        ss << "central controller pub agent " << i << "'s goal " << start_ptf <<"->" << target_ptf;
-                        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                        goal_publisher_->publish(msg);
+                            msg.agent_id   = i;
+                            msg.wait       = false;
+                            
+                            std::stringstream ss;
+                            ss << "central controller pub agent " << i << "'s goal " << start_ptf <<"->" << target_ptf;
+                            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                            goal_publisher_->publish(msg); 
+                        }
                     } else {
                         //RCLCPP_INFO(this->get_logger(), "flag 1.1");
                         break;
                     }
                 } else {
-                    //RCLCPP_INFO(this->get_logger(), "flag 2");
+                    RCLCPP_INFO(this->get_logger(), "agent %i 's task finish", i);
                     finished = true;
                     break;
                 }
