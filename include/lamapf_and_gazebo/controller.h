@@ -309,6 +309,8 @@ public:
                      init_pose_(init_pose),
                      cur_pose_(init_pose),
                      Node((std::string("agent_")+std::to_string(agent->id_)).c_str()) {
+
+
         std::stringstream ss1;
         ss1 << "agent " << agent->id_ << " init pose " << cur_pose_;                
         RCLCPP_INFO(this->get_logger(), ss1.str().c_str());
@@ -469,12 +471,13 @@ public:
     CenteralController(DimensionLength* dim, 
                        IS_OCCUPIED_FUNC<2> is_occupied,
                        const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
-                       const float& time_interval = 0.1): 
-                       dim_(dim),
-                       isoc_(is_occupied),
-                       instances_(instances),
-                       rclcpp::Node("central_controller") {             
+                       const float& time_interval = 0.1,
+                       bool enable_opencv_window = true): 
+                       rclcpp::Node("central_controller") {        
+                        
         
+        dim_ = dim;
+        instances_ = instances;                
         std::cout << "construct all possible poses" << std::endl;
         Id total_index = getTotalIndexOfSpace<2>(this->dim_);
         all_poses_.resize(total_index * 2 * 2, nullptr); // a position with 2*N orientation
@@ -531,6 +534,7 @@ public:
                     ss << " = " << all_agent_poses_[msg->agent_id];
                     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 });
+
         // pub all agent's first goal
         for(int i=0; i<instances_.first.size(); i++) {
 
@@ -566,11 +570,16 @@ public:
             std::stringstream ss;
             ss << "during CentralController loop";
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-
-            updateADG(all_agent_poses_);
-
+            if(!paused_) {
+                updateADG(all_agent_poses_);
+            }
         });
 
+        // visualize all agent's unfinished path
+        if(enable_opencv_window) {
+            std::thread canvas_thread(PathVisualize, is_occupied);
+            canvas_thread.detach();
+        }
     }
 
     // TODO: when single agent failed to complete its task, update all agent's path and search path again
@@ -713,25 +722,68 @@ public:
         progress_of_agents_.resize(ADG_->agents_.size(), 0);
     }
 
-    DimensionLength* dim_;
+    static int PathVisualize(IS_OCCUPIED_FUNC<2> is_occupied) {
+        Canvas canvas("LA-MAPF visualization", dim_[0], dim_[1], 1./reso, 5);
+        canvas.resolution_ = 1./reso;
+        while(true) {
+            canvas.resetCanvas();
+            canvas.drawEmptyGrid();
+            canvas.drawGridMap(dim_, is_occupied);
+            // draw all agent's unfinished path
+            for(int i=0; i<ADG_->paths_.size(); i++)
+            {
+                const auto& path = ADG_->paths_[i];
+                if(path.empty()) { continue; }
+                for(int t=progress_of_agents_[i]; t<path.size()-1; t++) {
+                    Pointi<2> pt1 = all_poses_[path[t]]->pt_;
+                    Pointi<2> pt2 = all_poses_[path[t+1]]->pt_;
+                    canvas.drawLineInt(pt1[0], pt1[1], pt2[0], pt2[1], true, std::max(1, zoom_ratio/10), COLOR_TABLE[(i) % 30]);
+                }
+            }
+            for(int i=0; i<instances_.second.size(); i++)
+            {
+                //const auto &instance = instances[current_subgraph_id]; // zoom_ratio/10
+                const auto &instance = instances_.second[i]; // zoom_ratio/10
+                //std::cout << "Agent " << *instances.first[i] << "'s pose "  << allAgentPoses[i] << std::endl;
+                //std::cout << "canvas.reso = " << canvas.resolution_ << std::endl;
+                //std::cout << "canvas.zoom_ratio = " << canvas.zoom_ratio_ << std::endl;
+                double x = all_agent_poses_[i][0]/reso, y = all_agent_poses_[i][1]/reso, orient = all_agent_poses_[i][2];
+
+                
+                instances_.first[i]->drawOnCanvas(Pointf<3>{x, y, orient}, canvas, COLOR_TABLE[i%30], false);
+                
+                //canvas.drawArrowInt(allAgentPoses[i].pt_[0], allAgentPoses[i].pt_[1], -orientToPi_2D(allAgentPoses[i].orient_), 1, std::max(1, zoom_ratio/10));
+                //break;
+            }
+            char key = canvas.show();
+            if(key == 32) {
+                paused_ = !paused_;
+            }
+        }
+        return 0;
+    }
+
+    static DimensionLength* dim_;
 
     IS_OCCUPIED_FUNC<2> isoc_;
 
-    std::pair<AgentPtrs<2>, InstanceOrients<2> > instances_;
+    static std::pair<AgentPtrs<2>, InstanceOrients<2> > instances_;
 
-    std::vector<std::shared_ptr<Pose<int, 2>> > all_poses_;
+    static std::vector<std::shared_ptr<Pose<int, 2>> > all_poses_;
 
-    std::shared_ptr<ActionDependencyGraph<2> > ADG_;
+    static std::shared_ptr<ActionDependencyGraph<2> > ADG_;
 
-    Pointfs<3> all_agent_poses_;
+    static Pointfs<3> all_agent_poses_;
 
-    std::vector<int> progress_of_agents_;
+    static std::vector<int> progress_of_agents_;
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_publisher_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
 
     rclcpp::TimerBase::SharedPtr timer_;
+
+    static bool paused_;
 
 };
 

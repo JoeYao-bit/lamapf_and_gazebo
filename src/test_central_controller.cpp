@@ -81,6 +81,20 @@ private:
 //     executor.spin();
 // }
 
+std::shared_ptr<ActionDependencyGraph<2> > CenteralController::ADG_ = nullptr;
+
+bool CenteralController::paused_ = true;
+
+std::vector<int> CenteralController::progress_of_agents_ = {};  
+
+std::vector<std::shared_ptr<Pose<int, 2>> > CenteralController::all_poses_ = {};
+
+Pointfs<3> CenteralController::all_agent_poses_ = {};
+
+std::pair<AgentPtrs<2>, InstanceOrients<2> > CenteralController::instances_ = {};
+
+DimensionLength* CenteralController::dim_ = nullptr;
+
 int main(int argc, char ** argv) {
 
     rclcpp::init(argc, argv);
@@ -128,6 +142,9 @@ int main(int argc, char ** argv) {
         executor.add_node(agent_node);
         nodes.push_back(agent_node); 
     }
+
+
+
     // start central controller
     auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, 1);
     executor.add_node(central_controller);
