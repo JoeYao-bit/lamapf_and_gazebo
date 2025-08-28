@@ -431,6 +431,8 @@ ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
 ros2 run lamapf_and_gazebo lamapf_planner_node
 ```
 
+启动gazebo可视化会失败，单独opencv窗口可以，或由于多节点并行和更新位姿耗时冲突导致
+
 空格开始移动，按空格暂停移动
 
 测试加载实体
@@ -463,13 +465,33 @@ gazebo sim 选择俯视图，正交视角
 截图后生成规划用地图时考虑栅格对应的分辨率，并顺时针转90度，以对其坐标系
 涂白（255,255,255）区域为可通行区域
 
+启动gazebo，以及添加实体、删除实体、设置实体位姿的服务
+
+```
+ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
+```
+
+start central controller test
+```
+ros2 run lamapf_and_gazebo test_central_controller
+```
+在 ROS2 里，终端打印 (RCLCPP_INFO / RCLCPP_ERROR / RCLCPP_WARN 等) 默认是写到 stdout/stderr，所以有几种方式可以把这些日志保存到文件里：
+
+直接用终端重定向（最简单）
+
+ros2 run my_pkg my_node > my_node.log 2>&1
+
+如果你在用 ros2 launch：
+
+ros2 launch my_pkg my_launch.py > launch.log 2>&1
+
 TODO:
 
 增加单位路径上的碰撞检测
 有碰撞风险则等待至无碰撞或超时报错，超时后更新地图重启规划。
 
-将每个机器人作为一个node计算控制指令
+将每个机器人作为一个node计算控制指令 (初步实现)
 
-通过ros的跨平台多节点通信机制实现不同机器人与控制中心的通信
+通过ros的跨平台多节点通信机制实现不同机器人与控制中心的通信（实现）
 
-通过服务实现总控和机器人间通信
+通过服务实现总控和机器人间通信（四）

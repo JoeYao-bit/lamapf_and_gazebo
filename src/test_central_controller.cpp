@@ -4,6 +4,9 @@
 #include "lamapf_and_gazebo/common_interfaces.h"
 
 #include "lamapf_and_gazebo/controller.h"
+
+#include "lamapf_and_gazebo/gazebo_gui.h"
+
 #include <gtest/gtest.h>
 
 #include "lamapf_and_gazebo/fake_agents.h"
@@ -114,7 +117,7 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({3}, 1).front(); // get all instances
+        deserializer.getTestInstance({20}, 1).front(); // get all instances
 
     std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
     std::vector<RotateControllerPtr> rot_ctls(instances.first.size(), std::make_shared<ConstantRotateController>(MotionConfig()));
@@ -125,12 +128,14 @@ int main(int argc, char ** argv) {
     std::cout << "start " << agents.size() << " agent nodes" << std::endl;
     // 使用 MultiThreadedExecutor 或 StaticSingleThreadedExecutor，
     // 把多个节点交给一个 Executor 管理，Executor 内部会调度多线程。
-    rclcpp::executors::MultiThreadedExecutor executor;
+    rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), instances.first.size() + 3);
     // 我发现executor.add_node放在循环中，比如for循化，那么time_中的内容不会运行，但如果一个个手动添加，则会运行，这是为什么
     // executor.add_node() 只保存了节点的 裸指针（在内部包装成 weak_ptr）
     // 如果你在循环中创建的节点没有被其他变量持有，它会在循环迭代结束时析构
     // 析构后，Timer 对象也被销毁，回调自然不会触发
     // 外部保存，即可避免这一缺陷。
+
+    double time_interval = 0.1;//.1; // second
 
     std::vector<std::shared_ptr<LocalController> > nodes;
     for(int i=0; i<agents.size(); i++) {
@@ -138,18 +143,34 @@ int main(int argc, char ** argv) {
         PosePtr<int, 2> start_pose = std::make_shared<Pose<int, 2> >(instances.second[i].first);
         Pointf<3> init_pose = PoseIntToPtf(start_pose);  
         std::cout << "init_pose = " << init_pose << std::endl;
-        auto agent_node = std::make_shared<LocalController>(agents[i], line_ctls[i], rot_ctls[i], init_pose, 1);
+        auto agent_node = std::make_shared<LocalController>(agents[i], line_ctls[i], rot_ctls[i], init_pose, instances.second.size(), time_interval);
         executor.add_node(agent_node);
         nodes.push_back(agent_node); 
     }
+    std::thread t1([&]() { executor.spin(); });
 
-
-
+    rclcpp::executors::MultiThreadedExecutor executor2;
     // start central controller
-    auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, 1);
-    executor.add_node(central_controller);
+    auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, file_path, 
+                                                                   time_interval, 
+                                                                   true); // enable gazebo
+    executor2.add_node(central_controller);
+    //executor.spin();
 
-    executor.spin();
+    // 250825 13：31
+    // when do not use gazebo gui, every thing is ok,
+    // but when use it, some agent node will not work (if gazebo node and other node are in the same executor)
+    // draw gazebo gui
+    //rclcpp::executors::MultiThreadedExecutor executor2;
+    //auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
+    //executor2.add_node(gazebo_node);
+   
+    std::thread t2([&]() { executor2.spin(); });
+
+    t1.join();
+    t2.join();
+
+
     rclcpp::shutdown();
     return 0;
 }

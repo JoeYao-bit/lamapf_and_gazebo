@@ -136,7 +136,7 @@ public:
 
     // Send the request
     auto future = client_->async_send_request(request);
-
+    // 同步等待（必然阻塞 ❌） 
     // Wait for the result
     if (rclcpp::spin_until_future_complete(this->get_node_base_interface(),
                                           future) ==
@@ -155,6 +155,16 @@ public:
       RCLCPP_ERROR(this->get_logger(), "Failed to call service");
       return false;
     }
+
+    // 异步调用（不会阻塞 ✅） 
+    // auto future = client_->async_send_request(request, 
+    //   [this](rclcpp::Client<ros_gz_interfaces::srv::SetEntityPose>::SharedFuture response) {
+    //       //RCLCPP_INFO(this->get_logger(), "Got response: %d", response.get()->result);
+    //       if (!response.get()->success) {
+    //         RCLCPP_ERROR(this->get_logger(), "Failed to set entity pose");
+    //       }
+    // });
+
   }
 
 protected:

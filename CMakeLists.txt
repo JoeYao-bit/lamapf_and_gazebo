@@ -39,13 +39,16 @@ include_directories(include
 
 set(dependencies rclcpp ros_gz_interfaces tf2 std_msgs geometry_msgs lamapf_and_gazebo_msgs)        
 
-
-
 add_executable(spawn_entity src/test_spawn_entity.cpp)
 ament_target_dependencies(spawn_entity ${dependencies})
 install(TARGETS spawn_entity DESTINATION lib/${PROJECT_NAME})
 target_link_libraries(spawn_entity ${EXTERNAL_LIBS} )
 
+
+add_executable(lamapf_planner_node src/lamapf_planner.cpp)
+target_link_libraries(lamapf_planner_node ${EXTERNAL_LIBS} )
+ament_target_dependencies(lamapf_planner_node ${dependencies})
+install(TARGETS lamapf_planner_node DESTINATION lib/${PROJECT_NAME})
 
 add_executable(generate_instance_node src/generate_instance.cpp)
 target_link_libraries(generate_instance_node ${EXTERNAL_LIBS} )

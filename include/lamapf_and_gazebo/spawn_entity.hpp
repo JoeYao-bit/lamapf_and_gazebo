@@ -122,6 +122,20 @@ public:
       RCLCPP_ERROR(this->get_logger(), "Failed to call service");
       return false;
     }
+
+
+    // auto response_callback = [this](rclcpp::Client<ros_gz_interfaces::srv::SpawnEntity>::SharedFuture response) {
+    //       //RCLCPP_INFO(this->get_logger(), "Got response: %d", response.get()->result);
+    //       RCLCPP_INFO(this->get_logger(), "receive response of spwan entity");
+    //       if (!response.get()->success) {
+    //         RCLCPP_ERROR(this->get_logger(), "Failed to spawn entity");
+    //       }
+    // };
+
+    // // 异步调用（不会阻塞 ✅） 
+    // auto future = client_->async_send_request(request);//, response_callback);
+    // RCLCPP_INFO(this->get_logger(), "just send service of spwan entity");
+
   }
 
 protected:

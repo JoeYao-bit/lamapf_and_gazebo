@@ -219,7 +219,7 @@ std::string createBlockAgent(const std::string& model_name,
 
 bool spawnAgentGazebo(const std::string& file_path, const std::string model_name, 
                       const geometry_msgs::msg::Pose& initial_pose, 
-                      const EntitySpawnerPtr& client, const rclcpp::Node::SharedPtr& node
+                      const EntitySpawnerPtr& client
                       ) {
 
     return client->spawn_entity(model_name, file_path, initial_pose);
@@ -228,8 +228,7 @@ bool spawnAgentGazebo(const std::string& file_path, const std::string model_name
 
 
 bool setModelPose(std::string model_name, double x, double y, double z, double theta, 
-                  const EntityPoseSetterPtr& client,
-                  const rclcpp::Node::SharedPtr& node) {
+                  const EntityPoseSetterPtr& client) {
 
     geometry_msgs::msg::Pose pose;
     pose.position.x = x;

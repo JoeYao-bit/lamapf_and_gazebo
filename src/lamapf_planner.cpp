@@ -28,7 +28,7 @@ EntityPoseSetterPtr set_pose_clinet = nullptr;
 EntitySpawnerPtr entity_pawner_clinet = nullptr;
 
 bool paused = true;
-bool gazebo_gui = true;
+bool gazebo_gui = false;
 // class InitExecutionSubscriber : public rclcpp::Node
 // {
 // public:
@@ -84,11 +84,11 @@ void updateAllAgentPoseInGazebo(const EntityPoseSetterPtr& set_pose_clinet_ptr,
                target_theta = allAgentPoses[id][2];
         if(agent->type_ == "Circle") {
 
-            setModelPose(std::string("Circle_")+std::to_string(agent->id_), target_x, target_y, target_z, target_theta, set_pose_clinet_ptr, node);
+            setModelPose(std::string("Circle_")+std::to_string(agent->id_), target_x, target_y, target_z, target_theta, set_pose_clinet_ptr);
 
         } else if(agent->type_ == "Block_2D") {
            
-            setModelPose(std::string("Block_2D_")+std::to_string(agent->id_), target_x, target_y, target_z, target_theta, set_pose_clinet_ptr, node);
+            setModelPose(std::string("Block_2D_")+std::to_string(agent->id_), target_x, target_y, target_z, target_theta, set_pose_clinet_ptr);
 
         }
     }
@@ -248,9 +248,9 @@ void gazeboInitialize(const std::string& file_path, const rclcpp::Node::SharedPt
         // do not spawn circle or block, but spawn real robots
         std::string file_path3 = ROBOT_SDFS[REAL_ROBOTS[id]];
         if(agent->type_ == "Circle") {
-            spawnAgentGazebo(file_path3, std::string("Circle_")+std::to_string(agent->id_), initial_pose, entity_pawner_clinet, node);
+            spawnAgentGazebo(file_path3, std::string("Circle_")+std::to_string(agent->id_), initial_pose, entity_pawner_clinet);
         } else if(agent->type_ == "Block_2D") {
-            spawnAgentGazebo(file_path3, std::string("Block_2D_")+std::to_string(agent->id_), initial_pose, entity_pawner_clinet, node);
+            spawnAgentGazebo(file_path3, std::string("Block_2D_")+std::to_string(agent->id_), initial_pose, entity_pawner_clinet);
         } else {
             RCLCPP_INFO(node->get_logger(), "undefined agent type");
             std::exit(0);
@@ -362,7 +362,6 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
     // visualize all agent's unfinished path
     std::thread canvas_thread(PathVisualize);
     canvas_thread.detach();
-
     while (rclcpp::ok())
     {    
         std::cout << "flag 1" << std::endl;
@@ -383,7 +382,11 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
         }
         // std::cout << "flag 3" << std::endl;
 
-        if(gazebo_gui) { updateAllAgentPoseInGazebo(set_pose_clinet, node); }
+        if(gazebo_gui) { 
+            mst.reset();
+            updateAllAgentPoseInGazebo(set_pose_clinet, node);
+            std::cout << "updateAllAgentPoseInGazebo take " << mst.elapsed() << " ms" << std::endl; // around 20ms
+         }
         // std::cout << "flag 4" << std::endl;
 
 
