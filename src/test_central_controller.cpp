@@ -157,19 +157,24 @@ int main(int argc, char ** argv) {
     executor2.add_node(central_controller);
     //executor.spin();
 
+
+   
+    std::thread t2([&]() { executor2.spin(); });
+
     // 250825 13：31
     // when do not use gazebo gui, every thing is ok,
     // but when use it, some agent node will not work (if gazebo node and other node are in the same executor)
     // draw gazebo gui
-    //rclcpp::executors::MultiThreadedExecutor executor2;
-    //auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
-    //executor2.add_node(gazebo_node);
-   
-    std::thread t2([&]() { executor2.spin(); });
+    rclcpp::executors::MultiThreadedExecutor executor3;
+    auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
+    executor3.add_node(gazebo_node);
+
+    std::thread t3([&]() { executor3.spin(); });
 
     t1.join();
     t2.join();
-
+    
+    t3.join();  
 
     rclcpp::shutdown();
     return 0;
