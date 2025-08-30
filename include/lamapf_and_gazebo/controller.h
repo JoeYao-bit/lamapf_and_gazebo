@@ -266,6 +266,17 @@ public:
                     // ss << " = " << all_agent_poses_[msg->agent_id];
                     // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 });
+
+         error_state_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::ErrorState>(
+                "AgentErrorState", 2*instances.first.size(),
+                [this](lamapf_and_gazebo_msgs::msg::ErrorState::SharedPtr msg) {
+                    std::stringstream ss;
+                    ss << "receive error state from agent " << msg->agent_id << 
+                    ", error state = " << msg->error_state << ", all action paused";
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    paused_ = true;
+                    // tell all agent to stop ? or stop after finish current task
+                });               
         
         //sleep(1);  // wait to ensure all local agent will receive initial goal      
         pubInitialGoals();
@@ -544,6 +555,8 @@ public:
     std::vector<rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr> goal_publishers_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
+
+    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_subscriber_;
 
     rclcpp::TimerBase::SharedPtr timer_;
 

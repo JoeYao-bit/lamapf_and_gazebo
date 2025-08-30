@@ -428,7 +428,7 @@ ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
 启动MAPF，并在gazebo中可视化
 
 ```
-ros2 run lamapf_and_gazebo lamapf_planner_node
+ros2 run lamapf_and_gazebo test_lamapf_planner_node
 ```
 
 启动gazebo可视化会失败，单独opencv窗口可以，或由于多节点并行和更新位姿耗时冲突导致
@@ -497,7 +497,7 @@ TODO:
 通过服务实现总控和机器人间通信（部分实现，缺少实机部分的联网配置以及单机启动）
 
 规划：
-基于MPC的直线运动控制；
+基于MPC的直线运动控制(实现)；
 局部碰撞预测；
 停机后中控重新恢复；
 跨平台IP配置

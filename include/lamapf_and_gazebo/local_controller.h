@@ -4,7 +4,10 @@
 #include "common_interfaces.h"
 #include "lamapf_and_gazebo_msgs/msg/update_pose.hpp"
 #include "lamapf_and_gazebo_msgs/msg/update_goal.hpp"
+#include "lamapf_and_gazebo_msgs/msg/error_state.hpp"
 
+#include <Eigen/Dense>
+#include <Eigen/Cholesky>
 // m/s, rad/s
 struct MotionConfig {
     double max_v_x = .5, min_v_x = 0;
@@ -22,7 +25,8 @@ bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - 
                                                     Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
-    return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
+    // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
+        return fabs(dist_to_target) < 0.03 && fabs(angle_to_target) < 0.03;
 }
 
 // there are two kinds of controller, follow a line and rotate
@@ -58,6 +62,69 @@ public:
         } else {
             retv[0] = dist_to_end/time_interval;
         }
+        return retv;
+    }
+};
+class MPCLineFollowController : public LineFollowController {
+public:
+    MPCLineFollowController(const MotionConfig& cfg) : LineFollowController(cfg) {}
+
+    // set pt1_ and pt2_ before call calculateCMD
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
+        Pointf<3> retv = {0, 0, 0};
+
+        // 直线方向
+        Eigen::Vector2d line_dir(pt2_[0] - pt1_[0], pt2_[1] - pt1_[1]);
+        line_dir.normalize();
+
+        // 当前位置到起点的向量
+        Eigen::Vector2d pos(pose[0], pose[1]);
+        Eigen::Vector2d start(pt1_[0], pt1_[1]);
+        Eigen::Vector2d d = pos - start;
+
+        // 投影误差（沿直线和垂直直线）
+        double e_long = d.dot(line_dir);
+        double e_lat  = d.dot(Eigen::Vector2d(-line_dir[1], line_dir[0]));
+
+        // 构建代价函数 J = e_lat^2 + α * e_long^2 + β * v^2 + γ * w^2
+        double alpha = 0.1, beta = 0.01, gamma = 0.01;
+
+        Eigen::Matrix2d H;
+        H << 2*beta, 0,
+             0, 2*gamma;
+        Eigen::Vector2d g;
+        g << 2*alpha*e_long, 2*e_lat;
+
+        // 解优化问题 (近似)
+        Eigen::Vector2d u_star = -H.ldlt().solve(g);//-H.inverse()* g;
+        double v_cmd = u_star[0];
+        double w_cmd = u_star[1];
+
+        // ------------------------
+        // 速度限制
+        // ------------------------
+        v_cmd = std::min(std::max(v_cmd, cfg_.min_v_x), cfg_.max_v_x);
+        w_cmd = std::min(std::max(w_cmd, cfg_.min_v_w), cfg_.max_v_w);
+
+        // ------------------------
+        // 加速度限制
+        // ------------------------
+        double v_delta_max = cfg_.max_a_x * time_interval;
+        double w_delta_max = cfg_.max_a_w * time_interval;
+
+        double v_next = std::clamp(v_cmd,
+                                   vel[0] + cfg_.min_a_x * time_interval,
+                                   vel[0] + cfg_.max_a_x * time_interval);
+
+        double w_next = std::clamp(w_cmd,
+                                   vel[2] + cfg_.min_a_w * time_interval,
+                                   vel[2] + cfg_.max_a_w * time_interval);
+
+        // 输出结果
+        retv[0] = v_next;   // 前进线速度
+        retv[1] = 0.0;      // 差动小车不考虑 y 方向
+        retv[2] = w_next;   // 角速度
+
         return retv;
     }
 };
@@ -156,6 +223,9 @@ public:
         // NOTICE: cache queue size must be large enough to cache all agent's pose or goal
         // otherwise some msg will be ignored
         pose_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
+
+        error_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::ErrorState>("AgentErrorState", 10);
+
         std::stringstream ss3;
         ss3 << "GoalUpdate" << agent->id_;
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
@@ -187,10 +257,12 @@ public:
         std::stringstream ss;
         ss << "init LocalController, agent id = " << agent->id_;
         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        
     }
 
     // calculate vel cmd for each agent
     Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
+        count_of_iter_ ++;
         Pointf<3> cmd_vel = {0,0,0};
         // if is required to wait, then wait
         if(wait_) { return cmd_vel; }
@@ -207,8 +279,12 @@ public:
                    << " in rotate, then stop and replan";
                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
-                sleep(1);
-                assert(0);
+                lamapf_and_gazebo_msgs::msg::ErrorState msg;
+                msg.agent_id = agent_->id_;
+                msg.error_state = 0;
+                error_state_publisher_->publish(msg);
+                //sleep(1);
+                //assert(0);
                 return cmd_vel;
             }
             // rotate
@@ -240,8 +316,12 @@ public:
                    << " in move forward, then stop and replan, dist_to_line = " << dist_to_line;
                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
-                sleep(1);
-                assert(0);
+                lamapf_and_gazebo_msgs::msg::ErrorState msg;
+                msg.agent_id = agent_->id_;
+                msg.error_state = 0;
+                error_state_publisher_->publish(msg);
+                // sleep(1);
+                // assert(0);
                 return cmd_vel;
             }
             double dist_to_direct = fabs(target_ptf_[2] - pose[2]);                                      
@@ -251,8 +331,12 @@ public:
                    << " in move forward, then stop and replan, dist_to_direct = " << dist_to_direct;
                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
-                sleep(1);
-                assert(0);
+                lamapf_and_gazebo_msgs::msg::ErrorState msg;
+                msg.agent_id = agent_->id_;
+                msg.error_state = 0;
+                error_state_publisher_->publish(msg);
+                // sleep(1);
+                // assert(0);
                 return cmd_vel;
             }
             // move forward
@@ -277,10 +361,10 @@ public:
         // Pointf<3> pose, Pointf<3> velcmd, float time_interval
         auto pre_pose = cur_pose_;
         cur_pose_ = updateAgentPose(cur_pose_, velcmd_, time_interval);
-        if(agent_->id_ == 9) {
-            std::cout << "agent id = " << agent_->id_ << ", velcmd_ = " << velcmd_ << ", pre pose = "
-                  << pre_pose << ", cur pose = " << cur_pose_ << std::endl;
-        }
+        // if(agent_->id_ == 9) {
+        //     std::cout << "agent id = " << agent_->id_ << ", velcmd_ = " << velcmd_ << ", pre pose = "
+        //           << pre_pose << ", cur pose = " << cur_pose_ << std::endl;
+        // }
         lamapf_and_gazebo_msgs::msg::UpdatePose msg;
         msg.x   = cur_pose_[0];
         msg.y   = cur_pose_[1];
@@ -322,7 +406,11 @@ public:
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_subscriber_;
 
+    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_publisher_;
+
     rclcpp::TimerBase::SharedPtr timer_;
+
+    int count_of_iter_ = 0;
 
 };
 

@@ -21,7 +21,7 @@ find_package(std_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(lamapf_and_gazebo_msgs REQUIRED)
-
+find_package(Eigen3 REQUIRED)
 
 ament_export_dependencies(rosidl_default_runtime)
 
@@ -35,6 +35,7 @@ set(EXTERNAL_LIBS
 
 
 include_directories(include 
+                    ${EIGEN3_INCLUDE_DIRS}   # 把 Eigen 头文件路径加进来
                     )
 
 set(dependencies rclcpp ros_gz_interfaces tf2 std_msgs geometry_msgs lamapf_and_gazebo_msgs)        
@@ -45,10 +46,10 @@ install(TARGETS spawn_entity DESTINATION lib/${PROJECT_NAME})
 target_link_libraries(spawn_entity ${EXTERNAL_LIBS} )
 
 
-add_executable(lamapf_planner_node src/lamapf_planner.cpp)
-target_link_libraries(lamapf_planner_node ${EXTERNAL_LIBS} )
-ament_target_dependencies(lamapf_planner_node ${dependencies})
-install(TARGETS lamapf_planner_node DESTINATION lib/${PROJECT_NAME})
+add_executable(test_lamapf_planner_node src/test_lamapf_planner_node.cpp)
+target_link_libraries(test_lamapf_planner_node ${EXTERNAL_LIBS} )
+ament_target_dependencies(test_lamapf_planner_node ${dependencies})
+install(TARGETS test_lamapf_planner_node DESTINATION lib/${PROJECT_NAME})
 
 add_executable(generate_instance_node src/generate_instance.cpp)
 target_link_libraries(generate_instance_node ${EXTERNAL_LIBS} )

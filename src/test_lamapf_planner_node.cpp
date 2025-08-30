@@ -340,7 +340,11 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
 
     rclcpp::WallRate loop_rate(control_frequency);
 
-    std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
+    // std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
+
+    // MPCLineFollowController
+    std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<MPCLineFollowController>(MotionConfig()));
+
     std::vector<RotateControllerPtr> rot_ctls(instances.first.size(), std::make_shared<ConstantRotateController>(MotionConfig()));
 
     std::cout << "pre_dec->all_poses_.size() = " << pre_dec->all_poses_.size() << std::endl;
