@@ -240,10 +240,10 @@ public:
                         target_ptf_[2] = msg->target_yaw;  
                         wait_          = msg->wait;
 
-                        std::stringstream ss2;
-                        ss2 << "in LocalController, receive goal, agent id = " << agent_->id_ << " ";
-                        ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
-                        RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
+                        // std::stringstream ss2;
+                        // ss2 << "in LocalController, receive goal, agent id = " << agent_->id_ << " ";
+                        // ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
+                        // RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
                     }
                 });
 
@@ -274,10 +274,10 @@ public:
             // if out of current position (when rotate), stop and replan
             float dist_to_target = (Pointf<2>{target_ptf_[0], target_ptf_[1]} - Pointf<2>{pose[0], pose[1]}).Norm();
             if(dist_to_target > 0.1) {
-                std::stringstream ss;
-                ss << "current pose " << pose << " out of target position " << target_ptf_
-                   << " in rotate, then stop and replan";
-                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                // std::stringstream ss;
+                // ss << "current pose " << pose << " out of target position " << target_ptf_
+                //    << " in rotate, then stop and replan";
+                // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
                 lamapf_and_gazebo_msgs::msg::ErrorState msg;
                 msg.agent_id = agent_->id_;
@@ -343,7 +343,7 @@ public:
             line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
             line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
 
-            std::cout << "**agent vel cmd, " << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
+            //std::cout << "**agent vel cmd, " << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
 
             cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);
         }

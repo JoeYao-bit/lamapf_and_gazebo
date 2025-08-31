@@ -59,7 +59,7 @@ from launch_ros.actions import Node
 
 from launch.actions import ExecuteProcess
 
-
+from ros_gz_bridge.actions import RosGzBridge
 
 def generate_launch_description():
 
@@ -69,8 +69,9 @@ def generate_launch_description():
     # tugbot_depot (not ok）
     # living_room （not ok）
     # office_env_large （not ok）
-    
-    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/industrial-warehouse.sdf'
+    # simple_world (ok)
+
+    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/simple_world.sdf'
 
     print("world path = ", world)
 
@@ -82,9 +83,13 @@ def generate_launch_description():
 
     delete_entity_srv = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', '/world/default/remove@ros_gz_interfaces/srv/DeleteEntity'], output='screen')
 
+    laser_bridge_bridge = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
+  '/world/default/model/robot_with_lidar/link/base_link/sensor/lidar_sensor/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'], output='screen')
+
     return LaunchDescription([
-        gazebo,
+        gazebo, 
         spawn_entity_srv,
         set_entity_pose_srv,
-        delete_entity_srv
+        delete_entity_srv,
+        laser_bridge_bridge
     ])

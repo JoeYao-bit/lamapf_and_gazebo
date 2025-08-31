@@ -210,7 +210,7 @@
         bool isActionValid(int action_id) const {
             for(const auto& pre_id : ADG_[action_id]) {
                 if(!isActionLeave(pre_id)) { 
-                    std::cout << "a" << node_to_path_index_[action_id].first << ", t=" << node_to_path_index_[action_id].second << " is invalid because " << "a" << node_to_path_index_[pre_id].first << ", t=" << node_to_path_index_[pre_id].second << " is not leave" << std::endl;
+                    //std::cout << "a" << node_to_path_index_[action_id].first << ", t=" << node_to_path_index_[action_id].second << " is invalid because " << "a" << node_to_path_index_[pre_id].first << ", t=" << node_to_path_index_[pre_id].second << " is not leave" << std::endl;
                     return false;
                  }
             }

@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="default">
+
+
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+
+    <!-- 系统插件 -->
+    <plugin
+        filename="gz-sim-physics-system"
+        name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+        filename="gz-sim-scene-broadcaster-system"
+        name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    
+    <plugin 
+        filename="gz-sim-imu-system" 
+        name="gz::sim::systems::Imu">
+    </plugin>
+
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <plugin
+        filename="gz-sim-user-commands-system"
+        name="gz::sim::systems::UserCommands">
+    </plugin>
+
+    <gravity>0 0 -9.8</gravity>
+
+    <!-- 机器人模型 -->
+    <model name="robot_with_lidar">
+      <pose>0 0 0 0 0 0</pose>
+      <link name="base_link">
+
+        <sensor name="lidar_sensor" type="gpu_lidar">
+          <pose>0 0 0.2 0 0 0</pose>
+          <always_on>1</always_on>
+          <update_rate>1</update_rate>
+          <visualize>true</visualize>
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>360</samples>
+                <resolution>1</resolution>
+                <min_angle>-3.14</min_angle>
+                <max_angle>3.14</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.1</min>
+              <max>10.0</max>
+              <resolution>0.01</resolution>
+            </range>
+          </ray>
+        </sensor>
+
+        <sensor name="imu_sensor" type="imu">
+          <always_on>1</always_on>
+          <update_rate>10</update_rate>
+          <visualize>true</visualize>
+          <topic>imu_yz</topic>
+        </sensor>
+
+      </link>
+    </model>
+
+    
+  </world>
+</sdf>

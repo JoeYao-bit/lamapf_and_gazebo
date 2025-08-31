@@ -490,7 +490,7 @@ TODO:
 增加单位路径上的碰撞检测
 有碰撞风险则等待至无碰撞或超时报错，超时后更新地图重启规划。
 
-将每个机器人作为一个node计算控制指令 (初步实现)
+将每个机器人作为一个node计算控制指令 (实现)
 
 通过ros的跨平台多节点通信机制实现不同机器人与控制中心的通信（实现）
 
@@ -498,8 +498,129 @@ TODO:
 
 规划：
 基于MPC的直线运动控制(实现)；
-局部碰撞预测；
-停机后中控重新恢复；
+局部碰撞预测(根据laser scan预测沿预定路线前进是否有碰撞风险)；
+停机后中控重新恢复（已添加中断，尚未添加恢复）；
 跨平台IP配置
 
 单机器人简单建图与定位。
+
+
+在gazebo里获取模拟的激光雷达数据，模拟的里程计数据
+进而模拟单机器人定位与碰撞检测
+进而模拟多机器人导航
+
+
+老师，我向您汇报一下我最近工作进展和未来计划：主要任务是多机器人导航系统的落地。计划分两步走，先在gazebo上搭建场景模拟仿真，跑通完整流程后实物落地。
+
+仿真部分已经完成了场景搭建，多机器人路径规划（Large Agent CBS+我的多机器人路径规划分解+我的高效碰撞检测）以及导航调度（基于动作依赖图action dependency graph），机器人运动控制（基于模型预测控制MPC）；
+
+尚未完成的有单机器人传感器数据模拟（基于gazebo和ros2通信机制）、定位（计划采用amcl）、建图（计划采用gmapping或cartographer）；
+
+实物部分尚未完成的有机器人传感器与数据获取（基于实验室现有turtlebot机器人+微型主机），多机器人间的通信（ros2自带通过连接同一wifi实现机器人间的无线通信）。
+
+之前投稿的四篇论文仍在审核，一篇二审（JAAMAS）三篇一审（IJRR，IEEE T-ASE, Journal of Intelligent & Robotic Systems）。
+
+如果你在 Gazebo Harmonic 里加载了一个 GpuLidar 传感器，它会发布类似：
+
+/world/default/model/your_robot/link/lidar_link/sensor/lidar/scan
+
+
+你要想在 ROS2 下看到 /scan（类型 sensor_msgs/msg/LaserScan），就需要 bridge：
+
+ros2 run ros_gz_bridge parameter_bridge \
+  /world/default/model/your_robot/link/lidar_link/sensor/lidar/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan
+
+SDF 规范不允许 world 下面直接放 link。
+<link> 必须放在 <model> 里面。
+
+
+！！！！！
+gazebo开局默认暂停，需要点击左下角播放键，才有传感器数据流
+
+gazebo官方文档，演示如何添加传感器生成数据流
+
+添加模型时，必须在world里添加插件，否则无法生成数据流
+
+    <!-- 系统插件 -->
+    <plugin
+        filename="gz-sim-physics-system"
+        name="gz::sim::systems::Physics">
+    </plugin>
+    <plugin
+        filename="gz-sim-scene-broadcaster-system"
+        name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+    
+    <plugin 
+        filename="gz-sim-imu-system" 
+        name="gz::sim::systems::Imu">
+    </plugin>
+
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <plugin
+        filename="gz-sim-user-commands-system"
+        name="gz::sim::systems::UserCommands">
+    </plugin>
+
+
+查看是否发布消息
+gz topic -l
+
+打印消息内容
+gz topic -e -t /world/default/model/box/link/link/sensor/imu_sensor/imu
+
+如果传感器成功工作，会打印出传感器消息
+
+参考simple_world.sdf
+
+加载world时消息桥接。
+def generate_launch_description():
+    # world 文件路径
+    world_file = os.path.join(
+        os.getenv("HOME"), "code/ros2_ws/src/lamapf_and_gazebo/world/simple_world.sdf"
+    )
+
+    # Gazebo 仿真
+    gz_sim = Node(
+        package="ros_gz_sim",
+        executable="gz_sim",
+        arguments=["-r", world_file],
+        output="screen"
+    )
+
+    # ROS–Gazebo bridge
+    bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=[
+            # imu
+            "/world/default/model/imu_box/link/base_link/sensor/imu_sensor/imu"
+            "@sensor_msgs/msg/Imu[gz.msgs.IMU",
+
+            # lidar
+            "/world/default/model/lidar_robot/link/base_link/sensor/lidar/scan"
+            "@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
+
+            # odometry（如果有）
+            "/model/lidar_robot/odometry"
+            "@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+        ],
+        output="screen"
+    )
+
+手动输入命令实现gazebo中模拟laserscan话题桥接
+
+ros2 run ros_gz_bridge parameter_bridge \
+  /world/default/model/robot_with_lidar/link/base_link/sensor/lidar_sensor/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan
+
+将其通过
+
+    laser_bridge_bridge = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
+  '/world/default/model/robot_with_lidar/link/base_link/sensor/lidar_sensor/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'], output='screen')
+
+  在ros_gz_launch.launch.py中启动，实现了在ros2读取到gazebo中的模拟激光雷达数据

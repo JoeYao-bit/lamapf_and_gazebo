@@ -407,9 +407,11 @@ public:
                     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - 
                                                     Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
                     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
-                    std::stringstream ss;        
-                    ss << "agent "<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;
-                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
+                    // std::stringstream ss;        
+                    // ss << "agent "<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;
+                    // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
                     // check whether reach current target, if reach, update progress to next pose
                     if(reachTarget(cur_pose, target_ptf)) {
                         //RCLCPP_INFO(this->get_logger(), "agent %i reach temporal target state", i);

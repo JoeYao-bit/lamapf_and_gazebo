@@ -117,7 +117,7 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({20}, 1).front(); // get all instances
+        deserializer.getTestInstance({5}, 1).front(); // get all instances
 
     std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
     std::vector<RotateControllerPtr> rot_ctls(instances.first.size(), std::make_shared<ConstantRotateController>(MotionConfig()));
@@ -165,11 +165,11 @@ int main(int argc, char ** argv) {
     // when do not use gazebo gui, every thing is ok,
     // but when use it, some agent node will not work (if gazebo node and other node are in the same executor)
     // draw gazebo gui
-    // rclcpp::executors::MultiThreadedExecutor executor3;
-    // auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
-    // executor3.add_node(gazebo_node);
-    // std::thread t3([&]() { executor3.spin(); });
-    // t3.join();  
+    rclcpp::executors::MultiThreadedExecutor executor3;
+    auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
+    executor3.add_node(gazebo_node);
+    std::thread t3([&]() { executor3.spin(); });
+    t3.join();  
 
     t1.join();
     t2.join();
