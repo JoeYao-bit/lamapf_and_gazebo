@@ -624,3 +624,16 @@ ros2 run ros_gz_bridge parameter_bridge \
   '/world/default/model/robot_with_lidar/link/base_link/sensor/lidar_sensor/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'], output='screen')
 
   在ros_gz_launch.launch.py中启动，实现了在ros2读取到gazebo中的模拟激光雷达数据
+
+在ros2中对应的消息类型是sensor_msgs/msg/LaserScan，名字与在gz中的相同
+
+在 SDF/SDFormat 的 官方 schema中，<topic> 只对部分传感器类型（如 camera、imu）开放
+
+但是 激光雷达（lidar / gpu_lidar / ray sensor） 目前 不支持 <topic> 标签。
+
+lidar scan 无法通过topic配置名称
+
+
+ros2 定位用nav2-amcl
+启动
+ros2 run nav2_amcl amcl

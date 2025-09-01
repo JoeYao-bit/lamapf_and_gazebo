@@ -83,13 +83,25 @@ def generate_launch_description():
 
     delete_entity_srv = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', '/world/default/remove@ros_gz_interfaces/srv/DeleteEntity'], output='screen')
 
-    laser_bridge_bridge = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
-  '/world/default/model/robot_with_lidar/link/base_link/sensor/lidar_sensor/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'], output='screen')
-
+  #   laser_bridge_bridge1 = ExecuteProcess(cmd=['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
+  # '/world/default/model/robot_with_lidar/link/base_link/sensor/lidar_sensor/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan'], output='screen')
+    
+    # ROS–Gazebo bridge for lidar
+    bridge_node = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=[
+            # Lidar bridge
+            "/world/default/model/robot_with_lidar/link/base_link/sensor/lidar_sensor/scan"
+            "@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
+        ],
+        output="screen"
+    )
+    
     return LaunchDescription([
         gazebo, 
         spawn_entity_srv,
         set_entity_pose_srv,
         delete_entity_srv,
-        laser_bridge_bridge
+        bridge_node,
     ])
