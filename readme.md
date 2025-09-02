@@ -637,3 +637,149 @@ lidar scan 无法通过topic配置名称
 ros2 定位用nav2-amcl
 启动
 ros2 run nav2_amcl amcl
+
+
+The Robotics Back-End：ROS2 + SLAM Toolbox 生成地图
+
+https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/#gazebo-simulation
+
+这篇教程使用 TurtleBot3 Gazebo 模拟器 演示了以下完整流程：
+
+环境准备（包含 DDS 切换到 Cyclone DDS）
+
+安装 Nav2 和 SLAM Toolbox
+
+启动仿真机器人（ROS2 Gazebo + /scan 发布）
+
+启动 Nav2 和 SLAM Toolbox，进行地图构建
+
+使用 RViz2 可视化地图
+
+保存地图文件（.pgm 和 .yaml）
+
+只要在 ros2_ws/src/ 的层级结构中（无论直接放还是放在子目录），colcon 都能正常编译和使用，区别只是目录管理上的清晰度。
+
+
+通过
+
+ros2 launch turtlebot3_gazebo empty_world.launch.py
+
+启动带有一个turtle bot的gazebo仿真环境,没有障碍物
+
+
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+
+
+启动带有一个turtle bot的gazebo仿真环境,有障碍物
+
+
+ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py
+
+启动带有一个turtle bot的gazebo仿真环境, 模拟室内场景
+
+
+
+ros2 run turtlebot3_teleop teleop_keyboard
+
+键盘控制gazebo中机器人移动
+
+残留之前物体，关闭gazebo重开也无法消除时，重启电脑
+
+
+# gazebo+ros2+turtlebot建图仿真流程
+
+1,启动gazebo world，加载环境和机器人
+
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+
+2,启动建图节点
+ros2 launch turtlebot3_cartographer cartographer.launch.py use_sim_time:=True
+
+3, 键盘wasdx控制机器人移动
+ros2 run turtlebot3_teleop teleop_keyboard
+
+4,保存地图及参数yaml文件
+ros2 run nav2_map_server map_saver_cli -f ~/map
+
+
+# gazebo+ros2+turtlebot导航仿真流程
+1, 启动gazebo world，加载环境和机器人
+
+ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+
+2, 启动导航节点，加载地图
+
+ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:=$HOME/map.yaml
+
+3, rviz中点击2D Pose Estimate，设置初始位置
+
+点击nav goal，设置目标位置
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
