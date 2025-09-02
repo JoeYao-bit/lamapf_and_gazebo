@@ -186,13 +186,44 @@ public:
 
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 
-    double new_x = pose[0] + time_interval*velcmd[0]*cos(pose[2]) - time_interval*velcmd[1]*sin(pose[2]), 
+    // double new_x = pose[0] + time_interval*velcmd[0]*cos(pose[2]) - time_interval*velcmd[1]*sin(pose[2]), 
 
-           new_y = pose[1] + time_interval*velcmd[0]*sin(pose[2]) + time_interval*velcmd[1]*cos(pose[2]),
+    //        new_y = pose[1] + time_interval*velcmd[0]*sin(pose[2]) + time_interval*velcmd[1]*cos(pose[2]),
 
-           new_theta = fmod((pose[2] + time_interval*velcmd[2]) + 2*M_PI, 2*M_PI);
+    //        new_theta = fmod((pose[2] + time_interval*velcmd[2]) + 2*M_PI, 2*M_PI);
+
+    // return Pointf<3>{new_x, new_y, new_theta};
+
+    double x = pose[0];
+    double y = pose[1];
+    double theta = pose[2];
+
+    double v = velcmd[0];   // 前向速度
+    double vy = velcmd[1];  // 横向速度（若用单轨，可设为 0）
+    double w = velcmd[2];   // 角速度
+
+    double new_x, new_y, new_theta;
+
+    if (std::fabs(w) < 1e-6) {
+        // ω≈0，退化为直线运动
+        new_x = x + (v * std::cos(theta) - vy * std::sin(theta)) * time_interval;
+        new_y = y + (v * std::sin(theta) + vy * std::cos(theta)) * time_interval;
+    } else {
+        // 精确积分（指数映射）
+        double sin_dt = std::sin(w * time_interval);
+        double cos_dt = std::cos(w * time_interval);
+
+        new_x = x + ( v * sin_dt + vy * (cos_dt - 1.0)) / w * std::cos(theta)
+                  + ( v * (1.0 - cos_dt) + vy * sin_dt ) / w * (-std::sin(theta));
+
+        new_y = y + ( v * sin_dt + vy * (cos_dt - 1.0)) / w * std::sin(theta)
+                  + ( v * (1.0 - cos_dt) + vy * sin_dt ) / w * ( std::cos(theta));
+    }
+
+    new_theta = std::fmod(theta + w * time_interval + 2*M_PI, 2*M_PI);
 
     return Pointf<3>{new_x, new_y, new_theta};
+
 };
 
 
@@ -324,7 +355,7 @@ public:
                 // assert(0);
                 return cmd_vel;
             }
-            double dist_to_direct = fabs(target_ptf_[2] - pose[2]);                                      
+            double dist_to_direct = std::fmod(target_ptf_[2] - pose[2], 2*M_PI);                                      
             if(dist_to_direct > 0.1) { 
                 std::stringstream ss;
                 ss << "current pose " << pose << "'s direction out of target line " << start_ptf_ << "->" << target_ptf_

@@ -195,7 +195,7 @@ public:
         
         dim_ = dim;
         instances_ = instances;                
-        paused_ = false;
+        paused_ = true;
 
         std::cout << "construct all possible poses" << std::endl;
         Id total_index = getTotalIndexOfSpace<2>(this->dim_);
