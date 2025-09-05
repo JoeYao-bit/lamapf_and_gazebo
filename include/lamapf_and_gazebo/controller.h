@@ -195,12 +195,16 @@ public:
         
         dim_ = dim;
         instances_ = instances;                
-        paused_ = true;
+        paused_ = false;
 
         std::cout << "construct all possible poses" << std::endl;
+
         Id total_index = getTotalIndexOfSpace<2>(this->dim_);
+
         all_poses_.resize(total_index * 2 * 2, nullptr); // a position with 2*N orientation
+
         Pointi<2> pt;
+
         for (Id id = 0; id < total_index; id++) {
             pt = IdToPointi<2>(id, this->dim_);
             if (!is_occupied(pt)) {
@@ -253,6 +257,7 @@ public:
             goal_publishers_.push_back(
                 this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>(ss3.str().c_str(), 2*instances.first.size()));
         }
+
         pose_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>(
                 "PoseUpdate", 2*instances.first.size(),
                 [this](lamapf_and_gazebo_msgs::msg::UpdatePose::SharedPtr msg) {
@@ -275,7 +280,16 @@ public:
                     ", error state = " << msg->error_state << ", all action paused";
                     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                     paused_ = true;
-                    // tell all agent to stop ? or stop after finish current task
+                    // tell all agent to stop
+                    for(int i=0; i<instances_.first.size(); i++) {
+                            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                            msg.agent_id   = i;
+                            msg.wait       = true;
+                            
+                            goal_publishers_[i]->publish(msg); 
+                    }
+                    // update map (TODO) and replan
+                    reupdate(all_agent_poses_);
                 });               
         
         //sleep(1);  // wait to ensure all local agent will receive initial goal      
@@ -302,13 +316,29 @@ public:
     void pubInitialGoals() {
         // pub all agent's first goal
         for(int i=0; i<instances_.first.size(); i++) {
+            if(ADG_->paths_[i].size() < 2) {
+                continue;
+            }
+            std::stringstream ss;
 
             size_t start_pose_id = ADG_->paths_[i][0];
+
+            ss.str("");ss.clear();
+            ss << "agent " << i << ", start_pose_id = " << start_pose_id;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+            assert(start_pose != nullptr);
             Pointf<3> start_ptf = PoseIntToPtf(start_pose);
 
             size_t target_pose_id = ADG_->paths_[i][1];
+            
+            ss.str("");ss.clear();
+            ss << "agent " << i << ", target_pose_id = " << target_pose_id;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
             PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
+            assert(target_pose != nullptr);
             Pointf<3> target_ptf = PoseIntToPtf(target_pose);
 
             lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
@@ -325,17 +355,71 @@ public:
             
             goal_publishers_[i]->publish(msg);
 
-            // std::stringstream ss;
-            // ss << "central controller pub agent " << i << "'s goal " << start_ptf <<"->" << target_ptf;
-            // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            ss.str("");ss.clear();
+            ss << "central controller pub agent " << i << "'s initial goal " << start_ptf <<"->" << target_ptf;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
 
         }
     }
 
     // TODO: when single agent failed to complete its task, update all agent's path and search path again
     bool reupdate(const Pointfs<3>& poses) {
-        // get current state as start of planning
+        std::stringstream ss;
+        ss << "start replan of path";
+        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
+        // get current state as start state of planning
+        assert(poses.size() == instances_.first.size());
+        Pose<int, 2> pose;
+        for(int i=0; i<instances_.first.size(); i++) {
+            instances_.second[i].first = PtfToPoseInt(poses[i]);
+            std::stringstream ss;
+            ss << "Agent " << i << "'s initial ptf: " << poses[i] << ", pose " << instances_.second[i].first;
+            ss << "| pose to ptf " << PoseIntToPtf(instances_.second[i].first);
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        }
+        // calculate initial paths 
+        auto paths = MAPF(dim, is_occupied, instances_);
         
+        if(paths.empty()) {
+            RCLCPP_INFO(this->get_logger(), "failed to generate initial paths");
+            return false;
+        }
+        RCLCPP_INFO(this->get_logger(), "flag 1");
+        assert(paths.size() == instances_.first.size());
+
+        auto agents = instances_.first;
+
+        for(int i=0; i<agents.size(); i++) {
+            std::cout << "path " << i << " size = " << paths[i].size() << ": ";
+            for(int j=0; j<paths[i].size(); j++) {
+                std::cout << paths[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        ADG_ = std::make_shared<ActionDependencyGraph<2>>(paths, agents, all_poses_);
+        RCLCPP_INFO(this->get_logger(), "flag 2");
+        progress_of_agents_.clear();
+        progress_of_agents_.resize(instances_.first.size(), 0);
+
+        all_agent_poses_.resize(instances_.first.size());
+        RCLCPP_INFO(this->get_logger(), "flag 3");
+        for(int i=0; i<instances_.first.size(); i++) {
+            size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose);
+            all_agent_poses_[i] = start_ptf;
+
+            ADG_->setActionLeave(i, 0);
+
+        }                                                                                                             RCLCPP_INFO(this->get_logger(), "finish reupdate paths");
+
+        pubInitialGoals();            
+
+        RCLCPP_INFO(this->get_logger(), "finish pub inital goal after reupdate paths");    
+            
+        return true;
     }
 
     LAMAPF_Paths MAPF(DimensionLength* dim, const IS_OCCUPIED_FUNC<2>& is_occupied,
@@ -408,9 +492,9 @@ public:
                                                     Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
                     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
 
-                    // std::stringstream ss;        
-                    // ss << "agent "<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;
-                    // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    std::stringstream ss;        
+                    ss << "agent "<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
 
                     // check whether reach current target, if reach, update progress to next pose
                     if(reachTarget(cur_pose, target_ptf)) {

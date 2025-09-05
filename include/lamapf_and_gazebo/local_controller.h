@@ -8,25 +8,33 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
+
 // m/s, rad/s
 struct MotionConfig {
-    double max_v_x = .5, min_v_x = 0;
-    double max_v_y = 0, min_v_y = 0;
-    double max_v_w = .5*M_PI, min_v_w = -.5*M_PI;
+    float max_v_x = .5, min_v_x = 0;
+    float max_v_y = 0, min_v_y = 0;
+    float max_v_w = .5*M_PI, min_v_w = -.5*M_PI;
 
-    double max_a_x = .5, min_a_x = -0.5;
-    double max_a_y = 0, min_a_y = 0;
-    double max_a_w = 1.*M_PI, min_a_w = -1.*M_PI;
+    float max_a_x = .5, min_a_x = -0.5;
+    float max_a_y = 0, min_a_y = 0;
+    float max_a_w = 2*M_PI, min_a_w = -2*M_PI;
 
     bool is_nonholonomic = true;
 };
 
-bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
-    float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - 
-                                                    Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
-    float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
+bool reachPosition(const float& x, const float& y, const float& target_x, const float& target_y) {
+    float dist_to_target_position = (Pointf<2>{x, y} - Pointf<2>{target_x, target_y}).Norm();
+    return fabs(dist_to_target_position) < 0.03;                                            
+}
+
+bool reachOrientation(const float& orientation, const float& target_orientation) {
+    float angle_to_target = fmod(orientation-target_orientation, 2*M_PI);
     // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
-        return fabs(dist_to_target) < 0.03 && fabs(angle_to_target) < 0.03;
+    return fabs(angle_to_target) < 0.03;
+}
+
+bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
+    return reachPosition(cur_pose[0], cur_pose[1], target_ptf[0], target_ptf[1]) && reachOrientation(cur_pose[2], target_ptf[2]);
 }
 
 // there are two kinds of controller, follow a line and rotate
@@ -62,9 +70,16 @@ public:
         } else {
             retv[0] = dist_to_end/time_interval;
         }
+
+        retv[0] = std::clamp(retv[0],
+                vel[0] + cfg_.min_a_x * time_interval,
+                vel[0] + cfg_.min_a_x * time_interval);
+
         return retv;
     }
 };
+
+// have no linear velocity
 class MPCLineFollowController : public LineFollowController {
 public:
     MPCLineFollowController(const MotionConfig& cfg) : LineFollowController(cfg) {}
@@ -73,65 +88,103 @@ public:
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
         Pointf<3> retv = {0, 0, 0};
 
-        // 直线方向
-        Eigen::Vector2d line_dir(pt2_[0] - pt1_[0], pt2_[1] - pt1_[1]);
-        line_dir.normalize();
+        // -----------------------------
+        // 1. 参考方向
+        // -----------------------------
+        Eigen::Vector2f ref_vec(pt2_[0] - pt1_[0], pt2_[1] - pt1_[1]);
+        //Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
 
-        // 当前位置到起点的向量
-        Eigen::Vector2d pos(pose[0], pose[1]);
-        Eigen::Vector2d start(pt1_[0], pt1_[1]);
-        Eigen::Vector2d d = pos - start;
+        float ref_theta = std::atan2(ref_vec.y(), ref_vec.x());
 
-        // 投影误差（沿直线和垂直直线）
-        double e_long = d.dot(line_dir);
-        double e_lat  = d.dot(Eigen::Vector2d(-line_dir[1], line_dir[0]));
+        // -----------------------------
+        // 2. 误差计算 (相对于终点)
+        // -----------------------------
+        Eigen::Vector2f pos_error(pose[0] - pt2_[0], pose[1] - pt2_[1]);
 
-        // 构建代价函数 J = e_lat^2 + α * e_long^2 + β * v^2 + γ * w^2
-        double alpha = 0.1, beta = 0.01, gamma = 0.01;
+        std::cout << "pos_error = " << pos_error[0] << ", " << pos_error[1] << std::endl;
 
-        Eigen::Matrix2d H;
-        H << 2*beta, 0,
-             0, 2*gamma;
-        Eigen::Vector2d g;
-        g << 2*alpha*e_long, 2*e_lat;
+        float e_long  =  pos_error.x() * std::cos(ref_theta) + pos_error.y() * std::sin(ref_theta);
+        float e_lat   = -pos_error.x() * std::sin(ref_theta) + pos_error.y() * std::cos(ref_theta);
+        float e_theta = pose[2] - ref_theta;
 
-        // 解优化问题 (近似)
-        Eigen::Vector2d u_star = -H.ldlt().solve(g);//-H.inverse()* g;
-        double v_cmd = u_star[0];
-        double w_cmd = u_star[1];
+        std::cout << "e_long = " << e_long << ", e_lat = " << e_lat << ", e_theta = " << e_theta << std::endl;
 
-        // ------------------------
-        // 速度限制
-        // ------------------------
-        v_cmd = std::min(std::max(v_cmd, cfg_.min_v_x), cfg_.max_v_x);
-        w_cmd = std::min(std::max(w_cmd, cfg_.min_v_w), cfg_.max_v_w);
+        // -----------------------------
+        // 3. 成本函数权重
+        // -----------------------------
+        float alpha = 0.01;  // 纵向误差权重
+        float beta  = 0.1; // 横向误差权重
+        float gamma = 0.01; // 航向误差权重
+
+        // -----------------------------
+        // 4. 简单 QP 近似解 (代替完整优化器)
+        // -----------------------------
+        Eigen::Matrix2f H;
+        H << 2 * alpha, 0,
+                0, 2 * gamma;
+
+        Eigen::Vector2f g;
+        g << 2 * alpha * e_long + 2 * beta * e_lat,   // 线速度受纵向和横向误差影响
+             2 * gamma * e_theta;                     // 角速度受航向误差影响
+
+
+        Eigen::Vector2f u_star = -H.ldlt().solve(g); // [v, w]
+
+        float v_cmd = u_star[0];
+        float w_cmd = u_star[1];
+
+        std::cout << "raw v_cmd = " << v_cmd << ", w_cmd = " << w_cmd << std::endl;
+
+        // -----------------------------
+        // 5. 速度限制 (MotionConfig)
+        // -----------------------------
+        // std::clamp 裁减到速度上下限之间
+        v_cmd = std::clamp(v_cmd, cfg_.min_v_x, cfg_.max_v_x);
+        w_cmd = std::clamp(w_cmd, cfg_.min_v_w, cfg_.max_v_w);
+
+        std::cout << "clamp v_cmd = " << v_cmd << ", w_cmd = " << w_cmd << std::endl;
+
+        // -----------------------------
+        // 6. 输出 [vx, vy, w]
+        // 差速小车: 只有 vx 和 w
+        // -----------------------------
+        retv[0] = v_cmd;
+        retv[1] = 0.0;
+        retv[2] = w_cmd;
+
 
         // ------------------------
         // 加速度限制
         // ------------------------
-        double v_delta_max = cfg_.max_a_x * time_interval;
-        double w_delta_max = cfg_.max_a_w * time_interval;
+        // float v_delta_max = cfg_.max_a_x * time_interval;
+        // float w_delta_max = cfg_.max_a_w * time_interval;
 
-        double v_next = std::clamp(v_cmd,
-                                   vel[0] + cfg_.min_a_x * time_interval,
-                                   vel[0] + cfg_.max_a_x * time_interval);
+        // std::clamp 是 C++17 引入的一个小工具函数，用来把数值限制在某个区间内。
+        // constexpr const T& clamp( const T& v, const T& lo, const T& hi );
+        // v → 需要被限制的值，lo → 下限，hi → 上限（要求 lo <= hi）
+        float v_next = std::clamp(v_cmd,
+                                    vel[0] + cfg_.min_a_x * time_interval,
+                                    vel[0] + cfg_.max_a_x * time_interval);
 
-        double w_next = std::clamp(w_cmd,
-                                   vel[2] + cfg_.min_a_w * time_interval,
-                                   vel[2] + cfg_.max_a_w * time_interval);
+        float w_next = std::clamp(w_cmd,
+                                    vel[2] + cfg_.min_a_w * time_interval,
+                                    vel[2] + cfg_.max_a_w * time_interval);
 
         // 输出结果
         retv[0] = v_next;   // 前进线速度
         retv[1] = 0.0;      // 差动小车不考虑 y 方向
         retv[2] = w_next;   // 角速度
 
+        std::cout << "limit acc v_cmd = " << v_next << ", w_cmd = " << w_next << std::endl;
+        
         return retv;
     }
 };
 
 
+
 class RotateController {
- public:
+public:
    
     // rotate from ang1 to ang2
     RotateController(const MotionConfig& cfg) {
@@ -156,33 +209,90 @@ public:
 
     // set posi_rot_ and ang_ before call calculateCMD
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
-        assert(ang_ >= 0 && ang_ <= 2*M_PI);
-
+        //assert(ang_ >= 0 && ang_ <= 2*M_PI);
+        float ang = std::fmod(ang_, 2*M_PI);
         Pointf<3> retv = {0, 0, 0};
         if(posi_rot_) {
-            while(pose[2] > ang_) {
+            while(pose[2] > ang) {
                 pose[2] = pose[2] - 2*M_PI;
             }
-            if(pose[2] + cfg_.max_v_w*time_interval < ang_) {
-                retv[2] = cfg_.max_v_w;
-            } else {
-                retv[2] = (ang_ - pose[2])/time_interval;
-            }
+            std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
+            retv[2] = std::min(cfg_.max_v_w, (ang - pose[2])/time_interval);
         } else {
-            while(pose[2] < ang_) {
+            while(pose[2] < ang) {
                 pose[2] = pose[2] + 2*M_PI;
             }
-            if(pose[2] + cfg_.min_v_w*time_interval > ang_) {
-                retv[2] = cfg_.min_v_w;
-            } else {
-                retv[2] = (ang_ - pose[2])/time_interval;
-            }
+            std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
+            retv[2] = std::max(cfg_.min_v_w, (ang - pose[2])/time_interval);
         }
+
+        retv[2] = std::clamp(retv[2],
+                vel[2] + cfg_.min_a_w * time_interval,
+                vel[2] + cfg_.max_a_w * time_interval);
+
         return retv;
     }
 
 };
 
+// have no linear velocity
+class TwoPhaseLineFollowController : public LineFollowController {
+public:
+    TwoPhaseLineFollowController(const MotionConfig& cfg) 
+    : LineFollowController(cfg), rot_ctl_(std::make_shared<ConstantRotateController>(cfg)) {}
+
+    // set pt1_ and pt2_ before call calculateCMD
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
+        Pointf<3> retv = {0, 0, 0};
+
+        // if current robot is heading to target, move forward
+        if(!reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
+            Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
+
+            double ref_theta = std::fmod(std::atan2(ref_vec.y(), ref_vec.x()), 2*M_PI);
+            if(ref_theta < 0) { ref_theta += 2*M_PI; } 
+
+            double dist_to_end = ref_vec.norm();
+
+            double cur_theta = std::fmod(pose[2], 2*M_PI);
+            std::cout << "ref_theta = " << ref_theta << ", cur_theta = " << cur_theta << std::endl;
+
+            if(reachOrientation(ref_theta, cur_theta)) {
+                if(dist_to_end > cfg_.max_v_x*time_interval) {
+                    retv[0] = cfg_.max_v_x;
+                } else {
+                    retv[0] = dist_to_end/time_interval;
+                }
+                retv[0] = std::clamp(retv[0],
+                                            vel[0] + cfg_.min_a_x * time_interval,
+                                            vel[0] + cfg_.max_a_x * time_interval);
+
+                std::cout << "move forward" << std::endl;
+
+            } else {
+
+                // otherwise rotate to target direction
+                rot_ctl_->ang_ = ref_theta; // update target angle
+
+                if(fabs(ref_theta - cur_theta) <= M_PI) {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
+                    else { rot_ctl_->posi_rot_ = false; }
+                } else {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
+                    else { rot_ctl_->posi_rot_ = true; }                    
+                }
+
+                std::cout << "rotate positive = " << rot_ctl_->posi_rot_ << std::endl;
+
+                retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+            }
+        }
+        return retv;
+    }
+
+    RotateControllerPtr rot_ctl_;
+};
 
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 
@@ -301,14 +411,28 @@ public:
             wait_ = true;
             return cmd_vel;
         }
+        // if(agent_->id_ == 0 
+        //     && count_of_iter_ == 30
+        // ) {
+        //     std::stringstream ss;
+        //     ss << "pub fake error state, count_of_iter_ = " << count_of_iter_;
+        //     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        //     lamapf_and_gazebo_msgs::msg::ErrorState msg;
+        //     msg.agent_id = agent_->id_;
+        //     msg.error_state = 0;
+        //     error_state_publisher_->publish(msg);
+        // }                                  
+        // if current orientation is not the pose's direction 
+
+        
         if(start_ptf_[2] != target_ptf_[2]) {
             // if out of current position (when rotate), stop and replan
             float dist_to_target = (Pointf<2>{target_ptf_[0], target_ptf_[1]} - Pointf<2>{pose[0], pose[1]}).Norm();
             if(dist_to_target > 0.1) {
-                // std::stringstream ss;
-                // ss << "current pose " << pose << " out of target position " << target_ptf_
-                //    << " in rotate, then stop and replan";
-                // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                std::stringstream ss;
+                ss << "current pose " << pose << " out of target position " << target_ptf_
+                   << " in rotate, then stop and replan";
+                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
                 lamapf_and_gazebo_msgs::msg::ErrorState msg;
                 msg.agent_id = agent_->id_;
@@ -332,51 +456,71 @@ public:
             // ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
             // RCLCPP_INFO(this->get_logger(), ss.str());
             
-            // std::cout << "**agent vel cmd, " << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
+            std::cout << "**agent vel cmd rot, " << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
 
             cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
         } else {
-            // if out of current line (when move forward), stop and replan
-            double dist_to_line = pointDistToLine(Pointf<2>{pose[0], pose[1]}, 
-                                                  Pointf<2>{start_ptf_[0], start_ptf_[1]},
-                                                  Pointf<2>{target_ptf_[0], target_ptf_[1]});
-            if(dist_to_line > 0.1) { 
-                std::stringstream ss;
-                ss << "current pose " << pose << " out of target line " << start_ptf_ << "->" << target_ptf_
-                   << " in move forward, then stop and replan, dist_to_line = " << dist_to_line;
-                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                wait_ = true;
-                lamapf_and_gazebo_msgs::msg::ErrorState msg;
-                msg.agent_id = agent_->id_;
-                msg.error_state = 0;
-                error_state_publisher_->publish(msg);
-                // sleep(1);
-                // assert(0);
-                return cmd_vel;
-            }
-            double dist_to_direct = std::fmod(target_ptf_[2] - pose[2], 2*M_PI);                                      
-            if(dist_to_direct > 0.1) { 
-                std::stringstream ss;
-                ss << "current pose " << pose << "'s direction out of target line " << start_ptf_ << "->" << target_ptf_
-                   << " in move forward, then stop and replan, dist_to_direct = " << dist_to_direct;
-                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                wait_ = true;
-                lamapf_and_gazebo_msgs::msg::ErrorState msg;
-                msg.agent_id = agent_->id_;
-                msg.error_state = 0;
-                error_state_publisher_->publish(msg);
-                // sleep(1);
-                // assert(0);
-                return cmd_vel;
-            }
-            // move forward
-            line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
-            line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
+            if(!reachOrientation(pose[2], start_ptf_[2])) {
+                // rotate
+                rot_ctl_->ang_ = start_ptf_[2]; // update target angle
 
-            //std::cout << "**agent vel cmd, " << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
+                if(fabs(start_ptf_[2] - pose[2]) <= 0.5*M_PI + 0.001) {
+                    if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = true; }
+                    else { rot_ctl_->posi_rot_ = false; }
+                } else {
+                    if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = false; }
+                    else { rot_ctl_->posi_rot_ = true; }                    
+                }
+                // std::stringstream ss;
+                // ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
+                // RCLCPP_INFO(this->get_logger(), ss.str());
+                
+                std::cout << "**agent vel cmd rot, " << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
 
-            cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);
+                cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
+            } else {
+                // if out of current line (when move forward), stop and replan
+                double dist_to_line = pointDistToLine(Pointf<2>{pose[0], pose[1]}, 
+                                                    Pointf<2>{start_ptf_[0], start_ptf_[1]},
+                                                    Pointf<2>{target_ptf_[0], target_ptf_[1]});
+                if(dist_to_line > 0.1) { 
+                    std::stringstream ss;
+                    ss << "current pose " << pose << " out of target line " << start_ptf_ << "->" << target_ptf_
+                    << " in move forward, then stop and replan, dist_to_line = " << dist_to_line;
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    wait_ = true;
+                    lamapf_and_gazebo_msgs::msg::ErrorState msg;
+                    msg.agent_id = agent_->id_;
+                    msg.error_state = 0;
+                    error_state_publisher_->publish(msg);
+                    // sleep(1);
+                    // assert(0);
+                    return cmd_vel;
+                }
+                double dist_to_direct = std::fmod(target_ptf_[2] - pose[2], 2*M_PI);   
+                if(dist_to_direct > 0.1) { 
+                    std::stringstream ss;
+                    ss << "current pose " << pose << "'s direction out of target line " << start_ptf_ << "->" << target_ptf_
+                    << " in move forward, then stop and replan, dist_to_direct = " << dist_to_direct;
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    wait_ = true;
+                    lamapf_and_gazebo_msgs::msg::ErrorState msg;
+                    msg.agent_id = agent_->id_;
+                    msg.error_state = 0;
+                    error_state_publisher_->publish(msg); 
+                    // sleep(1);
+                    // assert(0);
+                    return cmd_vel;
+                }
+                // move forward
+                line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
+                line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
+
+                std::cout << "**agent vel cmd mov, " << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
+
+                cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); 
+            }
         }
         // TODO: predict whether there is obstacle in future path
         // if is, wait utill run out of time
@@ -403,9 +547,11 @@ public:
         msg.agent_id = agent_->id_;
         pose_publisher_->publish(msg);
 
-        // std::stringstream ss;
-        // ss << "agent " << agent_->id_ << " pub pose(x,y,yaw) = " << msg.x << ", " << msg.y << ", " << msg.yaw;
-        // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        if(!wait_) {
+            std::stringstream ss;
+            ss << "agent " << agent_->id_ << ", cmdvel = " << velcmd_ << ", pub pose(x,y,yaw) = " << msg.x << ", " << msg.y << ", " << msg.yaw;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str()); 
+        }
     }
 
     // TODO: publish pose by localization

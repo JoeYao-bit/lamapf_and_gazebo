@@ -822,7 +822,22 @@ double orientToRadius(const int& orient) {
     return retv;
 }
 
-
+int radiusToOrient(const double& radius) {
+    int retv = 0;
+    double radius_fmod = std::fmod(radius, 2*M_PI);
+    if(fabs(radius_fmod-0)<=M_PI/2) {
+        return 0; // 0 degree
+    } else if(fabs(radius_fmod-M_PI)<=M_PI/2) {
+        return 1; // 180 degree
+    } else if(fabs(radius_fmod-1.5*M_PI)<=M_PI/2) {
+        return 2; // 270 degree
+    } else if(fabs(radius_fmod-.5*M_PI)<=M_PI/2) {
+        return 3; // 90 degree
+    } 
+    std::cout << "FATAL: undefined angle = " << radius << std::endl;
+    assert(0);
+    return 0;
+}
 
 // maintain all poses of current agents, x, y, z, yaw
 extern std::vector<Pointf<3> > allAgentPoses;
@@ -851,11 +866,32 @@ Pointf<3> GridToPtf(const Pointi<2>& pt) {
     return retv;
 }
 
+// assume center of map is (0, 0) in the world coordinate system
+Pointi<2> PtfToGrid(const Pointf<3>& pt) {
+    Pointi<2> retv = {0, 0};
+    retv[0] = std::round(pt[0]/reso) + .5*dim[0];
+    retv[1] = .5*dim[1] - std::round(pt[1]/reso);
+    return retv;
+}
+
+Pointf<3> PoseIntToPtf(const Pose<int, 2>& pose) {
+    Pointf<3> ptf = GridToPtf(pose.pt_);
+    ptf[2] = orientToRadius(pose.orient_);
+    return ptf;
+}
+
 Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose) {
     Pointf<3> ptf = GridToPtf(pose->pt_);
     ptf[2] = orientToRadius(pose->orient_);
     return ptf;
 }
+
+Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf) {
+    Pose<int, 2> pose;
+    pose.pt_ = PtfToGrid(ptf);
+    pose.orient_ = radiusToOrient(ptf[2]);
+    return pose;
+};
 
 // sdf file path of real robot Circle/Block2D agents in LA-MAPF
 std::vector<std::string> ROBOT_SDFS = {

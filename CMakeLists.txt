@@ -61,6 +61,11 @@ target_link_libraries(test_central_controller ${EXTERNAL_LIBS} )
 ament_target_dependencies(test_central_controller ${dependencies})
 install(TARGETS test_central_controller DESTINATION lib/${PROJECT_NAME})
 
+add_executable(test_mpc_controller src/test_mpc_controller.cpp)
+target_link_libraries(test_mpc_controller ${EXTERNAL_LIBS} )
+ament_target_dependencies(test_mpc_controller ${dependencies})
+install(TARGETS test_mpc_controller DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

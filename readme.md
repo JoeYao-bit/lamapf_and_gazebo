@@ -718,11 +718,15 @@ ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:
 
 
 
+如何在终端模拟发送自定义ErrorState
 
+想发布到 /AgentErrorState 话题
 
+ros2 topic pub /AgentErrorState lamapf_and_gazebo_msgs/msg/ErrorState "{agent_id: 3, error_state: -1}"
 
+运行后会默认 持续发布（10Hz）。如果只想发一条，可以加 --once：
 
-
+ros2 topic pub --once /AgentErrorState lamapf_and_gazebo_msgs/msg/ErrorState "{agent_id: 3, error_state: -1}"
 
 
 
