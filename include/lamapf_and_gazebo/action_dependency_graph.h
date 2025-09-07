@@ -37,14 +37,14 @@
             int id_count = 0;
             for(int i=0; i<paths_.size(); i++) {
                 path_index_to_node_[i].resize(paths_[i].size());
-                //std::cout << "path " << i <<"(" << paths_[i].size() << ")" << ": ";
+                std::cout << "path " << i <<"(" << paths_[i].size() << ")" << ": ";
                 for(int j=0; j<paths_[i].size(); j++) {
-                    //std::cout << *all_poses_[paths_[i][j]] << " ";
+                    std::cout << *all_poses_[paths_[i][j]] << " ";
                     path_index_to_node_[i][j] = id_count;
                     node_to_path_index_.push_back({i, j});
                     id_count ++;
                 }
-                //std::cout << std::endl;
+                std::cout << std::endl;
             }
             ADG_.resize(id_count, {});
             action_status_.resize(id_count, UNVISITED);
@@ -210,7 +210,7 @@
         bool isActionValid(int action_id) const {
             for(const auto& pre_id : ADG_[action_id]) {
                 if(!isActionLeave(pre_id)) { 
-                    //std::cout << "a" << node_to_path_index_[action_id].first << ", t=" << node_to_path_index_[action_id].second << " is invalid because " << "a" << node_to_path_index_[pre_id].first << ", t=" << node_to_path_index_[pre_id].second << " is not leave" << std::endl;
+                    std::cout << "a" << node_to_path_index_[action_id].first << ", t=" << node_to_path_index_[action_id].second << " is invalid because " << "a" << node_to_path_index_[pre_id].first << ", t=" << node_to_path_index_[pre_id].second << " is not leave" << std::endl;
                     return false;
                  }
             }

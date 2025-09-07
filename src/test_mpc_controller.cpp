@@ -2,6 +2,15 @@
 
 #include "lamapf_and_gazebo/controller.h"
 
+Pointi<2> pt1, pt2;
+auto mpc = std::make_shared<TwoPhaseLineFollowController>(MotionConfig());
+
+Pointf<3> start_ptf = {.2, .5, M_PI/6}, target_ptf{1., 0, 0};
+Pointf<3> cur_ptf = start_ptf, cur_vel = {0,0,0};
+Pose<int, 2> start_pose = PtfToPoseInt(start_ptf), target_pose = PtfToPoseInt(target_ptf);
+std::vector<Pointf<3>> history_ptfs;
+float time_interval = 0.1;
+bool set_pt1 = true;
 
 int main() {
 
@@ -10,14 +19,7 @@ int main() {
     // MPCLineFollowController
     dim[0] = 30;
     dim[1] = 30;
-    auto mpc = std::make_shared<TwoPhaseLineFollowController>(MotionConfig());
-    
-    Pointf<3> start_ptf = {.2, .5, M_PI/6}, target_ptf{1., 0, 0};
-    Pointf<3> cur_ptf = start_ptf, cur_vel = {0,0,0};
-    Pose<int, 2> start_pose = PtfToPoseInt(start_ptf), target_pose = PtfToPoseInt(target_ptf);
-    Pose<int, 2> cur_pose;
-    std::vector<Pointf<3>> history_ptfs;
-    float time_interval = 0.1;
+
 
     mpc->pt1_ = Pointf<2>{start_ptf[0],  start_ptf[1]};
     mpc->pt2_ = Pointf<2>{target_ptf[0], target_ptf[1]}; // update target line
@@ -26,6 +28,36 @@ int main() {
     Canvas canvas("LA-MAPF visualization", dim[0], dim[1], 1./reso, zoom_ratio);
     canvas.resolution_ = 1./reso;
     bool wait = false;
+
+    auto callback = [](int event, int x, int y, int flags, void *) {
+        if(event == cv::EVENT_LBUTTONDOWN) {
+            if(set_pt1) {
+                pt1[0] = x;
+                pt1[1] = y;
+                set_pt1 = false;
+                std::cout << "get point pt1 " << x << ", " << y << std::endl;
+            } else {
+                pt2[0] = x;
+                pt2[1] = y;
+                set_pt1 = true;
+                std::cout << "get point pt2 " << x << ", " << y << std::endl;
+                auto temp_ptf1 = GridToPtf(pt1);
+                auto temp_ptf2 = GridToPtf(pt2);
+                mpc->pt1_[0] = temp_ptf1[0];
+                mpc->pt1_[1] = temp_ptf1[1];
+                mpc->pt2_[0] = temp_ptf2[0];
+                mpc->pt2_[1] = temp_ptf2[1];
+                mpc->finish_rotate_ = false;
+                cur_ptf = mpc->pt1_;
+                start_pose.pt_ = pt1;
+                start_pose.pt_ = pt2;
+                cur_vel = freeNav::Pointf<3>{0,0,0};
+            }
+        }
+    };
+
+    canvas.setMouseCallBack(callback);
+
     while(true) {
         canvas.resetCanvas();
         canvas.drawEmptyGrid();
@@ -39,7 +71,7 @@ int main() {
                 cur_ptf = updateAgentPose(cur_ptf, cur_vel, time_interval);
                 history_ptfs.push_back(cur_ptf);
 
-                cur_pose = PtfToPoseInt(cur_ptf);
+                Pose<int, 2> cur_pose = PtfToPoseInt(cur_ptf);
                 std::cout << "cmd vel = " << cur_vel << ", cur pose = " << cur_ptf << std::endl;
             } else {
                 std::cout << "reach target" << std::endl;

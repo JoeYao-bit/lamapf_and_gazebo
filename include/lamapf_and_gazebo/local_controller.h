@@ -15,7 +15,7 @@ struct MotionConfig {
     float max_v_y = 0, min_v_y = 0;
     float max_v_w = .5*M_PI, min_v_w = -.5*M_PI;
 
-    float max_a_x = .5, min_a_x = -0.5;
+    float max_a_x = 3.0, min_a_x = -3.;
     float max_a_y = 0, min_a_y = 0;
     float max_a_w = 2*M_PI, min_a_w = -2*M_PI;
 
@@ -30,7 +30,11 @@ bool reachPosition(const float& x, const float& y, const float& target_x, const 
 bool reachOrientation(const float& orientation, const float& target_orientation) {
     float angle_to_target = fmod(orientation-target_orientation, 2*M_PI);
     // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
-    return fabs(angle_to_target) < 0.03;
+    if(angle_to_target <= M_PI) {
+        return fabs(angle_to_target) < 0.03;
+    } else {
+        return fabs(2*M_PI - angle_to_target) < 0.03;   
+    }
 }
 
 bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
@@ -46,10 +50,13 @@ public:
     }
 
     // pose: x, y, theta / vel: x, y, theta
-    virtual Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const = 0;
+    virtual Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) = 0;
 
     MotionConfig cfg_;
     Pointf<2> pt1_, pt2_;
+
+    // used only in two phase line follower
+    bool finish_rotate_ = false;
 
 };
 
@@ -62,7 +69,7 @@ public:
     ConstantLineFollowController(const MotionConfig& cfg) : LineFollowController(cfg) {}
 
     // set pt1_ and pt2_ before call calculateCMD
-    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
         double dist_to_end = sqrt(pow(pose[0]-pt2_[0], 2) + pow(pose[1]-pt2_[1], 2));
         if(dist_to_end > cfg_.max_v_x*time_interval) {
@@ -71,9 +78,9 @@ public:
             retv[0] = dist_to_end/time_interval;
         }
 
-        retv[0] = std::clamp(retv[0],
-                vel[0] + cfg_.min_a_x * time_interval,
-                vel[0] + cfg_.min_a_x * time_interval);
+        // retv[0] = std::clamp(retv[0],
+        //         vel[0] + cfg_.min_a_x * time_interval,
+        //         vel[0] + cfg_.max_a_x * time_interval);
 
         return retv;
     }
@@ -85,7 +92,7 @@ public:
     MPCLineFollowController(const MotionConfig& cfg) : LineFollowController(cfg) {}
 
     // set pt1_ and pt2_ before call calculateCMD
-    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
 
         // -----------------------------
@@ -101,13 +108,13 @@ public:
         // -----------------------------
         Eigen::Vector2f pos_error(pose[0] - pt2_[0], pose[1] - pt2_[1]);
 
-        std::cout << "pos_error = " << pos_error[0] << ", " << pos_error[1] << std::endl;
+        //std::cout << "pos_error = " << pos_error[0] << ", " << pos_error[1] << std::endl;
 
         float e_long  =  pos_error.x() * std::cos(ref_theta) + pos_error.y() * std::sin(ref_theta);
         float e_lat   = -pos_error.x() * std::sin(ref_theta) + pos_error.y() * std::cos(ref_theta);
         float e_theta = pose[2] - ref_theta;
 
-        std::cout << "e_long = " << e_long << ", e_lat = " << e_lat << ", e_theta = " << e_theta << std::endl;
+        //std::cout << "e_long = " << e_long << ", e_lat = " << e_lat << ", e_theta = " << e_theta << std::endl;
 
         // -----------------------------
         // 3. 成本函数权重
@@ -133,7 +140,7 @@ public:
         float v_cmd = u_star[0];
         float w_cmd = u_star[1];
 
-        std::cout << "raw v_cmd = " << v_cmd << ", w_cmd = " << w_cmd << std::endl;
+        //std::cout << "raw v_cmd = " << v_cmd << ", w_cmd = " << w_cmd << std::endl;
 
         // -----------------------------
         // 5. 速度限制 (MotionConfig)
@@ -142,7 +149,7 @@ public:
         v_cmd = std::clamp(v_cmd, cfg_.min_v_x, cfg_.max_v_x);
         w_cmd = std::clamp(w_cmd, cfg_.min_v_w, cfg_.max_v_w);
 
-        std::cout << "clamp v_cmd = " << v_cmd << ", w_cmd = " << w_cmd << std::endl;
+        //std::cout << "clamp v_cmd = " << v_cmd << ", w_cmd = " << w_cmd << std::endl;
 
         // -----------------------------
         // 6. 输出 [vx, vy, w]
@@ -175,7 +182,7 @@ public:
         retv[1] = 0.0;      // 差动小车不考虑 y 方向
         retv[2] = w_next;   // 角速度
 
-        std::cout << "limit acc v_cmd = " << v_next << ", w_cmd = " << w_next << std::endl;
+        //std::cout << "limit acc v_cmd = " << v_next << ", w_cmd = " << w_next << std::endl;
         
         return retv;
     }
@@ -192,7 +199,7 @@ public:
     }
 
     // poseposi_rot: x, y, theta / vel: x, y, theta
-    virtual Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const = 0;
+    virtual Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) = 0;
 
     MotionConfig cfg_;
     bool posi_rot_;
@@ -208,7 +215,7 @@ public:
     ConstantRotateController(const MotionConfig& cfg) : RotateController(cfg) {}
 
     // set posi_rot_ and ang_ before call calculateCMD
-    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         //assert(ang_ >= 0 && ang_ <= 2*M_PI);
         float ang = std::fmod(ang_, 2*M_PI);
         Pointf<3> retv = {0, 0, 0};
@@ -216,19 +223,19 @@ public:
             while(pose[2] > ang) {
                 pose[2] = pose[2] - 2*M_PI;
             }
-            std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
+            //std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
             retv[2] = std::min(cfg_.max_v_w, (ang - pose[2])/time_interval);
         } else {
             while(pose[2] < ang) {
                 pose[2] = pose[2] + 2*M_PI;
             }
-            std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
+            //std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
             retv[2] = std::max(cfg_.min_v_w, (ang - pose[2])/time_interval);
         }
 
-        retv[2] = std::clamp(retv[2],
-                vel[2] + cfg_.min_a_w * time_interval,
-                vel[2] + cfg_.max_a_w * time_interval);
+        // retv[2] = std::clamp(retv[2],
+        //         vel[2] + cfg_.min_a_w * time_interval,
+        //         vel[2] + cfg_.max_a_w * time_interval);
 
         return retv;
     }
@@ -242,36 +249,22 @@ public:
     : LineFollowController(cfg), rot_ctl_(std::make_shared<ConstantRotateController>(cfg)) {}
 
     // set pt1_ and pt2_ before call calculateCMD
-    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) const override {
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
 
-        // if current robot is heading to target, move forward
-        if(!reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
-            Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
+        // rotate head to target
+        Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
+        //std::cout << "(1)finish_rotate_ = " << finish_rotate_ << std::endl;
+        if(!finish_rotate_) {
 
             double ref_theta = std::fmod(std::atan2(ref_vec.y(), ref_vec.x()), 2*M_PI);
             if(ref_theta < 0) { ref_theta += 2*M_PI; } 
 
-            double dist_to_end = ref_vec.norm();
-
             double cur_theta = std::fmod(pose[2], 2*M_PI);
-            std::cout << "ref_theta = " << ref_theta << ", cur_theta = " << cur_theta << std::endl;
+            if(cur_theta < 0) { cur_theta += 2*M_PI; } 
 
-            if(reachOrientation(ref_theta, cur_theta)) {
-                if(dist_to_end > cfg_.max_v_x*time_interval) {
-                    retv[0] = cfg_.max_v_x;
-                } else {
-                    retv[0] = dist_to_end/time_interval;
-                }
-                retv[0] = std::clamp(retv[0],
-                                            vel[0] + cfg_.min_a_x * time_interval,
-                                            vel[0] + cfg_.max_a_x * time_interval);
-
-                std::cout << "move forward" << std::endl;
-
-            } else {
-
-                // otherwise rotate to target direction
+            if(!reachOrientation(cur_theta, ref_theta)) {
+                                // otherwise rotate to target direction
                 rot_ctl_->ang_ = ref_theta; // update target angle
 
                 if(fabs(ref_theta - cur_theta) <= M_PI) {
@@ -282,57 +275,78 @@ public:
                     else { rot_ctl_->posi_rot_ = true; }                    
                 }
 
-                std::cout << "rotate positive = " << rot_ctl_->posi_rot_ << std::endl;
-
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
+                std::cout << "rotate positive = " << rot_ctl_->posi_rot_ << ", retv w = " << retv << std::endl;
+
+            } else {
+                finish_rotate_ = true;
+                //std::cout << "set finish_rotate_ = true" << std::endl;
             }
+            //std::cout << "(2)finish_rotate_ = " << finish_rotate_ << std::endl;
+        } else if(!reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
+            // move to target
+            double dist_to_end = ref_vec.norm();
+            if(dist_to_end > cfg_.max_v_x*time_interval) {
+                retv[0] = cfg_.max_v_x;
+            } else {
+                retv[0] = dist_to_end/time_interval;
+            }
+
+            //std::cout << "dist_to_end = " << dist_to_end << ", retv v = " << retv << std::endl;
+
+            // retv[0] = std::clamp(retv[0],
+            //                             vel[0] + cfg_.min_a_x * time_interval,
+            //                             vel[0] + cfg_.max_a_x * time_interval);
+        } else {
+            //std::cout << "finish all task" << std::endl;
         }
         return retv;
     }
 
     RotateControllerPtr rot_ctl_;
+
 };
 
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 
-    // double new_x = pose[0] + time_interval*velcmd[0]*cos(pose[2]) - time_interval*velcmd[1]*sin(pose[2]), 
+    double new_x = pose[0] + time_interval*velcmd[0]*cos(pose[2]) - time_interval*velcmd[1]*sin(pose[2]), 
 
-    //        new_y = pose[1] + time_interval*velcmd[0]*sin(pose[2]) + time_interval*velcmd[1]*cos(pose[2]),
+           new_y = pose[1] + time_interval*velcmd[0]*sin(pose[2]) + time_interval*velcmd[1]*cos(pose[2]),
 
-    //        new_theta = fmod((pose[2] + time_interval*velcmd[2]) + 2*M_PI, 2*M_PI);
-
-    // return Pointf<3>{new_x, new_y, new_theta};
-
-    double x = pose[0];
-    double y = pose[1];
-    double theta = pose[2];
-
-    double v = velcmd[0];   // 前向速度
-    double vy = velcmd[1];  // 横向速度（若用单轨，可设为 0）
-    double w = velcmd[2];   // 角速度
-
-    double new_x, new_y, new_theta;
-
-    if (std::fabs(w) < 1e-6) {
-        // ω≈0，退化为直线运动
-        new_x = x + (v * std::cos(theta) - vy * std::sin(theta)) * time_interval;
-        new_y = y + (v * std::sin(theta) + vy * std::cos(theta)) * time_interval;
-    } else {
-        // 精确积分（指数映射）
-        double sin_dt = std::sin(w * time_interval);
-        double cos_dt = std::cos(w * time_interval);
-
-        new_x = x + ( v * sin_dt + vy * (cos_dt - 1.0)) / w * std::cos(theta)
-                  + ( v * (1.0 - cos_dt) + vy * sin_dt ) / w * (-std::sin(theta));
-
-        new_y = y + ( v * sin_dt + vy * (cos_dt - 1.0)) / w * std::sin(theta)
-                  + ( v * (1.0 - cos_dt) + vy * sin_dt ) / w * ( std::cos(theta));
-    }
-
-    new_theta = std::fmod(theta + w * time_interval + 2*M_PI, 2*M_PI);
+           new_theta = fmod((pose[2] + time_interval*velcmd[2]) + 2*M_PI, 2*M_PI);
 
     return Pointf<3>{new_x, new_y, new_theta};
+
+    // double x = pose[0];
+    // double y = pose[1];
+    // double theta = pose[2];
+
+    // double v = velcmd[0];   // 前向速度
+    // double vy = velcmd[1];  // 横向速度（若用单轨，可设为 0）
+    // double w = velcmd[2];   // 角速度
+
+    // double new_x, new_y, new_theta;
+
+    // if (std::fabs(w) < 1e-6) {
+    //     // ω≈0，退化为直线运动
+    //     new_x = x + (v * std::cos(theta) - vy * std::sin(theta)) * time_interval;
+    //     new_y = y + (v * std::sin(theta) + vy * std::cos(theta)) * time_interval;
+    // } else {
+    //     // 精确积分（指数映射）
+    //     double sin_dt = std::sin(w * time_interval);
+    //     double cos_dt = std::cos(w * time_interval);
+
+    //     new_x = x + ( v * sin_dt + vy * (cos_dt - 1.0)) / w * std::cos(theta)
+    //               + ( v * (1.0 - cos_dt) + vy * sin_dt ) / w * (-std::sin(theta));
+
+    //     new_y = y + ( v * sin_dt + vy * (cos_dt - 1.0)) / w * std::sin(theta)
+    //               + ( v * (1.0 - cos_dt) + vy * sin_dt ) / w * ( std::cos(theta));
+    // }
+
+    // new_theta = std::fmod(theta + w * time_interval + 2*M_PI, 2*M_PI);
+
+    // return Pointf<3>{new_x, new_y, new_theta};
 
 };
 
@@ -358,7 +372,7 @@ public:
 
 
         std::stringstream ss1;
-        ss1 << "agent " << agent->id_ << " init pose " << cur_pose_;                
+        ss1 << "agent_" << agent_->id_ << " init pose " << cur_pose_;                
         RCLCPP_INFO(this->get_logger(), ss1.str().c_str());
 
         // NOTICE: cache queue size must be large enough to cache all agent's pose or goal
@@ -368,7 +382,7 @@ public:
         error_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::ErrorState>("AgentErrorState", 10);
 
         std::stringstream ss3;
-        ss3 << "GoalUpdate" << agent->id_;
+        ss3 << "GoalUpdate" << agent_->id_;
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
                 ss3.str().c_str(), 2*all_agent_size,
                 [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
@@ -381,22 +395,23 @@ public:
                         target_ptf_[2] = msg->target_yaw;  
                         wait_          = msg->wait;
 
-                        // std::stringstream ss2;
-                        // ss2 << "in LocalController, receive goal, agent id = " << agent_->id_ << " ";
-                        // ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
-                        // RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
+                        line_ctl_->finish_rotate_ = false;
+                        std::stringstream ss2;
+                        ss2 << "in LocalController, receive goal, agent_" << agent_->id_ << " ";
+                        ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
+                        RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
                     }
                 });
 
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this,time_interval,agent]() {
             //std::stringstream ss;
-            //ss << "during LocalController loop, agent id = " << agent->id_;
+            //ss << "during LocalController loop, agent_" << agent->id_;
             //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
             publishPoseMsgSim(time_interval);
         });
         std::stringstream ss;
-        ss << "init LocalController, agent id = " << agent->id_;
+        ss << "init LocalController, agent_" << agent_->id_;
         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
         
     }
@@ -430,7 +445,7 @@ public:
             float dist_to_target = (Pointf<2>{target_ptf_[0], target_ptf_[1]} - Pointf<2>{pose[0], pose[1]}).Norm();
             if(dist_to_target > 0.1) {
                 std::stringstream ss;
-                ss << "current pose " << pose << " out of target position " << target_ptf_
+                ss << "agent_" << agent_->id_ << ", current pose " << pose << " out of target position " << target_ptf_
                    << " in rotate, then stop and replan";
                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 wait_ = true;
@@ -452,11 +467,11 @@ public:
                 if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = false; }
                 else { rot_ctl_->posi_rot_ = true; }                    
             }
-            // std::stringstream ss;
-            // ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-            // RCLCPP_INFO(this->get_logger(), ss.str());
+            std::stringstream ss;
+            ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
             
-            std::cout << "**agent vel cmd rot, " << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
+            std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
 
             cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
@@ -472,11 +487,11 @@ public:
                     if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = false; }
                     else { rot_ctl_->posi_rot_ = true; }                    
                 }
-                // std::stringstream ss;
-                // ss << "current pose " << poses[i] << "start pose = " << start_ptf << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-                // RCLCPP_INFO(this->get_logger(), ss.str());
+                std::stringstream ss;
+                ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
+                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 
-                std::cout << "**agent vel cmd rot, " << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
+                std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
 
                 cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
             } else {
@@ -517,7 +532,7 @@ public:
                 line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
                 line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
 
-                std::cout << "**agent vel cmd mov, " << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
+                std::cout << "**vel cmd mov, agent_" << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
 
                 cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); 
             }
@@ -537,7 +552,7 @@ public:
         auto pre_pose = cur_pose_;
         cur_pose_ = updateAgentPose(cur_pose_, velcmd_, time_interval);
         // if(agent_->id_ == 9) {
-        //     std::cout << "agent id = " << agent_->id_ << ", velcmd_ = " << velcmd_ << ", pre pose = "
+        //     std::cout << "agent_id = " << agent_->id_ << ", velcmd_ = " << velcmd_ << ", pre pose = "
         //           << pre_pose << ", cur pose = " << cur_pose_ << std::endl;
         // }
         lamapf_and_gazebo_msgs::msg::UpdatePose msg;
@@ -549,7 +564,7 @@ public:
 
         if(!wait_) {
             std::stringstream ss;
-            ss << "agent " << agent_->id_ << ", cmdvel = " << velcmd_ << ", pub pose(x,y,yaw) = " << msg.x << ", " << msg.y << ", " << msg.yaw;
+            ss << "agent_" << agent_->id_ << ", cmdvel = " << velcmd_ << ", pub pose(x,y,yaw) = " << msg.x << ", " << msg.y << ", " << msg.yaw;
             RCLCPP_INFO(this->get_logger(), ss.str().c_str()); 
         }
     }

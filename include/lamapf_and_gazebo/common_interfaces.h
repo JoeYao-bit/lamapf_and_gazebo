@@ -50,7 +50,6 @@ struct timeval tv_after;
 
 int zoom_ratio = 10;
 
-Pointi<2> pt1;
 int current_subgraph_id = 0;
 bool draw_all_subgraph_node = false;
 bool draw_all_instance = false;

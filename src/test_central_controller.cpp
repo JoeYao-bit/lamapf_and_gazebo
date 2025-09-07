@@ -116,12 +116,20 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({10}, 1).front(); // get all instances
+        deserializer.getTestInstance({20}, 1).front(); // get all instances
 
-    std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<MPCLineFollowController>(MotionConfig()));
+    std::vector<LineFollowControllerPtr> line_ctls;
+
     // MPCLineFollowController
     // ConstantLineFollowController
-    std::vector<RotateControllerPtr> rot_ctls(instances.first.size(), std::make_shared<ConstantRotateController>(MotionConfig()));
+    // TwoPhaseLineFollowController
+    std::vector<RotateControllerPtr> rot_ctls;
+
+
+    for(int i=0; i<instances.first.size(); i++) {
+      line_ctls.push_back(std::make_shared<TwoPhaseLineFollowController>(MotionConfig()));
+      rot_ctls.push_back(std::make_shared<ConstantRotateController>(MotionConfig()));
+    }
 
     const auto& agents = instances.first;
     // start single robot controller

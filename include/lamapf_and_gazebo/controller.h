@@ -74,9 +74,9 @@ public:
                         // reach current target, move to next target
                         ADG_.setActionLeave(i, progress_of_agents_[i]);
                         progress_of_agents_[i]++;
-                        //std::cout << "agent " << i  << " at pose " << poses[i] << " reach " << target_ptf << std::endl; 
+                        //std::cout << "agent_" << i  << " at pose " << poses[i] << " reach " << target_ptf << std::endl; 
                         //std::stringstream ss;
-                        //ss << "flag 1.0" << ", agent " << i  << " at pose " << poses[i] << " reach " << target_ptf;
+                        //ss << "flag 1.0" << ", agent_" << i  << " at pose " << poses[i] << " reach " << target_ptf;
                         //RCLCPP_INFO(node_ptr_->get_logger(), ss.str());
                         // ADG_.setActionProcessing(i, progress_of_agents_[i]);
                     } else {
@@ -89,7 +89,7 @@ public:
                     target_pose_id = ADG_.paths_[i].back();
                     target_pose = ADG_.all_poses_[target_pose_id];
                     target_ptf = PoseIntToPtf(target_pose);
-                    //std::cout << "agent " << i << " finish all pose, now at " << poses[i] << ", final pose = " << target_ptf << std::endl;
+                    //std::cout << "agent_" << i << " finish all pose, now at " << poses[i] << ", final pose = " << target_ptf << std::endl;
                     break;
                 }
             }
@@ -150,7 +150,7 @@ public:
                 // std::cout << "target_pose_id = " << target_pose_id << ", ADG_.all_poses_.size = " << ADG_.all_poses_.size() << std::endl;
                 target_pose = ADG_.all_poses_[target_pose_id];
                 target_ptf = PoseIntToPtf(target_pose);
-                //std::cout << "agent " << i << " finish2, at " << poses[i] << ", target = " << target_ptf << std::endl;
+                //std::cout << "agent_" << i << " finish2, at " << poses[i] << ", target = " << target_ptf << std::endl;
             }
             //std::cout << "cur vel = " << cmd_vel << std::endl;
             // break;
@@ -227,9 +227,9 @@ public:
 
         auto agents = instances.first;
 
-        // for(int i=0; i<agents.size(); i++) {
-        //     std::cout << "path " << i << " size = " << paths[i].size() << std::endl;
-        // }
+        for(int i=0; i<agents.size(); i++) {
+            std::cout << "path " << i << " size = " << paths[i].size() << std::endl;
+        }
 
         ADG_ = std::make_shared<ActionDependencyGraph<2>>(paths, agents, all_poses_);
 
@@ -267,7 +267,7 @@ public:
                     all_agent_poses_[msg->agent_id][2] = msg->yaw;
 
                     // std::stringstream ss;
-                    // ss << "during CentralController loop, receive pose of agent " << msg->agent_id;
+                    // ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
                     // ss << " = " << all_agent_poses_[msg->agent_id];
                     // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 });
@@ -276,7 +276,7 @@ public:
                 "AgentErrorState", 2*instances.first.size(),
                 [this](lamapf_and_gazebo_msgs::msg::ErrorState::SharedPtr msg) {
                     std::stringstream ss;
-                    ss << "receive error state from agent " << msg->agent_id << 
+                    ss << "receive error state from agent_" << msg->agent_id << 
                     ", error state = " << msg->error_state << ", all action paused";
                     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                     paused_ = true;
@@ -289,7 +289,7 @@ public:
                             goal_publishers_[i]->publish(msg); 
                     }
                     // update map (TODO) and replan
-                    reupdate(all_agent_poses_);
+                    //reupdate(all_agent_poses_);
                 });               
         
         //sleep(1);  // wait to ensure all local agent will receive initial goal      
@@ -324,7 +324,7 @@ public:
             size_t start_pose_id = ADG_->paths_[i][0];
 
             ss.str("");ss.clear();
-            ss << "agent " << i << ", start_pose_id = " << start_pose_id;
+            ss << "agent_" << i << ", start_pose_id = " << start_pose_id;
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
 
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
@@ -334,7 +334,7 @@ public:
             size_t target_pose_id = ADG_->paths_[i][1];
             
             ss.str("");ss.clear();
-            ss << "agent " << i << ", target_pose_id = " << target_pose_id;
+            ss << "agent_" << i << ", target_pose_id = " << target_pose_id;
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
 
             PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
@@ -356,7 +356,7 @@ public:
             goal_publishers_[i]->publish(msg);
 
             ss.str("");ss.clear();
-            ss << "central controller pub agent " << i << "'s initial goal " << start_ptf <<"->" << target_ptf;
+            ss << "central controller pub agent_" << i << "'s initial goal " << start_ptf <<"->" << target_ptf;
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
 
         }
@@ -493,17 +493,17 @@ public:
                     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
 
                     std::stringstream ss;        
-                    ss << "agent "<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;
+                    ss << "agent_"<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;
                     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
 
                     // check whether reach current target, if reach, update progress to next pose
                     if(reachTarget(cur_pose, target_ptf)) {
-                        //RCLCPP_INFO(this->get_logger(), "agent %i reach temporal target state", i);
+                        RCLCPP_INFO(this->get_logger(), "agent_%i reach temporal target state", i);
                         // reach current target, move to next target
                         ADG_->setActionLeave(i, progress_of_agents_[i]);
                         // if next action is valid
                         if(!ADG_->isActionValid(i, progress_of_agents_[i] + 1)) {
-                            //RCLCPP_INFO(this->get_logger(), "agent %i next action %i invalid", i, progress_of_agents_[i] + 1);
+                            RCLCPP_INFO(this->get_logger(), "agent_%i next action %i invalid", i, progress_of_agents_[i] + 1);
                             // tell the agent to wait utill action are valid
                             lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
                             msg.agent_id   = i;
@@ -512,9 +512,9 @@ public:
                             goal_publishers_[i]->publish(msg); 
                             break;
                         }
-                        // RCLCPP_INFO(this->get_logger(), "agent %i's progress update from % i/%i to %i/%i",
-                        //              i, progress_of_agents_[i], ADG_->paths_[i].size(),
-                        //              progress_of_agents_[i]+1, ADG_->paths_[i].size());
+                        RCLCPP_INFO(this->get_logger(), "agent_%i's progress update from % i/%i to %i/%i",
+                                     i, progress_of_agents_[i], ADG_->paths_[i].size(),
+                                     progress_of_agents_[i]+1, ADG_->paths_[i].size());
                         progress_of_agents_[i]++;
                         //RCLCPP_INFO(this->get_logger(), "flag 0.4");
                         if(progress_of_agents_[i] + 1 <= ADG_->paths_[i].size() - 1) {
@@ -543,9 +543,9 @@ public:
                             
                             goal_publishers_[i]->publish(msg); 
 
-                            // std::stringstream ss;
-                            // ss << "central controller pub agent " << i << "'s goal " << start_ptf <<"->" << target_ptf;
-                            // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                            std::stringstream ss;
+                            ss << "central controller pub agent_" << i << "'s goal " << start_ptf <<"->" << target_ptf;
+                            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
 
                         }
                     } else {
@@ -553,7 +553,7 @@ public:
                         break;
                     }
                 } else {
-                    //RCLCPP_INFO(this->get_logger(), "agent %i 's task finish", i);
+                    RCLCPP_INFO(this->get_logger(), "agent_%i 's task finish", i);
                     // when finish tell it to wait at target
                     lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
                     msg.agent_id   = i;

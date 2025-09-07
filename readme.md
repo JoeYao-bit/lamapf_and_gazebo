@@ -730,7 +730,15 @@ ros2 topic pub --once /AgentErrorState lamapf_and_gazebo_msgs/msg/ErrorState "{a
 
 
 
+要选择所有包含 "hello" 的行：
 
+    双击第一个 "hello"
+
+    按 Ctrl+Shift+L 选择所有 "hello"
+
+    按 Ctrl+L 选择整行
+
+    按 Ctrl+C 复制
 
 
 
