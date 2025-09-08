@@ -97,6 +97,12 @@ std::pair<AgentPtrs<2>, InstanceOrients<2> > CenteralController::instances_ = {}
 
 DimensionLength* CenteralController::dim_ = nullptr;
 
+std::vector<std::pair<Pointf<3>, Pointf<3> > > CenteralController::recover_tasks_ = {};  
+
+bool CenteralController::pub_init_target_ = true;
+
+bool CenteralController::need_replan_ = false;
+
 int main(int argc, char ** argv) {
 
     rclcpp::init(argc, argv);
@@ -174,11 +180,12 @@ int main(int argc, char ** argv) {
     // when do not use gazebo gui, every thing is ok,
     // but when use it, some agent node will not work (if gazebo node and other node are in the same executor)
     // draw gazebo gui
-    // rclcpp::executors::MultiThreadedExecutor executor3;
-    // auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
-    // executor3.add_node(gazebo_node);
-    // std::thread t3([&]() { executor3.spin(); });
-    // t3.join();  
+
+    rclcpp::executors::MultiThreadedExecutor executor3;
+    auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
+    executor3.add_node(gazebo_node);
+    std::thread t3([&]() { executor3.spin(); });
+    t3.join();  
 
     t1.join();
     t2.join();

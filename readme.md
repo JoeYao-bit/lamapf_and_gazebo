@@ -728,9 +728,17 @@ ros2 topic pub /AgentErrorState lamapf_and_gazebo_msgs/msg/ErrorState "{agent_id
 
 ros2 topic pub --once /AgentErrorState lamapf_and_gazebo_msgs/msg/ErrorState "{agent_id: 3, error_state: -1}"
 
+在 ROS2 里，终端打印 (RCLCPP_INFO / RCLCPP_ERROR / RCLCPP_WARN 等) 默认是写到 stdout/stderr，所以有几种方式可以把这些日志保存到文件里：
 
+直接用终端重定向（最简单）
 
-要选择所有包含 "hello" 的行：
+ros2 run my_pkg my_node > my_node.log 2>&1
+
+如果你在用 ros2 launch：
+
+ros2 launch my_pkg my_launch.py > launch.log 2>&1
+
+vscode要选择所有包含 "hello" 的行：
 
     双击第一个 "hello"
 

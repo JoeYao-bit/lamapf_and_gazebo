@@ -48,6 +48,7 @@ int main() {
                 mpc->pt2_[0] = temp_ptf2[0];
                 mpc->pt2_[1] = temp_ptf2[1];
                 mpc->finish_rotate_ = false;
+                mpc->finish_move_ = false;
                 cur_ptf = mpc->pt1_;
                 start_pose.pt_ = pt1;
                 start_pose.pt_ = pt2;

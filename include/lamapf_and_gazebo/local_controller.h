@@ -13,7 +13,7 @@
 struct MotionConfig {
     float max_v_x = .5, min_v_x = 0;
     float max_v_y = 0, min_v_y = 0;
-    float max_v_w = .5*M_PI, min_v_w = -.5*M_PI;
+    float max_v_w = .25*M_PI, min_v_w = -.25*M_PI;
 
     float max_a_x = 3.0, min_a_x = -3.;
     float max_a_y = 0, min_a_y = 0;
@@ -53,10 +53,13 @@ public:
     virtual Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) = 0;
 
     MotionConfig cfg_;
-    Pointf<2> pt1_, pt2_;
+    Pointf<3> pt1_, pt2_;
 
     // used only in two phase line follower
     bool finish_rotate_ = false;
+
+    bool finish_move_ = false;
+
 
 };
 
@@ -255,7 +258,13 @@ public:
         // rotate head to target
         Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
         //std::cout << "(1)finish_rotate_ = " << finish_rotate_ << std::endl;
-        if(!finish_rotate_) {
+
+        if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
+            finish_move_ = true;
+            finish_rotate_ = true;
+        }
+
+        if(!finish_rotate_ && !finish_move_) {
 
             double ref_theta = std::fmod(std::atan2(ref_vec.y(), ref_vec.x()), 2*M_PI);
             if(ref_theta < 0) { ref_theta += 2*M_PI; } 
@@ -277,14 +286,14 @@ public:
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
-                std::cout << "rotate positive = " << rot_ctl_->posi_rot_ << ", retv w = " << retv << std::endl;
+                std::cout << "rotate 1 positive = " << rot_ctl_->posi_rot_ << ", retv w = " << retv << std::endl;
 
             } else {
                 finish_rotate_ = true;
                 //std::cout << "set finish_rotate_ = true" << std::endl;
             }
             //std::cout << "(2)finish_rotate_ = " << finish_rotate_ << std::endl;
-        } else if(!reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
+        } else if(finish_rotate_ && !finish_move_) {
             // move to target
             double dist_to_end = ref_vec.norm();
             if(dist_to_end > cfg_.max_v_x*time_interval) {
@@ -298,8 +307,33 @@ public:
             // retv[0] = std::clamp(retv[0],
             //                             vel[0] + cfg_.min_a_x * time_interval,
             //                             vel[0] + cfg_.max_a_x * time_interval);
-        } else {
-            //std::cout << "finish all task" << std::endl;
+        } else if(finish_rotate_ && finish_move_) {
+            // rotate target pose
+
+            double ref_theta = std::fmod(pt2_[2], 2*M_PI);
+            if(ref_theta < 0) { ref_theta += 2*M_PI; } 
+
+            double cur_theta = std::fmod(pose[2], 2*M_PI);
+            if(cur_theta < 0) { cur_theta += 2*M_PI; } 
+
+            if(!reachOrientation(cur_theta, ref_theta)) {
+                rot_ctl_->ang_ = ref_theta; 
+
+                if(fabs(ref_theta - cur_theta) <= M_PI) {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
+                    else { rot_ctl_->posi_rot_ = false; }
+                } else {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
+                    else { rot_ctl_->posi_rot_ = true; }                    
+                }
+
+                retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+                std::cout << "rotate 2 positive = " << rot_ctl_->posi_rot_ << ", retv w = " << retv << std::endl;
+
+            } else {
+                std::cout << "finish all task" << std::endl;
+            }
         }
         return retv;
     }
@@ -396,6 +430,11 @@ public:
                         wait_          = msg->wait;
 
                         line_ctl_->finish_rotate_ = false;
+                        line_ctl_->finish_move_ = false;
+                        
+                        line_ctl_->pt1_ = start_ptf_;
+                        line_ctl_->pt2_ = target_ptf_;
+
                         std::stringstream ss2;
                         ss2 << "in LocalController, receive goal, agent_" << agent_->id_ << " ";
                         ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
@@ -416,7 +455,123 @@ public:
         
     }
 
+
+
     // calculate vel cmd for each agent
+    // Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
+    //     count_of_iter_ ++;
+    //     Pointf<3> cmd_vel = {0,0,0};
+    //     // if is required to wait, then wait
+    //     if(wait_) { return cmd_vel; }
+    //     if(reachTarget(pose, target_ptf_)) {
+    //         wait_ = true;
+    //         return cmd_vel;
+    //     }
+
+    //     if(start_ptf_[2] != target_ptf_[2]) {
+    //         // if out of current position (when rotate), stop and replan
+    //         float dist_to_target = (Pointf<2>{target_ptf_[0], target_ptf_[1]} - Pointf<2>{pose[0], pose[1]}).Norm();
+    //         if(dist_to_target > 0.1) {
+    //             std::stringstream ss;
+    //             ss << "agent_" << agent_->id_ << ", current pose " << pose << " out of target position " << target_ptf_
+    //                << " in rotate, then stop and replan";
+    //             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+    //             wait_ = true;
+    //             lamapf_and_gazebo_msgs::msg::ErrorState msg;
+    //             msg.agent_id = agent_->id_;
+    //             msg.error_state = 0;
+    //             error_state_publisher_->publish(msg);
+    //             //sleep(1);
+    //             //assert(0);
+    //             return cmd_vel;
+    //         }
+    //         // rotate
+    //         rot_ctl_->ang_ = target_ptf_[2]; // update target angle
+
+    //         if(fabs(target_ptf_[2] - start_ptf_[2]) <= 0.5*M_PI + 0.001) {
+    //             if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = true; }
+    //             else { rot_ctl_->posi_rot_ = false; }
+    //         } else {
+    //             if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = false; }
+    //             else { rot_ctl_->posi_rot_ = true; }                    
+    //         }
+    //         std::stringstream ss;
+    //         ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
+    //         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            
+    //         std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
+
+    //         cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+    //     } else {
+    //         if(!reachOrientation(pose[2], start_ptf_[2])) {
+    //             // rotate
+    //             rot_ctl_->ang_ = start_ptf_[2]; // update target angle
+
+    //             if(fabs(start_ptf_[2] - pose[2]) <= 0.5*M_PI + 0.001) {
+    //                 if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = true; }
+    //                 else { rot_ctl_->posi_rot_ = false; }
+    //             } else {
+    //                 if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = false; }
+    //                 else { rot_ctl_->posi_rot_ = true; }                    
+    //             }
+    //             std::stringstream ss;
+    //             ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
+    //             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                
+    //             std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
+
+    //             cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
+    //         } else {
+    //             // if out of current line (when move forward), stop and replan
+    //             double dist_to_line = pointDistToLine(Pointf<2>{pose[0], pose[1]}, 
+    //                                                 Pointf<2>{start_ptf_[0], start_ptf_[1]},
+    //                                                 Pointf<2>{target_ptf_[0], target_ptf_[1]});
+    //             if(dist_to_line > 0.1) { 
+    //                 std::stringstream ss;
+    //                 ss << "current pose " << pose << " out of target line " << start_ptf_ << "->" << target_ptf_
+    //                 << " in move forward, then stop and replan, dist_to_line = " << dist_to_line;
+    //                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+    //                 wait_ = true;
+    //                 lamapf_and_gazebo_msgs::msg::ErrorState msg;
+    //                 msg.agent_id = agent_->id_;
+    //                 msg.error_state = 0;
+    //                 error_state_publisher_->publish(msg);
+    //                 // sleep(1);
+    //                 // assert(0);
+    //                 return cmd_vel;
+    //             }
+    //             double dist_to_direct = std::fmod(target_ptf_[2] - pose[2], 2*M_PI);   
+    //             if(dist_to_direct > 0.1) { 
+    //                 std::stringstream ss;
+    //                 ss << "current pose " << pose << "'s direction out of target line " << start_ptf_ << "->" << target_ptf_
+    //                 << " in move forward, then stop and replan, dist_to_direct = " << dist_to_direct;
+    //                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+    //                 wait_ = true;
+    //                 lamapf_and_gazebo_msgs::msg::ErrorState msg;
+    //                 msg.agent_id = agent_->id_;
+    //                 msg.error_state = 0;
+    //                 error_state_publisher_->publish(msg); 
+    //                 // sleep(1);
+    //                 // assert(0);
+    //                 return cmd_vel;
+    //             }
+    //             // move forward
+    //             line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
+    //             line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
+
+    //             std::cout << "**vel cmd mov, agent_" << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
+
+    //             cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); 
+    //         }
+    //     }
+    //     // TODO: predict whether there is obstacle in future path
+    //     // if is, wait utill run out of time
+    //     // if run out of time, call central controller to replan  
+    //     return cmd_vel;
+    // }
+
+        // calculate vel cmd for each agent
     Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
         count_of_iter_ ++;
         Pointf<3> cmd_vel = {0,0,0};
@@ -426,120 +581,7 @@ public:
             wait_ = true;
             return cmd_vel;
         }
-        // if(agent_->id_ == 0 
-        //     && count_of_iter_ == 30
-        // ) {
-        //     std::stringstream ss;
-        //     ss << "pub fake error state, count_of_iter_ = " << count_of_iter_;
-        //     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-        //     lamapf_and_gazebo_msgs::msg::ErrorState msg;
-        //     msg.agent_id = agent_->id_;
-        //     msg.error_state = 0;
-        //     error_state_publisher_->publish(msg);
-        // }                                  
-        // if current orientation is not the pose's direction 
-
-        
-        if(start_ptf_[2] != target_ptf_[2]) {
-            // if out of current position (when rotate), stop and replan
-            float dist_to_target = (Pointf<2>{target_ptf_[0], target_ptf_[1]} - Pointf<2>{pose[0], pose[1]}).Norm();
-            if(dist_to_target > 0.1) {
-                std::stringstream ss;
-                ss << "agent_" << agent_->id_ << ", current pose " << pose << " out of target position " << target_ptf_
-                   << " in rotate, then stop and replan";
-                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                wait_ = true;
-                lamapf_and_gazebo_msgs::msg::ErrorState msg;
-                msg.agent_id = agent_->id_;
-                msg.error_state = 0;
-                error_state_publisher_->publish(msg);
-                //sleep(1);
-                //assert(0);
-                return cmd_vel;
-            }
-            // rotate
-            rot_ctl_->ang_ = target_ptf_[2]; // update target angle
-
-            if(fabs(target_ptf_[2] - start_ptf_[2]) <= 0.5*M_PI + 0.001) {
-                if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = true; }
-                else { rot_ctl_->posi_rot_ = false; }
-            } else {
-                if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = false; }
-                else { rot_ctl_->posi_rot_ = true; }                    
-            }
-            std::stringstream ss;
-            ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-            
-            std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
-
-            cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
-
-        } else {
-            if(!reachOrientation(pose[2], start_ptf_[2])) {
-                // rotate
-                rot_ctl_->ang_ = start_ptf_[2]; // update target angle
-
-                if(fabs(start_ptf_[2] - pose[2]) <= 0.5*M_PI + 0.001) {
-                    if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = true; }
-                    else { rot_ctl_->posi_rot_ = false; }
-                } else {
-                    if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = false; }
-                    else { rot_ctl_->posi_rot_ = true; }                    
-                }
-                std::stringstream ss;
-                ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                
-                std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
-
-                cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
-            } else {
-                // if out of current line (when move forward), stop and replan
-                double dist_to_line = pointDistToLine(Pointf<2>{pose[0], pose[1]}, 
-                                                    Pointf<2>{start_ptf_[0], start_ptf_[1]},
-                                                    Pointf<2>{target_ptf_[0], target_ptf_[1]});
-                if(dist_to_line > 0.1) { 
-                    std::stringstream ss;
-                    ss << "current pose " << pose << " out of target line " << start_ptf_ << "->" << target_ptf_
-                    << " in move forward, then stop and replan, dist_to_line = " << dist_to_line;
-                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                    wait_ = true;
-                    lamapf_and_gazebo_msgs::msg::ErrorState msg;
-                    msg.agent_id = agent_->id_;
-                    msg.error_state = 0;
-                    error_state_publisher_->publish(msg);
-                    // sleep(1);
-                    // assert(0);
-                    return cmd_vel;
-                }
-                double dist_to_direct = std::fmod(target_ptf_[2] - pose[2], 2*M_PI);   
-                if(dist_to_direct > 0.1) { 
-                    std::stringstream ss;
-                    ss << "current pose " << pose << "'s direction out of target line " << start_ptf_ << "->" << target_ptf_
-                    << " in move forward, then stop and replan, dist_to_direct = " << dist_to_direct;
-                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                    wait_ = true;
-                    lamapf_and_gazebo_msgs::msg::ErrorState msg;
-                    msg.agent_id = agent_->id_;
-                    msg.error_state = 0;
-                    error_state_publisher_->publish(msg); 
-                    // sleep(1);
-                    // assert(0);
-                    return cmd_vel;
-                }
-                // move forward
-                line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
-                line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
-
-                std::cout << "**vel cmd mov, agent_" << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
-
-                cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); 
-            }
-        }
-        // TODO: predict whether there is obstacle in future path
-        // if is, wait utill run out of time
-        // if run out of time, call central controller to replan  
+        cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); ;
         return cmd_vel;
     }
 

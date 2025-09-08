@@ -196,7 +196,7 @@ public:
         dim_ = dim;
         instances_ = instances;                
         paused_ = false;
-
+        pub_init_target_ = true;
         std::cout << "construct all possible poses" << std::endl;
 
         Id total_index = getTotalIndexOfSpace<2>(this->dim_);
@@ -279,29 +279,78 @@ public:
                     ss << "receive error state from agent_" << msg->agent_id << 
                     ", error state = " << msg->error_state << ", all action paused";
                     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                    paused_ = true;
-                    // tell all agent to stop
+                    need_replan_ = true;
+                    // tell all agent to wait
                     for(int i=0; i<instances_.first.size(); i++) {
-                            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
-                            msg.agent_id   = i;
-                            msg.wait       = true;
-                            
-                            goal_publishers_[i]->publish(msg); 
+                        lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                        msg.agent_id   = i;
+                        msg.wait       = true;
+                        
+                        goal_publishers_[i]->publish(msg); 
                     }
-                    // update map (TODO) and replan
-                    //reupdate(all_agent_poses_);
                 });               
         
         //sleep(1);  // wait to ensure all local agent will receive initial goal      
-        pubInitialGoals();
 
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
             //std::stringstream ss;
             //ss << "during CentralController loop, paused = " << paused_;
             //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            if(need_replan_) {
+                need_replan_ = false;
+                paused_ = true;
+                // update map (TODO) and replan plath
+                reupdate(all_agent_poses_);
+                // tell all agent to stop
+                recover_tasks_.clear();
+                RCLCPP_INFO(this->get_logger(), "after finish replan, pub all agent's recover task"); 
+                for(int i=0; i<instances_.first.size(); i++) {
+                    Pose<int, 2> pre_pose = *(ADG_->all_poses_[ADG_->paths_[i][progress_of_agents_[i]]]);
+                    Pointf<3> pre_ptf = PoseIntToPtf(pre_pose);
+                    recover_tasks_.push_back(std::make_pair(this->all_agent_poses_[i], pre_ptf));
+
+                    // tell all agents to return to last valid state
+                    lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                    msg.start_x   = this->all_agent_poses_[i][0];
+                    msg.start_y   = this->all_agent_poses_[i][1];
+                    msg.start_yaw = this->all_agent_poses_[i][2];
+
+                    msg.target_x   = pre_ptf[0];
+                    msg.target_y   = pre_ptf[1];
+                    msg.target_yaw = pre_ptf[2];
+                    
+                    msg.agent_id   = i;
+                    msg.wait       = false;
+                    
+                    goal_publishers_[i]->publish(msg); 
+                }
+            }
             if(!paused_) {
-                updateADG(all_agent_poses_);
+                if(recover_tasks_.empty()) {
+                    updateADG(all_agent_poses_); 
+                } else {
+                    RCLCPP_INFO(this->get_logger(), "do recover task");
+                    // checck whether finish recover task, 
+                    // if finish, clear recover_tasks_
+                    bool all_recover_task_finish = true;
+                    for(int i=0; i<instances_.first.size(); i++) {
+                        if(!reachTarget(all_agent_poses_[i], recover_tasks_[i].second)) {
+                            all_recover_task_finish = false;
+                            break; 
+                        } else {
+                            std::stringstream ss;
+                            ss << "agent_" << i << "'s recover task finish";
+                            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                        }
+                    }
+                    if(all_recover_task_finish) {
+                        recover_tasks_.clear();
+                        std::stringstream ss;
+                        ss << "all recover task finish";
+                        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    }
+                }
             }
         });
 
@@ -372,7 +421,8 @@ public:
         assert(poses.size() == instances_.first.size());
         Pose<int, 2> pose;
         for(int i=0; i<instances_.first.size(); i++) {
-            instances_.second[i].first = PtfToPoseInt(poses[i]);
+            Pose<int, 2> pre_pose = *(ADG_->all_poses_[ADG_->paths_[i][progress_of_agents_[i]]]);
+            instances_.second[i].first = pre_pose;//PtfToPoseInt(poses[i]);
             std::stringstream ss;
             ss << "Agent " << i << "'s initial ptf: " << poses[i] << ", pose " << instances_.second[i].first;
             ss << "| pose to ptf " << PoseIntToPtf(instances_.second[i].first);
@@ -415,10 +465,10 @@ public:
 
         }                                                                                                             RCLCPP_INFO(this->get_logger(), "finish reupdate paths");
 
-        pubInitialGoals();            
-
         RCLCPP_INFO(this->get_logger(), "finish pub inital goal after reupdate paths");    
-            
+        
+        pub_init_target_ = true;
+
         return true;
     }
 
@@ -466,6 +516,12 @@ public:
 
     // update progress
     void updateADG(const Pointfs<3>& poses) {
+
+        if(pub_init_target_) {
+            pubInitialGoals();
+            pub_init_target_ = false;// only pub the first time
+        }
+
         Pointf<3> start_ptf, target_ptf;
         bool all_finished = true;
         //RCLCPP_INFO(this->get_logger(), "update ADG");
@@ -638,6 +694,13 @@ public:
 
     static std::vector<int> progress_of_agents_;
 
+    // task about all agent return to previous valid state
+    // ready for replan
+    // used only when task is interrupted
+    // empty means current no recover task, otherwise current have recover task
+    // when have recover task, do it first
+    static std::vector<std::pair<Pointf<3>, Pointf<3> > > recover_tasks_;
+
     std::vector<rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr> goal_publishers_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
@@ -647,6 +710,11 @@ public:
     rclcpp::TimerBase::SharedPtr timer_;
 
     static bool paused_;
+
+    static bool pub_init_target_;
+
+    static bool need_replan_;
+
 
 };
 
