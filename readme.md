@@ -749,12 +749,37 @@ vscode要选择所有包含 "hello" 的行：
     按 Ctrl+C 复制
 
 
+增加了断点恢复功能
 
 
 
+接收到机器人异常后，
+测试中模拟发送: ros2 topic pub --once /AgentErrorState lamapf_and_gazebo_msgs/msg/ErrorState "{agent_id: 3, error_state: -1}"
+
+按机器人最后的可用位姿重新规划路径
+启动 controller:
+ros2 run lamapf_and_gazebo test_central_controller > my_node.log 2>&1 
+
+规划完成后继续原任务
 
 
+开发碰撞预测
 
+分为旋转预测和前进预测。
+如果旋转过程中的几何形状或者前进预测中的几何形状，与激光点云有交集，则判断为存在碰撞风险
+逐个检查每个点是否在几何形状范围内。
+local controller应该等待直到可用，或者等待超过一定时间，重启任务
+
+MAPF计划执行的两种不确定性：
+1, 时间不确定性
+通信延时和速度差异，导致各机器人到达预定目标的时间先后顺序不确定，如不考虑可能导致任务失败
+采用action dependency graph，机器人必须等计划中必须更早的机器人到达目标位姿后再继续任务
+否则等待，
+确保严格按照时间顺序执行计划
+
+2, 位姿不确定性
+机器人在移动过程中，因为定位存在误差，可能随机抖动，导致机器人不能一直严格按照计划执行
+检测到偏离原计划路径过远时，按照当前位置重新规划，以完成任务目标
 
 
 

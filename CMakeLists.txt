@@ -20,6 +20,7 @@ find_package(tf2 REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(lamapf_and_gazebo_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -38,7 +39,7 @@ include_directories(include
                     ${EIGEN3_INCLUDE_DIRS}   # 把 Eigen 头文件路径加进来
                     )
 
-set(dependencies rclcpp ros_gz_interfaces tf2 std_msgs geometry_msgs lamapf_and_gazebo_msgs)        
+set(dependencies rclcpp ros_gz_interfaces tf2 std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs)        
 
 add_executable(spawn_entity src/test_spawn_entity.cpp)
 ament_target_dependencies(spawn_entity ${dependencies})

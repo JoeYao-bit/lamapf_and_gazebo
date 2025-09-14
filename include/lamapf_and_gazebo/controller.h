@@ -7,7 +7,7 @@
 
 
 #include "lamapf_and_gazebo/fake_agents.h"
-
+#include "sensor_msgs/msg/laser_scan.hpp"
 
 
 class CenteralControllerFull {
@@ -325,6 +325,7 @@ public:
                     
                     goal_publishers_[i]->publish(msg); 
                 }
+                paused_ = false;
             }
             if(!paused_) {
                 if(recover_tasks_.empty()) {

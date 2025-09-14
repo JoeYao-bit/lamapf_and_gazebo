@@ -122,7 +122,7 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({20}, 1).front(); // get all instances
+        deserializer.getTestInstance({10}, 1).front(); // get all instances
 
     std::vector<LineFollowControllerPtr> line_ctls;
 
@@ -179,13 +179,14 @@ int main(int argc, char ** argv) {
     // 250825 13：31
     // when do not use gazebo gui, every thing is ok,
     // but when use it, some agent node will not work (if gazebo node and other node are in the same executor)
-    // draw gazebo gui
-
-    rclcpp::executors::MultiThreadedExecutor executor3;
-    auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
-    executor3.add_node(gazebo_node);
-    std::thread t3([&]() { executor3.spin(); });
-    t3.join();  
+    // to draw gazebo gui
+    // uncomment following code, compile and launch gazebo via
+    // ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py  
+    // rclcpp::executors::MultiThreadedExecutor executor3;
+    // auto gazebo_node = std::make_shared<GazeboGUI>(central_controller);  
+    // executor3.add_node(gazebo_node);
+    // std::thread t3([&]() { executor3.spin(); });
+    // t3.join();  
 
     t1.join();
     t2.join();

@@ -8,6 +8,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
+#include "sensor_msgs/msg/laser_scan.hpp"
 
 // m/s, rad/s
 struct MotionConfig {
@@ -442,6 +443,15 @@ public:
                     }
                 });
 
+
+        std::stringstream ss4;
+        ss3 << "LaseScan" << agent_->id_;
+        laserscan_subscriber_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+                ss3.str().c_str(), 10,
+                [this](sensor_msgs::msg::LaserScan::SharedPtr msg) {
+                    laserscan_msg_ = msg;
+                });
+
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this,time_interval,agent]() {
             //std::stringstream ss;
@@ -455,7 +465,95 @@ public:
         
     }
 
+    // whether the agent will collide with obstacle if rotate
+    // check via laserscan
+    // std_msgs/Header header
+    // float32 angle_min
+    // float32 angle_max
+    // float32 angle_increment
+    // float32 time_increment
+    // float32 scan_time
+    // float32 range_min
+    // float32 range_max
+    // float32[] ranges
+    // float32[] intensities
+    // need test
+    bool hasCollideInRotate(float rotate_angle) const {
+        if(agent_->type_ == "Block_2D") {
+            std::shared_ptr<BlockAgent_2D> block_ptr = std::dynamic_pointer_cast<BlockAgent_2D>(agent_);
+            auto min_pt = block_ptr->min_pt_, max_pt = block_ptr->max_pt_;
+            //bool collide = BlockAgentRotateCollisionCheck(min_pt, max_pt, rotate_angle, angle, dist, count== 1);
+            // 遍历 ranges 数组
+            for (size_t i = 0; i < laserscan_msg_->ranges.size(); i++) {
+                float range = laserscan_msg_->ranges[i];
+                float angle = laserscan_msg_->angle_min + i * laserscan_msg_->angle_increment;
+                // 过滤无效点
+                if (std::isnan(range) || std::isinf(range)) {
+                    continue;
+                }
 
+                if(BlockAgentRotateCollisionCheck(min_pt, max_pt, rotate_angle, angle, range)) {
+                    return true;
+                }        
+            }
+        } else if(agent_->type_ == "Circle") {
+            std::shared_ptr<CircleAgent<2>> circle_ptr = std::dynamic_pointer_cast<CircleAgent<2>>(agent_);
+            // 遍历 ranges 数组
+            for (size_t i = 0; i < laserscan_msg_->ranges.size(); i++) {
+                float range = laserscan_msg_->ranges[i];
+                float angle = laserscan_msg_->angle_min + i * laserscan_msg_->angle_increment;
+                // 过滤无效点
+                if (std::isnan(range) || std::isinf(range)) {
+                    continue;
+                }
+
+                if(range <= circle_ptr->radius_) {
+                    return true;
+                }        
+            }
+        }
+    }
+
+    // whether the agent will collide with obstacle if move
+    // check via laserscan
+    // need test
+    bool hasCollideInMove(float move_dist) const {
+        if(agent_->type_ == "Block_2D") {
+            std::shared_ptr<BlockAgent_2D> block_ptr = std::dynamic_pointer_cast<BlockAgent_2D>(agent_);
+            auto min_pt = block_ptr->min_pt_, max_pt = block_ptr->max_pt_;
+            //bool collide = BlockAgentMoveCollisionCheck(min_pt, max_pt, move_dist, angle, dist);
+            // 遍历 ranges 数组
+            for (size_t i = 0; i < laserscan_msg_->ranges.size(); i++) {
+                float range = laserscan_msg_->ranges[i];
+                float angle = laserscan_msg_->angle_min + i * laserscan_msg_->angle_increment;
+                // 过滤无效点
+                if (std::isnan(range) || std::isinf(range)) {
+                    continue;
+                }
+
+                if(BlockAgentMoveCollisionCheck(min_pt, max_pt, move_dist, angle, range)) {
+                    return true;
+                }        
+            }
+        } else if(agent_->type_ == "Circle") {
+            std::shared_ptr<CircleAgent<2>> circle_ptr = std::dynamic_pointer_cast<CircleAgent<2>>(agent_);
+            //bool collide = CircleAgentMoveCollisionCheck(r, mov_vec, angle, dist);
+            // 遍历 ranges 数组
+            auto mov_vec = Pointf<2>{move_dist, 0};
+            for (size_t i = 0; i < laserscan_msg_->ranges.size(); i++) {
+                float range = laserscan_msg_->ranges[i];
+                float angle = laserscan_msg_->angle_min + i * laserscan_msg_->angle_increment;
+                // 过滤无效点
+                if (std::isnan(range) || std::isinf(range)) {
+                    continue;
+                }
+                
+                if(CircleAgentMoveCollisionCheck(circle_ptr->radius_, mov_vec, angle, range)) {
+                    return true;
+                }        
+            }
+        }
+    }
 
     // calculate vel cmd for each agent
     // Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
@@ -639,6 +737,10 @@ public:
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_subscriber_;
+
+    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_subscriber_;
+
+    sensor_msgs::msg::LaserScan::SharedPtr laserscan_msg_;
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_publisher_;
 
