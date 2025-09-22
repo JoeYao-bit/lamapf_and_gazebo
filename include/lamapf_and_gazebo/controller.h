@@ -637,11 +637,15 @@ public:
         ADG_->clearAllProgress();
         progress_of_agents_.resize(ADG_->agents_.size(), 0);
     }
-
+ 
     static int PathVisualize(IS_OCCUPIED_FUNC<2> is_occupied) {
-        float zoom_ratio = std::max(1., std::min(1000./dim_[0], 1000./dim_[1])); 
+        float zoom_ratio = std::max(1., ceil(std::min(1000./dim_[0], 1000./dim_[1]))); 
         Canvas canvas("LA-MAPF visualization", dim_[0], dim_[1], 1./reso, zoom_ratio);
+        std::cout << "canvas rows / cols = " << canvas.getCanvas().rows << " / " << canvas.getCanvas().cols << std::endl;
+        std::cout << "dim_[0] = " << dim_[0] << ", dim_[1] = " << dim_[1] << std::endl;
+        std::cout << "before zoom_ratio = " << zoom_ratio << ", canvas.resolution_ = " << canvas.resolution_ << std::endl;
         canvas.resolution_ = 1./reso;
+        std::cout << "after zoom_ratio = " << zoom_ratio << ", canvas.resolution_ = " << canvas.resolution_ << std::endl;
         while(rclcpp::ok()) {
             canvas.resetCanvas();
             canvas.drawEmptyGrid();
@@ -664,7 +668,7 @@ public:
                 //std::cout << "Agent " << *instances.first[i] << "'s pose "  << allAgentPoses[i] << std::endl;
                 //std::cout << "canvas.reso = " << canvas.resolution_ << std::endl;
                 //std::cout << "canvas.zoom_ratio = " << canvas.zoom_ratio_ << std::endl;
-                double x = all_agent_poses_[i][0]/reso, y = all_agent_poses_[i][1]/reso, orient = all_agent_poses_[i][2];
+                double x = all_agent_poses_[i][0], y = all_agent_poses_[i][1], orient = all_agent_poses_[i][2];
 
                 
                 instances_.first[i]->drawOnCanvas(Pointf<3>{x, y, orient}, canvas, COLOR_TABLE[i%30], false);
