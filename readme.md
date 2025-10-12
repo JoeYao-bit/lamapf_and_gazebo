@@ -835,26 +835,59 @@ MAPF计划执行的两种不确定性：
 
 
 
+# ubuntu系统跨平台互联
+
+1, 连接到同一wifi网络下，关闭vpn
+
+2, 通过ip addr show查看在wifi下的ip，关闭开启wifi后新增加的ip中
+通常是    inet 10.34.152.24/16 brd 10.34.255.255 scope global dynamic noprefixroute wlo1
+       valid_lft 4836sec preferred_lft 4836sec
+这样的格式。
+其中inet 10.34.152.24是想要的ip地址。
+
+通过ping 10.34.152.24测试在另一平台上是否可以和本机通信。
+
+3, 配置 ROS 2 环境变量
+
+ROS 2 的通信基于 DDS (Data Distribution Service)，不依赖 ROS Master（不像 ROS 1）。
+但要让两个主机在同一个 DDS 域中通信，需要统一几个关键参数。
+
+（1）确保两台机器的 ROS_DOMAIN_ID 相同
+
+在两台电脑的 ~/.bashrc 中添加相同的：
+
+export ROS_DOMAIN_ID=0
+
+如果在同一个局域网运行多个 ROS 系统，可以设置为其他数字（例如 10、20），但两台需要一致。
+
+
+在每台电脑的 ~/.bashrc 中添加：
+
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export ROS_LOCALHOST_ONLY=0
+
+ROS_LOCALHOST_ONLY=0：允许通过局域网通信（否则只在本机上）
+
+rmw_fastrtps_cpp 是默认的 DDS 实现，也可以换成 rmw_cyclonedds_cpp（通信效果更稳定）
+
+4️⃣ 测试 listener/talker
+
+A 机：
+
+ros2 run demo_nodes_cpp talker
+
+B 机：
 
 
 
 
+在家庭wifi和另一台笔记本上，只需设置好
 
+ros2 run demo_nodes_cpp listener
+export ROS_LOCALHOST_ONLY=0
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+即可通过listener和talker测试，
+估计是学校wifi特殊导致的问题
 
 
 
