@@ -878,23 +878,75 @@ ros2 run demo_nodes_cpp talker
 
 B 机：
 
+ros2 run demo_nodes_cpp listener
 
 
 
 在家庭wifi和另一台笔记本上，只需设置好
+export ROS_DOMAIN_ID=0
 
-ros2 run demo_nodes_cpp listener
 export ROS_LOCALHOST_ONLY=0
 
 即可通过listener和talker测试，
 估计是学校wifi特殊导致的问题
 
+连接Tech Sup Provide WangW Lab可以实现通信
+
+微型主机电源供电，
+
+微型主机安装配套turtlebot的建图和定位包
 
 
+1, 安装kobuki相关的包
+ecl_core,ecl_lite,kobuki_core,kobuki_ros,kobuki_ros_interfaces
+
+git clone https://github.com/stonier/ecl_lite.git
+
+git clone https://github.com/stonier/ecl_core.git
+
+git clone https://github.com/kobuki-base/kobuki_ros.git
+
+git clone https://github.com/kobuki-base/kobuki_ros_interfaces.git
+
+git clone https://github.com/kobuki-base/kobuki_core.git
+
+启动与turtlebot的连接
+ ros2 launch kobuki_node-launch.py 
+
+编译器认为基类的 operator= 被隐藏了，所以发出警告。
+
+为什么编译失败？
+
+ROS2 Jazzy 使用的 GCC/Clang 默认把 所有警告当作错误 (-Werror)，
+
+所以即便只是警告，也会直接导致构建失败。
 
 
+colcon build --cmake-args -DCMAKE_CXX_FLAGS="-Wno-error=overloaded-virtual"
 
 
+方法 1：在编译时禁止将警告当作错误
+
+你可以在 workspace 的 CMakeLists.txt 或 colcon build 时加入：
+
+需要root 和 dialout 用户组可以访问
+
+你的普通用户不在 dialout 组，所以会报 permission denied
+
+添加用户到dialout组
+
+sudo usermod -aG dialout $USER
+
+
+完全退出你的用户账号（GUI 或 SSH）。
+
+重新登录。
+
+再执行：
+
+groups
+
+你会看到 dialout 已经在列表里。
 
 
 
