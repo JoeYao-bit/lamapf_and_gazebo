@@ -949,17 +949,42 @@ groups
 你会看到 dialout 已经在列表里。
 
 
+在kobuki_ros/kobuki_node下
+启动对turtlebot的连接：ros2 launch kobuki_node-launch.py
+
+再运行ros2 run kobuki_keyop kobuki_keyop_node
+实现键盘控制移动
+
+你的 kobuki_ros_node 配置文件（YAML）中确实没有显式设置 波特率；
+
+但 stty -F /dev/ttyUSB0 显示当前串口速率为 115200 baud；
+
+这实际上就是 Kobuki 的默认波特率。
+
+所以 ✅ 你的波特率已经是正确的，不需要额外配置。
+
+运行 ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocity
+启动键盘控制运动
+
+kobuki_ros_node 实际上 订阅的是 /commands/velocity，
+而 kobuki_keyop 默认发布的是 /cmd_vel。
+
+因此需要remap cmdvel话题到/commands/velocity话题，即可实现键盘运动控制
+（神人官方，话题都不匹配）
+里程计发布在/odom话题
+
+连接激光雷达
+目前激光雷达，单独通过usb线和机器连接，不经过turtlebot本身
+
+安装 ROS 2 版 RPLIDAR 驱动包
+git clone -b ros2 https://github.com/Slamtec/rplidar_ros.git
 
 
 
+单独编译某个包
+colcon build --packages-select rplidar_ros
 
-
-
-
-
-
-
-
-
+启动连接激光雷达，并发布到话题/scan
+ros2 launch rplidar_ros rplidar_a2m8_launch.py
 
 
