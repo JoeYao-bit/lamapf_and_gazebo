@@ -988,3 +988,70 @@ colcon build --packages-select rplidar_ros
 ros2 launch rplidar_ros rplidar_a2m8_launch.py
 
 
+我一个usb口连turtlebot机器人，一个连rplidar，如何自动识别匹配usb号
+让系统自动识别并固定每个设备（即使拔插顺序改变，也不会错乱）。
+
+我们可以用 udev 规则（推荐方式） 为每个设备创建独立的固定名称：
+例如：
+
+机器人
+➜  ros2_ws udevadm info -a -n /dev/ttyUSB0 | grep -E 'idVendor|idProduct|serial' -m 3
+    SUBSYSTEMS=="usb-serial"
+    ATTRS{idProduct}=="6001"
+    ATTRS{idVendor}=="0403"
+
+激光雷达  
+➜  ros2_ws udevadm info -a -n /dev/ttyUSB1 | grep -E 'idVendor|idProduct|serial' -m 3
+    SUBSYSTEMS=="usb-serial"
+    ATTRS{idProduct}=="ea60"
+    ATTRS{idVendor}=="10c4"
+➜  ros2_ws 
+
+
+# RPLIDAR
+ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="A602WXYZ", SYMLINK+="rplidar"
+
+# TurtleBot Base (Kobuki)
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="FTXYZ123", SYMLINK+="kobuki"
+
+
+我们可以用这些信息创建一个稳定的 udev 规则，让每次插拔都自动生成固定端口名：
+/dev/kobuki 和 /dev/rplidar。
+
+
+执行：
+
+sudo nano /etc/udev/rules.d/99-robot-usb.rules
+
+填入以下内容：
+
+需要给每个机器人都配置一遍
+
+# TurtleBot Kobuki base (FTDI USB)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="kobuki"
+
+# RPLIDAR (Silicon Labs CP210x)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="rplidar"
+
+
+2️⃣ 重新加载规则并触发
+
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+然后拔掉再插上两个设备，检查：
+
+ls -l /dev/kobuki /dev/rplidar
+
+🧭 四、ROS2 中使用
+
+启动激光雷达
+
+ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_baudrate:=115200
+
+启动机器人
+
+ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
+
+测试通过
