@@ -1055,3 +1055,31 @@ ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_
 ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
 
 测试通过
+
+安装ros2建图工具包
+
+sudo apt install ros-jazzy-slam-toolbox
+
+tf只有base foot print 到odom的tf，需要laser到base foot print的tf
+
+发布静态tf
+
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
+
+激光雷达的数据话题名 /scan ≠ 激光雷达的 坐标系 frame_id = "laser"
+
+
+启动建图指令
+
+ros2 launch slam_toolbox online_async_launch.py use_sim_time:=false
+
+
+安装tf2
+
+ sudo apt install ros-jazzy-tf2
+
+ sudo apt install ros-jazzy-tf2-msgs
+
+ sudo apt install ros-jazzy-tf2-geometry-msgs 
+
+ sudo apt install ros-jazzy-tf2-ros 
