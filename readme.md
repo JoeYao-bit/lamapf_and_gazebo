@@ -963,7 +963,10 @@ groups
 
 所以 ✅ 你的波特率已经是正确的，不需要额外配置。
 
-运行 ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocity
+运行 
+
+ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocity
+
 启动键盘控制运动
 
 kobuki_ros_node 实际上 订阅的是 /commands/velocity，
@@ -1083,3 +1086,33 @@ ros2 launch slam_toolbox online_async_launch.py use_sim_time:=false
  sudo apt install ros-jazzy-tf2-geometry-msgs 
 
  sudo apt install ros-jazzy-tf2-ros 
+
+
+map_update_interval: 5.0
+
+这个参数控制 SLAM Toolbox 发布 /map_updates 的频率（秒为单位）。
+
+默认 5 秒意味着地图更新很慢，如果你只是微动或者传感器帧率低，/map_updates 可能在长时间内没有变化，看起来像“只显示第一帧地图”。
+
+throttle_scans: 1 表示每帧 scan 都处理，这可以保持更新频繁。
+
+minimum_travel_distance 和 minimum_travel_heading 控制 SLAM 是否更新地图，如果你走得太慢或者旋转角度太小，也可能导致 /map_updates 没变化。
+
+
+使用自己参数，原参数更新频率太低，最小更新距离太大
+
+原参数启动
+ros2 launch slam_toolbox online_async_launch.py 
+
+自定义参数启动
+ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
+
+
+安装地图服务器
+
+sudo apt install ros-jazzy-nav2-map-server
+
+
+保存地图到指定位置和名字，得到.pgm文件和yaml文件
+
+ros2 run nav2_map_server map_saver_cli -f ~/my_map

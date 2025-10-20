@@ -3,23 +3,19 @@ from launch_ros.actions import Node
 import os
 
 def generate_launch_description():
-    # 配置文件路径
-    configuration_directory = os.path.join(
-        '/opt/ros/jazzy/share/cartographer_ros/configuration_files'
+    config_dir = os.path.join(
+        os.getenv('HOME'), 'code', 'ros2_ws', 'src', 'lamapf_and_gazebo', 'config'
     )
 
-    configuration_basename = 'backpack_2d.lua'  # 2D 建图配置
-
-    # 1️⃣ 主 SLAM 节点
-    cartographer_node = Node(
+    carto_node = Node(
         package='cartographer_ros',
         executable='cartographer_node',
         name='cartographer_node',
         output='screen',
         parameters=[{'use_sim_time': False}],
         arguments=[
-            '-configuration_directory', configuration_directory,
-            '-configuration_basename', configuration_basename
+            '-configuration_directory', config_dir,
+            '-configuration_basename', 'turtlebot2.lua'
         ],
         remappings=[
             ('/scan', '/scan'),
@@ -27,11 +23,10 @@ def generate_launch_description():
         ]
     )
 
-    # 2️⃣ 地图栅格发布节点
-    occupancy_grid_node = Node(
+    grid_node = Node(
         package='cartographer_ros',
         executable='cartographer_occupancy_grid_node',
-        name='cartographer_occupancy_grid_node',
+        name='occupancy_grid_node',
         output='screen',
         parameters=[{'use_sim_time': False}],
         arguments=[
@@ -41,6 +36,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        cartographer_node,
-        occupancy_grid_node
+        carto_node,
+        grid_node
     ])
