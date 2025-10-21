@@ -1116,3 +1116,52 @@ sudo apt install ros-jazzy-nav2-map-server
 保存地图到指定位置和名字，得到.pgm文件和yaml文件
 
 ros2 run nav2_map_server map_saver_cli -f ~/my_map
+
+
+安装amcl定位
+
+sudo apt install ros-jazzy-nav2-amcl ros-jazzy-nav2-map-server ros-jazzy-nav2-lifecycle-manager
+
+
+启动amcl定位 
+
+ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
+
+ AMCL 粒子滤波器仍然需要 明确的初始位姿消息 /initialpose。
+
+手动运行脚本/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
+发布制定地图yaml文件的位姿
+
+即可实现定位
+
+amcl_localization.yaml参数中
+    update_min_d: 0.01
+    update_min_a: 0.01
+
+限制了更新位姿的最小阀值，静止不动或过小则不发布新的位姿
+
+
+如果地图建图原点位姿不是初始化定位的位姿，后续在rviz2中通过设置pose estimate手动重新设置初始位姿
+
+为确保地图能在rviz2中可视化，而且地图仅amcl启动时加载一次，
+先打开rviz2，选择地图为map，再启动定位
+
+最新关键指令
+
+启动激光雷达
+ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_baudrate:=115200
+
+启动连接turtlebot2
+ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
+
+启动建图
+ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
+
+保存地图
+ros2 run nav2_map_server map_saver_cli -f ~/my_map
+
+启动定位
+ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
+
+发布初始位置
+python3 /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py

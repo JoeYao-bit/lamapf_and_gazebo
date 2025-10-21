@@ -1,0 +1,18 @@
+amcl:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    global_frame_id: "map"
+    scan_topic: "/scan"
+    map_topic: "map"
+    min_particles: 500
+    max_particles: 2000
+    update_min_d: 0.01
+    update_min_a: 0.01
+    resample_interval: 1
+    transform_tolerance: 0.5
+    laser_model_type: "likelihood_field"
+    laser_likelihood_max_dist: 2.0
+    tf_broadcast: true
+    use_map_topic: true
