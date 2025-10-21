@@ -1154,8 +1154,19 @@ ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_
 启动连接turtlebot2
 ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
 
+键盘控制移动
+ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocity
+
+
 启动建图
 ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
+
+发布雷达到机器人底盘的静态transform
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
+
+tf树可视化
+ros2 run tf2_tools view_frames 
+应该是map->odom->base_footprint->laser
 
 保存地图
 ros2 run nav2_map_server map_saver_cli -f ~/my_map
