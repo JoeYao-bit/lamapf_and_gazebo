@@ -923,24 +923,344 @@ sudo apt install -y libepoxy-dev
 
 
 kaHypar可以删掉
+# ubuntu系统跨平台互联
+
+1, 连接到同一wifi网络下，关闭vpn
+
+2, 通过ip addr show查看在wifi下的ip，关闭开启wifi后新增加的ip中
+通常是    inet 10.34.152.24/16 brd 10.34.255.255 scope global dynamic noprefixroute wlo1
+       valid_lft 4836sec preferred_lft 4836sec
+这样的格式。
+其中inet 10.34.152.24是想要的ip地址。
+
+通过ping 10.34.152.24测试在另一平台上是否可以和本机通信。
+
+3, 配置 ROS 2 环境变量
+
+ROS 2 的通信基于 DDS (Data Distribution Service)，不依赖 ROS Master（不像 ROS 1）。
+但要让两个主机在同一个 DDS 域中通信，需要统一几个关键参数。
+
+（1）确保两台机器的 ROS_DOMAIN_ID 相同
+
+在两台电脑的 ~/.bashrc 中添加相同的：
+
+export ROS_DOMAIN_ID=0
+
+如果在同一个局域网运行多个 ROS 系统，可以设置为其他数字（例如 10、20），但两台需要一致。
+
+
+在每台电脑的 ~/.bashrc 中添加：
+
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export ROS_LOCALHOST_ONLY=0
+
+ROS_LOCALHOST_ONLY=0：允许通过局域网通信（否则只在本机上）
+
+rmw_fastrtps_cpp 是默认的 DDS 实现，也可以换成 rmw_cyclonedds_cpp（通信效果更稳定）
+
+4️⃣ 测试 listener/talker
+
+A 机：
+
+ros2 run demo_nodes_cpp talker
+
+B 机：
+
+ros2 run demo_nodes_cpp listener
 
 
 
+在家庭wifi和另一台笔记本上，只需设置好
+export ROS_DOMAIN_ID=0
+
+export ROS_LOCALHOST_ONLY=0
+
+即可通过listener和talker测试，
+估计是学校wifi特殊导致的问题
+
+连接Tech Sup Provide WangW Lab可以实现通信
+
+微型主机电源供电，
+
+微型主机安装配套turtlebot的建图和定位包
+
+
+1, 安装kobuki相关的包
+ecl_core,ecl_lite,kobuki_core,kobuki_ros,kobuki_ros_interfaces
+
+git clone https://github.com/stonier/ecl_lite.git
+
+git clone https://github.com/stonier/ecl_core.git
+
+git clone https://github.com/kobuki-base/kobuki_ros.git
+
+git clone https://github.com/kobuki-base/kobuki_ros_interfaces.git
+
+git clone https://github.com/kobuki-base/kobuki_core.git
+
+启动与turtlebot的连接
+ ros2 launch kobuki_node-launch.py 
+
+编译器认为基类的 operator= 被隐藏了，所以发出警告。
+
+为什么编译失败？
+
+ROS2 Jazzy 使用的 GCC/Clang 默认把 所有警告当作错误 (-Werror)，
+
+所以即便只是警告，也会直接导致构建失败。
+
+
+colcon build --cmake-args -DCMAKE_CXX_FLAGS="-Wno-error=overloaded-virtual"
+
+
+方法 1：在编译时禁止将警告当作错误
+
+你可以在 workspace 的 CMakeLists.txt 或 colcon build 时加入：
+
+需要root 和 dialout 用户组可以访问
+
+你的普通用户不在 dialout 组，所以会报 permission denied
+
+添加用户到dialout组
+
+sudo usermod -aG dialout $USER
+
+
+完全退出你的用户账号（GUI 或 SSH）。
+
+重新登录。
+
+再执行：
+
+groups
+
+你会看到 dialout 已经在列表里。
+
+
+在kobuki_ros/kobuki_node下
+启动对turtlebot的连接：ros2 launch kobuki_node-launch.py
+
+再运行ros2 run kobuki_keyop kobuki_keyop_node
+实现键盘控制移动
+
+你的 kobuki_ros_node 配置文件（YAML）中确实没有显式设置 波特率；
+
+但 stty -F /dev/ttyUSB0 显示当前串口速率为 115200 baud；
+
+这实际上就是 Kobuki 的默认波特率。
+
+所以 ✅ 你的波特率已经是正确的，不需要额外配置。
+
+运行 
+
+ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocity
+
+启动键盘控制运动
+
+kobuki_ros_node 实际上 订阅的是 /commands/velocity，
+而 kobuki_keyop 默认发布的是 /cmd_vel。
+
+因此需要remap cmdvel话题到/commands/velocity话题，即可实现键盘运动控制
+（神人官方，话题都不匹配）
+里程计发布在/odom话题
+
+连接激光雷达
+目前激光雷达，单独通过usb线和机器连接，不经过turtlebot本身
+
+安装 ROS 2 版 RPLIDAR 驱动包
+git clone -b ros2 https://github.com/Slamtec/rplidar_ros.git
 
 
 
+单独编译某个包
+colcon build --packages-select rplidar_ros
+
+启动连接激光雷达，并发布到话题/scan
+ros2 launch rplidar_ros rplidar_a2m8_launch.py
 
 
+我一个usb口连turtlebot机器人，一个连rplidar，如何自动识别匹配usb号
+让系统自动识别并固定每个设备（即使拔插顺序改变，也不会错乱）。
+
+我们可以用 udev 规则（推荐方式） 为每个设备创建独立的固定名称：
+例如：
+
+机器人
+➜  ros2_ws udevadm info -a -n /dev/ttyUSB0 | grep -E 'idVendor|idProduct|serial' -m 3
+    SUBSYSTEMS=="usb-serial"
+    ATTRS{idProduct}=="6001"
+    ATTRS{idVendor}=="0403"
+
+激光雷达  
+➜  ros2_ws udevadm info -a -n /dev/ttyUSB1 | grep -E 'idVendor|idProduct|serial' -m 3
+    SUBSYSTEMS=="usb-serial"
+    ATTRS{idProduct}=="ea60"
+    ATTRS{idVendor}=="10c4"
+➜  ros2_ws 
 
 
+# RPLIDAR
+ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="A602WXYZ", SYMLINK+="rplidar"
+
+# TurtleBot Base (Kobuki)
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="FTXYZ123", SYMLINK+="kobuki"
 
 
+我们可以用这些信息创建一个稳定的 udev 规则，让每次插拔都自动生成固定端口名：
+/dev/kobuki 和 /dev/rplidar。
 
 
+执行：
+
+sudo nano /etc/udev/rules.d/99-robot-usb.rules
+
+填入以下内容：
+
+需要给每个机器人都配置一遍
+
+# TurtleBot Kobuki base (FTDI USB)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="kobuki"
+
+# RPLIDAR (Silicon Labs CP210x)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="rplidar"
 
 
+2️⃣ 重新加载规则并触发
 
 
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+然后拔掉再插上两个设备，检查：
+
+ls -l /dev/kobuki /dev/rplidar
+
+🧭 四、ROS2 中使用
+
+启动激光雷达
+
+ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_baudrate:=115200
+
+启动机器人
+
+ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
+
+测试通过
+
+安装ros2建图工具包
+
+sudo apt install ros-jazzy-slam-toolbox
+
+tf只有base foot print 到odom的tf，需要laser到base foot print的tf
+
+发布静态tf
+
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
+
+激光雷达的数据话题名 /scan ≠ 激光雷达的 坐标系 frame_id = "laser"
 
 
+启动建图指令
 
+ros2 launch slam_toolbox online_async_launch.py use_sim_time:=false
+
+
+安装tf2
+
+ sudo apt install ros-jazzy-tf2
+
+ sudo apt install ros-jazzy-tf2-msgs
+
+ sudo apt install ros-jazzy-tf2-geometry-msgs 
+
+ sudo apt install ros-jazzy-tf2-ros 
+
+
+map_update_interval: 5.0
+
+这个参数控制 SLAM Toolbox 发布 /map_updates 的频率（秒为单位）。
+
+默认 5 秒意味着地图更新很慢，如果你只是微动或者传感器帧率低，/map_updates 可能在长时间内没有变化，看起来像“只显示第一帧地图”。
+
+throttle_scans: 1 表示每帧 scan 都处理，这可以保持更新频繁。
+
+minimum_travel_distance 和 minimum_travel_heading 控制 SLAM 是否更新地图，如果你走得太慢或者旋转角度太小，也可能导致 /map_updates 没变化。
+
+
+使用自己参数，原参数更新频率太低，最小更新距离太大
+
+原参数启动
+ros2 launch slam_toolbox online_async_launch.py 
+
+自定义参数启动
+ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
+
+
+安装地图服务器
+
+sudo apt install ros-jazzy-nav2-map-server
+
+
+保存地图到指定位置和名字，得到.pgm文件和yaml文件
+
+ros2 run nav2_map_server map_saver_cli -f ~/my_map
+
+
+安装amcl定位
+
+sudo apt install ros-jazzy-nav2-amcl ros-jazzy-nav2-map-server ros-jazzy-nav2-lifecycle-manager
+
+
+启动amcl定位 
+
+ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
+
+ AMCL 粒子滤波器仍然需要 明确的初始位姿消息 /initialpose。
+
+手动运行脚本/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
+发布制定地图yaml文件的位姿
+
+即可实现定位
+
+amcl_localization.yaml参数中
+    update_min_d: 0.01
+    update_min_a: 0.01
+
+限制了更新位姿的最小阀值，静止不动或过小则不发布新的位姿
+
+
+如果地图建图原点位姿不是初始化定位的位姿，后续在rviz2中通过设置pose estimate手动重新设置初始位姿
+
+为确保地图能在rviz2中可视化，而且地图仅amcl启动时加载一次，
+先打开rviz2，选择地图为map，再启动定位
+
+最新关键指令
+
+启动激光雷达
+ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_baudrate:=115200
+
+启动连接turtlebot2
+ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
+
+键盘控制移动
+ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocity
+
+
+启动建图
+ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
+
+发布雷达到机器人底盘的静态transform
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
+
+tf树可视化
+ros2 run tf2_tools view_frames 
+应该是map->odom->base_footprint->laser
+
+保存地图
+ros2 run nav2_map_server map_saver_cli -f ~/my_map
+
+启动定位
+ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
+
+发布初始位置
+python3 /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
