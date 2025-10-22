@@ -12,6 +12,9 @@ launch
 DESTINATION share/${PROJECT_NAME}/
 )
 
+message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+message(STATUS "AMENT_PREFIX_PATH: $ENV{AMENT_PREFIX_PATH}")
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)

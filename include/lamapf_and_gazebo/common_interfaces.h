@@ -63,26 +63,26 @@ bool draw_visit_grid_table = false;
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
 {
         {"map_name",     "LargeOfficeEnv"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
+        {"map_path",     "/home/wangweilab/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
+        {"la_ins_path", "/home/wangweilab/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
 };
 
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
 {
         {"map_name",     "LargeOfficeEnvSeccond"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white_second.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_second.txt"},
+        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white_second.png"},
+        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_second.txt"},
 };
 
 SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
 {
         {"map_name",     "IndustrialWarehouse"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
+        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
+        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
 };
 
-//std::string map_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.png";
-//std::string ins_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.scen";
+//std::string map_path_pic = "/home/wangweilab/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.png";
+//std::string ins_path_pic = "/home/wangweilab/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.scen";
 
 double reso = 0.1; // how long a grid occupied in real world ?
 
