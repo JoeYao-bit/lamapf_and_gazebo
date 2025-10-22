@@ -1244,6 +1244,7 @@ ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocit
 
 
 ## 5, 启动建图
+改变yaml参数文件地址
 ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
 
 ## 6, 发布雷达到机器人底盘的静态transform
@@ -1254,12 +1255,19 @@ ros2 run tf2_tools view_frames
 应该是map->odom->base_footprint->laser
 
 ## 8, 保存地图
+
+安装地图服务器
+
+sudo apt install ros-jazzy-nav2-map-server
+
 ros2 run nav2_map_server map_saver_cli -f ~/my_map
 
 ## 9, 启动定位
+改变yaml参数文件地址
 ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
 
 ## 10, 发布初始位置
+改init_pose_publisher.py中的文件路径
 python3 /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
 
 ## 11, 初始位置不对则输入rviz2设置初始位置
@@ -1300,3 +1308,7 @@ colcon build --packages-select rplidar_ros
 安装ros2建图工具包
 
 sudo apt install ros-jazzy-slam-toolbox
+
+安装tf_transformations
+
+sudo apt install ros-jazzy-tf-transformations
