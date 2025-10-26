@@ -1,4 +1,5 @@
- 
+[TOC] 
+
 更新launch后需要重新运行 colcon build 以更新位于install的launch复制文件，单独更新src节点内的launch无效
 
 运行下述代码启动gazebo以及相关world文件
@@ -1312,3 +1313,50 @@ sudo apt install ros-jazzy-slam-toolbox
 安装tf_transformations
 
 sudo apt install ros-jazzy-tf-transformations
+
+真机实验
+1,各个机器人的定位和局部控制节点有自己的唯一编号，共用用一张地图
+2,局部控制器接收唯一指定定位节点的结果
+3,定位节点接收指定编号的里程计和激光雷达信息，以及tf信息？
+
+
+tf树可以通过指定名称空间的方式隔离
+不同机器人的同类话题比如odom可以通过指定名称空间的方式避免话题名重复
+命名空间不会阻止跨空间通信；只要两个节点话题路径完全匹配（字符串相同），它们就能通信；
+ROS 2 不会自动在不同命名空间间桥接或阻断通信。
+
+构造如图所示的tf树
+
+map)
+ ├── robot1/odom → robot1/base_link → ...
+ ├── robot2/odom → robot2/base_link → ...
+ └── robot3/odom → robot3/base_link → ...
+
+
+kobuki_ros odom tf话题名字在 kobuki_node_params.yaml设置
+
+    odom_frame: odom
+    base_frame: base_footprint
+
+rplidar 的 frame_id 在rplidar_a2m8_launch.py中配置
+
+    frame_id = LaunchConfiguration('frame_id', default='laser')
+ 
+但laser到base_footprint的tf由我通过命令发布
+在这里需要改为指定机器人的laser名称
+
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
+
+假设各个机器人已经有准确定位信息，
+如何选择各个机器人目标点？
+
+1，固定地图，预设各个机器人的起点终点，即固定场景
+地图名称、各个机器人起末位置，均为固定参数，写入指定文件
+先制作地图，在选择每个机器人期末位姿，写入文件
+确保各个机器人均处于指定位置之后
+再加载文件对应的起末位姿，进行全局规划和局部运动控制
+
+或
+2,根据当前各个机器人位姿动态随机选择（算法随机或人工临时设置）
+
+先试试第二个
