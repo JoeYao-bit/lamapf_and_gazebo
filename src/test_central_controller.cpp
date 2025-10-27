@@ -156,7 +156,7 @@ int main(int argc, char ** argv) {
     for(int i=0; i<agents.size(); i++) {
         std::cout << "i = " << i << ", " << instances.second[i].first << std::endl;
         PosePtr<int, 2> start_pose = std::make_shared<Pose<int, 2> >(instances.second[i].first);
-        Pointf<3> init_pose = PoseIntToPtf(start_pose);  
+        Pointf<3> init_pose = PoseIntToPtf(start_pose, GridToPtfPicOnly);  
         std::cout << "init_pose = " << init_pose << std::endl;
         auto agent_node = std::make_shared<LocalController>(agents[i], line_ctls[i], rot_ctls[i], init_pose, instances.second.size(), time_interval);
         executor.add_node(agent_node);

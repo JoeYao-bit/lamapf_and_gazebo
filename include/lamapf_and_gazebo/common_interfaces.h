@@ -834,8 +834,15 @@ struct CenteralControllerFull;
 
 extern CenteralControllerFull* ctl;
 
+using GRID_TO_PTF_FUNC = std::function<Pointf<3>(const Pointi<2>&)>;
+
+using PTF_TO_GRID_FUNC = std::function<Pointi<2>(const Pointf<3>&)>;
+
+
 // assume center of map is (0, 0) in the world coordinate system
-Pointf<3> GridToPtf(const Pointi<2>& pt) {
+// use for map that have only a picture
+// on the constrast, is which have explicit origin, like slam_toolbox's yaml file
+Pointf<3> GridToPtfPicOnly(const Pointi<2>& pt) {
     Pointf<3> retv = {0, 0, 0};
     retv[0] = reso*pt[0] - .5*dim[0]*reso;
     retv[1] = .5*dim[1]*reso - reso*pt[1];
@@ -843,28 +850,28 @@ Pointf<3> GridToPtf(const Pointi<2>& pt) {
 }
 
 // assume center of map is (0, 0) in the world coordinate system
-Pointi<2> PtfToGrid(const Pointf<3>& pt) {
+Pointi<2> PtfToGridPicOnly(const Pointf<3>& pt) {
     Pointi<2> retv = {0, 0};
     retv[0] = std::round(pt[0]/reso) + .5*dim[0];
     retv[1] = .5*dim[1] - std::round(pt[1]/reso);
     return retv;
 }
 
-Pointf<3> PoseIntToPtf(const Pose<int, 2>& pose) {
-    Pointf<3> ptf = GridToPtf(pose.pt_);
+Pointf<3> PoseIntToPtf(const Pose<int, 2>& pose, const GRID_TO_PTF_FUNC& gridToPtf) {
+    Pointf<3> ptf = gridToPtf(pose.pt_);
     ptf[2] = orientToRadius(pose.orient_);
     return ptf;
 }
 
-Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose) {
-    Pointf<3> ptf = GridToPtf(pose->pt_);
+Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose, const GRID_TO_PTF_FUNC& gridToPtf) {
+    Pointf<3> ptf = gridToPtf(pose->pt_);
     ptf[2] = orientToRadius(pose->orient_);
     return ptf;
 }
 
-Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf) {
+Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, const PTF_TO_GRID_FUNC& ptfToGrid) {
     Pose<int, 2> pose;
-    pose.pt_ = PtfToGrid(ptf);
+    pose.pt_ = ptfToGrid(ptf);
     pose.orient_ = radiusToOrient(ptf[2]);
     return pose;
 };

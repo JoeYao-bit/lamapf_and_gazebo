@@ -41,7 +41,7 @@ public:
             auto color = COLOR_TABLE[id%30];
             double start_theta = orientToRadius(ctl_->instances_.second[id].first.orient_);
 
-            Pointf<3> ptf = GridToPtf(start_pt);
+            Pointf<3> ptf = GridToPtfPicOnly(start_pt);
 
             initial_pose.position.x = ptf[0];  // transfer to world coordinate system
             initial_pose.position.y = ptf[1];

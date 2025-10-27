@@ -1356,6 +1356,8 @@ ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
 确保各个机器人均处于指定位置之后
 再加载文件对应的起末位姿，进行全局规划和局部运动控制
 
+需要根据地图yaml进行文件生成坐标系转换函数
+
 或
 2,根据当前各个机器人位姿动态随机选择（算法随机或人工临时设置）
 
