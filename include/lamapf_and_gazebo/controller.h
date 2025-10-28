@@ -189,8 +189,10 @@ public:
                        const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
                        std::string lns_path,
                        const float& time_interval = 0.1,
-                       bool enable_opencv_window = true): 
-                       rclcpp::Node("central_controller") {        
+                       bool enable_opencv_window = true,
+                       const GRID_TO_PTF_FUNC& grid_to_ptf_func = GridToPtfPicOnly): 
+                       rclcpp::Node("central_controller"),
+                       grid_to_ptf_func_(grid_to_ptf_func) {        
                         
         
         dim_ = dim;
@@ -240,7 +242,7 @@ public:
         for(int i=0; i<instances.first.size(); i++) {
             size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
-            Pointf<3> start_ptf = PoseIntToPtf(start_pose, GridToPtfPicOnly);
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
             all_agent_poses_[i] = start_ptf;
 
             ADG_->setActionLeave(i, 0);
@@ -307,7 +309,7 @@ public:
                 RCLCPP_INFO(this->get_logger(), "after finish replan, pub all agent's recover task"); 
                 for(int i=0; i<instances_.first.size(); i++) {
                     Pose<int, 2> pre_pose = *(ADG_->all_poses_[ADG_->paths_[i][progress_of_agents_[i]]]);
-                    Pointf<3> pre_ptf = PoseIntToPtf(pre_pose, GridToPtfPicOnly);
+                    Pointf<3> pre_ptf = PoseIntToPtf(pre_pose, grid_to_ptf_func_);
                     recover_tasks_.push_back(std::make_pair(this->all_agent_poses_[i], pre_ptf));
 
                     // tell all agents to return to last valid state
@@ -379,7 +381,7 @@ public:
 
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
             assert(start_pose != nullptr);
-            Pointf<3> start_ptf = PoseIntToPtf(start_pose, GridToPtfPicOnly);
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
 
             size_t target_pose_id = ADG_->paths_[i][1];
             
@@ -389,7 +391,7 @@ public:
 
             PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
             assert(target_pose != nullptr);
-            Pointf<3> target_ptf = PoseIntToPtf(target_pose, GridToPtfPicOnly);
+            Pointf<3> target_ptf = PoseIntToPtf(target_pose, grid_to_ptf_func_);
 
             lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
             msg.start_x   = start_ptf[0];
@@ -426,7 +428,7 @@ public:
             instances_.second[i].first = pre_pose;//PtfToPoseInt(poses[i]);
             std::stringstream ss;
             ss << "Agent " << i << "'s initial ptf: " << poses[i] << ", pose " << instances_.second[i].first;
-            ss << "| pose to ptf " << PoseIntToPtf(instances_.second[i].first, GridToPtfPicOnly);
+            ss << "| pose to ptf " << PoseIntToPtf(instances_.second[i].first, grid_to_ptf_func_);
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
         }
         // calculate initial paths 
@@ -459,7 +461,7 @@ public:
         for(int i=0; i<instances_.first.size(); i++) {
             size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
-            Pointf<3> start_ptf = PoseIntToPtf(start_pose, GridToPtfPicOnly);
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
             all_agent_poses_[i] = start_ptf;
 
             ADG_->setActionLeave(i, 0);
@@ -543,7 +545,7 @@ public:
                     target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
                     //RCLCPP_INFO(this->get_logger(), "flag 0.3");
                     target_pose = ADG_->all_poses_[target_pose_id];
-                    target_ptf = PoseIntToPtf(target_pose, GridToPtfPicOnly);
+                    target_ptf = PoseIntToPtf(target_pose, grid_to_ptf_func_);
                     
                     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - 
                                                     Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
@@ -580,11 +582,11 @@ public:
                             // update the agent's start and target state
                             size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
                             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
-                            start_ptf = PoseIntToPtf(start_pose, GridToPtfPicOnly);
+                            start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
 
                             size_t target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
                             PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
-                            target_ptf = PoseIntToPtf(target_pose, GridToPtfPicOnly);
+                            target_ptf = PoseIntToPtf(target_pose, grid_to_ptf_func_);
 
                             lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
                             msg.start_x   = start_ptf[0];
@@ -720,7 +722,7 @@ public:
 
     static bool need_replan_;
 
-
+    GRID_TO_PTF_FUNC grid_to_ptf_func_;
 };
 
 

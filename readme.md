@@ -1314,6 +1314,10 @@ sudo apt install ros-jazzy-slam-toolbox
 
 sudo apt install ros-jazzy-tf-transformations
 
+安装yaml-cpp和eigen，方便坐标变换
+
+sudo apt install libyaml-cpp-dev libeigen3-dev
+
 真机实验
 1,各个机器人的定位和局部控制节点有自己的唯一编号，共用用一张地图
 2,局部控制器接收唯一指定定位节点的结果
@@ -1358,7 +1362,17 @@ ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
 
 需要根据地图yaml进行文件生成坐标系转换函数
 
-或
+先获取各个机器人起末点的世界坐标，再将其转换为栅格地图坐标
+
+导入规划系统
+
+所有机器人采用turtlebot
+
 2,根据当前各个机器人位姿动态随机选择（算法随机或人工临时设置）
 
-先试试第二个
+先试试第一个
+
+
+测试加载yaml地图参数
+
+ros2 run lamapf_and_gazebo test_yaml_converter
