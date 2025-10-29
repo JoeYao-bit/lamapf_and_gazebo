@@ -466,7 +466,8 @@ public:
 
             ADG_->setActionLeave(i, 0);
 
-        }                                                                                                             RCLCPP_INFO(this->get_logger(), "finish reupdate paths");
+        }                                                                                                             
+        RCLCPP_INFO(this->get_logger(), "finish reupdate paths");
 
         RCLCPP_INFO(this->get_logger(), "finish pub inital goal after reupdate paths");    
         
@@ -641,7 +642,7 @@ public:
     }
  
     static int PathVisualize(IS_OCCUPIED_FUNC<2> is_occupied) {
-        float zoom_ratio = std::max(1., ceil(std::min(1000./dim_[0], 1000./dim_[1]))); 
+        float zoom_ratio = std::max(1., ceil(std::min(800./dim_[0], 800./dim_[1]))); 
         Canvas canvas("LA-MAPF visualization", dim_[0], dim_[1], 1./reso, zoom_ratio);
         std::cout << "canvas rows / cols = " << canvas.getCanvas().rows << " / " << canvas.getCanvas().cols << std::endl;
         std::cout << "dim_[0] = " << dim_[0] << ", dim_[1] = " << dim_[1] << std::endl;

@@ -447,9 +447,15 @@ public:
 
         std::stringstream ss5;
         ss5 << "AmclPose" << agent_->id_;
+        std::cout << "Agent " << agent_->id_ << "'s pose sub ros topic name " << ss5.str() << std::endl;
+
         pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
                 ss5.str().c_str(), 10,
                 [this](geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
+                    std::stringstream ss_local;
+                    ss_local << "agent " << agent_->id_ << " receive pose (" << msg->pose.pose.position.x << ", "
+                    << msg->pose.pose.position.y << ")";
+                    RCLCPP_INFO(this->get_logger(), ss_local.str().c_str());
                     pose_msg_ = msg;
                 });        
         
@@ -693,22 +699,17 @@ public:
         time_interval_ = time_interval;
 
         std::stringstream ss;
-        ss << "FakeRobot" << agent_id_ << "initialized";
+        ss << "FakeRobot" << agent_id_ << " initialized";
         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
         
         pose_publisher_      = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
 
-        lamapf_and_gazebo_msgs::msg::UpdatePose init_pose_msg;
-        init_pose_msg.x   = init_pose[0];
-        init_pose_msg.y   = init_pose[1];
-        init_pose_msg.yaw = init_pose[2];
-        init_pose_msg.agent_id = this->agent_id_;
-        pose_publisher_->publish(init_pose_msg);
-            
         std::stringstream ss4;
         ss4 << "AmclPose" << agent_id_;
-        pose_ros_subscriber_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(ss4.str().c_str(), 10);
 
+        std::cout << "Agent " << agent_id_ << "'s pose pub ros topic name " << ss4.str() << std::endl;
+
+        pose_ros_publisher_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(ss4.str().c_str(), 10);
 
         std::stringstream ss5;
         ss5 << "CmdVel" << agent_id_;
@@ -722,53 +723,54 @@ public:
             velcmd[0] = cmdvel_msg_->linear.x;
             velcmd[2] = cmdvel_msg_->angular.z;
 
+            std::stringstream ss7;
+            ss7 << "fake robot"<< agent_id_ <<" receive cmdvel(vx,w) = " << velcmd[0] << ", " << velcmd[2];
+            RCLCPP_INFO(this->get_logger(), ss7.str().c_str());
+
             cur_pose_ = updateAgentPose(pre_pose, velcmd, this->time_interval_);
 
             
+        });        
+
+    
+        // std::chrono::milliseconds(int(1000*time_interval))
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
+            //std::stringstream ss;
+            //ss << "during LocalController loop, agent_" << agent->id_;
+            //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            //publishPoseMsgSim(time_interval);
+
             lamapf_and_gazebo_msgs::msg::UpdatePose pose_msg;
             pose_msg.x   = cur_pose_[0];
             pose_msg.y   = cur_pose_[1];
             pose_msg.yaw = cur_pose_[2];
             pose_msg.agent_id = this->agent_id_;
-            pose_publisher_->publish(pose_msg);
+            this->pose_publisher_->publish(pose_msg);
 
-            
-            geometry_msgs::msg::PoseWithCovarianceStamped pose_msg_ros;
 
-            // --- Header ---
-            pose_msg_ros.header.stamp = this->now();                // 当前时间戳
-            pose_msg_ros.header.frame_id = "map";                   // 坐标系
+            geometry_msgs::msg::PoseWithCovarianceStamped pose_ros_msg;
 
-            // --- Pose ---
-            pose_msg_ros.pose.pose.position.x = cur_pose_[0];
-            pose_msg_ros.pose.pose.position.y = cur_pose_[1];
-            pose_msg_ros.pose.pose.position.z = 0.0;
+            pose_ros_msg.header.frame_id = "map";
+            pose_ros_msg.header.stamp = this->now();
 
-            std::stringstream ss6;
-            ss6 << "fake robot"<< agent_id_ <<" pub pose " << cur_pose_;
-            RCLCPP_INFO(this->get_logger(), ss6.str().c_str());
+            pose_ros_msg.pose.pose.position.x = cur_pose_[0];
+            pose_ros_msg.pose.pose.position.y = cur_pose_[1];
+            pose_ros_msg.pose.pose.position.z = 0.0;
 
             tf2::Quaternion q;
-            q.setRPY(0, 0, cur_pose_[2]);  // 只设置Z轴旋转（yaw）
+            q.setRPY(0, 0, cur_pose_[2]);
 
-            pose_msg_ros.pose.pose.orientation.x = q.x();
-            pose_msg_ros.pose.pose.orientation.y = q.y();
-            pose_msg_ros.pose.pose.orientation.z = q.z();
-            pose_msg_ros.pose.pose.orientation.w = q.w();
+            pose_ros_msg.pose.pose.orientation.x = q.x();
+            pose_ros_msg.pose.pose.orientation.y = q.y();
+            pose_ros_msg.pose.pose.orientation.z = q.z();
+            pose_ros_msg.pose.pose.orientation.w = q.w();
 
+            this->pose_ros_publisher_->publish(pose_ros_msg);
 
-            pose_ros_subscriber_->publish(pose_msg_ros);
-        });        
-
-    
-        // // std::chrono::milliseconds(int(1000*time_interval))
-        // timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
-        //     //std::stringstream ss;
-        //     //ss << "during LocalController loop, agent_" << agent->id_;
-        //     //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-        //     //publishPoseMsgSim(time_interval);
-
-        // });
+            std::stringstream ss2;
+            ss2 << "FakeRobot" << agent_id_ << " pub new position " << cur_pose_;
+            RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
+        });
 
     }
 
@@ -778,7 +780,7 @@ public:
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
 
-    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_ros_subscriber_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_ros_publisher_;
 
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmdvel_subscriber_;
 
