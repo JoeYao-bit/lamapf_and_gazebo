@@ -122,7 +122,7 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({10}, 1).front(); // get all instances
+        deserializer.getTestInstance({1}, 1).front(); // get all instances
 
     std::vector<LineFollowControllerPtr> line_ctls;
 

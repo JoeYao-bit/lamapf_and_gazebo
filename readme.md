@@ -1368,13 +1368,22 @@ ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
 
 所有机器人采用turtlebot
 
-重写专门局部控制节点
+重写专门局部控制节点， 完成
 
 2,根据当前各个机器人位姿动态随机选择（算法随机或人工临时设置）
 
 先试试第一个
 
 
-测试加载yaml地图参数
+测试加载yaml地图参数, 完成
 
 ros2 run lamapf_and_gazebo test_yaml_converter
+
+现有框架允许单一机器人在MAPF体系下工作
+
+后续计划
+
+机身电源供电
+建图（更大的室内地图）
+真实定位替换虚拟定位
+单机器人框架下导航
