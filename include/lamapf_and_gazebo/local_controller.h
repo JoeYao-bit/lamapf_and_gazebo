@@ -395,24 +395,17 @@ public:
     LocalController(const AgentPtr<2>& agent,
                     const LineFollowControllerPtr& line_ctl,
                     const RotateControllerPtr& rot_ctl,
-                    const Pointf<3>& init_pose,
                     int all_agent_size,
                     const float& time_interval = 0.1):
                      agent_(agent),
                      line_ctl_(line_ctl),
                      rot_ctl_(rot_ctl),
-                     init_pose_(init_pose),
-                     cur_pose_(init_pose),
+                     velcmd_(Pointf<3>{0,0,0}),
                      Node((std::string("agent_")+std::to_string(agent->id_)).c_str()) {
 
 
-        std::stringstream ss1;
-        ss1 << "agent_" << agent_->id_ << " init pose " << cur_pose_;                
-        RCLCPP_INFO(this->get_logger(), ss1.str().c_str());
-
         // NOTICE: cache queue size must be large enough to cache all agent's pose or goal
         // otherwise some msg will be ignored
-        pose_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
 
         error_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::ErrorState>("AgentErrorState", 10);
 
@@ -445,20 +438,99 @@ public:
 
 
         std::stringstream ss4;
-        ss3 << "LaseScan" << agent_->id_;
+        ss4 << "LaseScan" << agent_->id_;
         laserscan_subscriber_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-                ss3.str().c_str(), 10,
+                ss4.str().c_str(), 10,
                 [this](sensor_msgs::msg::LaserScan::SharedPtr msg) {
                     laserscan_msg_ = msg;
                 });
+
+        std::stringstream ss5;
+        ss5 << "AmclPose" << agent_->id_;
+        pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+                ss5.str().c_str(), 10,
+                [this](geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
+                    pose_msg_ = msg;
+                });        
+        
+        std::stringstream ss6;
+        ss6 << "CmdVel" << agent_->id_;
+        cmd_vel_publisher_ =  this->create_publisher<geometry_msgs::msg::Twist>(ss6.str(), 10);
 
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this,time_interval,agent]() {
             //std::stringstream ss;
             //ss << "during LocalController loop, agent_" << agent->id_;
             //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-            publishPoseMsgSim(time_interval);
+            //publishPoseMsgSim(time_interval);
+
+
+            // after initialized calculate vel cmd and pub
+            if(pose_msg_ != nullptr) {
+                // 位姿应尽量实时，位姿时刻与当前时间差距过大则不更新位姿
+                rclcpp::Time now = this->get_clock()->now();
+                // 消息时间
+                rclcpp::Time msg_time(pose_msg_->header.stamp);
+
+                // 计算纳秒差
+                int64_t diff_ns = (now - msg_time).nanoseconds();
+
+                // 转为毫秒（double 类型）
+                double diff_ms = diff_ns / 1e6;
+                geometry_msgs::msg::Twist cmd_vel;
+
+                // 设置线速度（前进 0.2 m/s）
+                cmd_vel.linear.x = 0.0;
+                cmd_vel.linear.y = 0.0;
+                cmd_vel.linear.z = 0.0;
+
+                // 设置角速度（逆时针旋转 0.5 rad/s）
+                cmd_vel.angular.x = 0.0;
+                cmd_vel.angular.y = 0.0;
+                cmd_vel.angular.z = 0.0;
+
+
+                // if(diff_ms > 500) {
+                //     std::stringstream ss;
+                //     ss << "during LocalController loop, agent_" << agent->id_<<", last pose is too old, " << diff_ms << "ms ago";
+                //     RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                //     // pub stop cmd
+                //     cmd_vel_publisher_->publish(cmd_vel);
+                // }
+
+                Pointf<3> cur_pose;
+                cur_pose[0] = pose_msg_->pose.pose.position.x;
+                cur_pose[1] = pose_msg_->pose.pose.position.y;
+
+                // 获取姿态四元数
+                double qx = pose_msg_->pose.pose.orientation.x;
+                double qy = pose_msg_->pose.pose.orientation.y;
+                double qz = pose_msg_->pose.pose.orientation.z;
+                double qw = pose_msg_->pose.pose.orientation.w;
+
+                // 构建 tf2 四元数对象
+                tf2::Quaternion q(qx, qy, qz, qw);
+
+                // 用 Matrix3x3 提取 roll, pitch, yaw
+                double roll, pitch, yaw;
+                tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
+                cur_pose[2] = yaw;
+
+                velcmd_ = calculateCMD(cur_pose, velcmd_, time_interval);
+                // pub vel cmd
+                cmd_vel.linear.x  = velcmd_[0];
+                cmd_vel.angular.z = velcmd_[2];
+
+                cmd_vel_publisher_->publish(cmd_vel);
+
+                std::stringstream ss;
+                ss << "agent_" << agent_->id_ << " pub vel cmd vx = " << velcmd_[0] << ", w = " << velcmd_[2];
+                RCLCPP_INFO(this->get_logger(), ss.str().c_str()); 
+            }
         });
+
+
         std::stringstream ss;
         ss << "init LocalController, agent_" << agent_->id_;
         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
@@ -556,120 +628,6 @@ public:
     }
 
     // calculate vel cmd for each agent
-    // Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
-    //     count_of_iter_ ++;
-    //     Pointf<3> cmd_vel = {0,0,0};
-    //     // if is required to wait, then wait
-    //     if(wait_) { return cmd_vel; }
-    //     if(reachTarget(pose, target_ptf_)) {
-    //         wait_ = true;
-    //         return cmd_vel;
-    //     }
-
-    //     if(start_ptf_[2] != target_ptf_[2]) {
-    //         // if out of current position (when rotate), stop and replan
-    //         float dist_to_target = (Pointf<2>{target_ptf_[0], target_ptf_[1]} - Pointf<2>{pose[0], pose[1]}).Norm();
-    //         if(dist_to_target > 0.1) {
-    //             std::stringstream ss;
-    //             ss << "agent_" << agent_->id_ << ", current pose " << pose << " out of target position " << target_ptf_
-    //                << " in rotate, then stop and replan";
-    //             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-    //             wait_ = true;
-    //             lamapf_and_gazebo_msgs::msg::ErrorState msg;
-    //             msg.agent_id = agent_->id_;
-    //             msg.error_state = 0;
-    //             error_state_publisher_->publish(msg);
-    //             //sleep(1);
-    //             //assert(0);
-    //             return cmd_vel;
-    //         }
-    //         // rotate
-    //         rot_ctl_->ang_ = target_ptf_[2]; // update target angle
-
-    //         if(fabs(target_ptf_[2] - start_ptf_[2]) <= 0.5*M_PI + 0.001) {
-    //             if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = true; }
-    //             else { rot_ctl_->posi_rot_ = false; }
-    //         } else {
-    //             if(target_ptf_[2] > start_ptf_[2]) { rot_ctl_->posi_rot_ = false; }
-    //             else { rot_ctl_->posi_rot_ = true; }                    
-    //         }
-    //         std::stringstream ss;
-    //         ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-    //         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-            
-    //         std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
-
-    //         cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
-
-    //     } else {
-    //         if(!reachOrientation(pose[2], start_ptf_[2])) {
-    //             // rotate
-    //             rot_ctl_->ang_ = start_ptf_[2]; // update target angle
-
-    //             if(fabs(start_ptf_[2] - pose[2]) <= 0.5*M_PI + 0.001) {
-    //                 if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = true; }
-    //                 else { rot_ctl_->posi_rot_ = false; }
-    //             } else {
-    //                 if(start_ptf_[2] > pose[2]) { rot_ctl_->posi_rot_ = false; }
-    //                 else { rot_ctl_->posi_rot_ = true; }                    
-    //             }
-    //             std::stringstream ss;
-    //             ss << "agent_" << agent_->id_ << ", current pose " << pose << "start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_;
-    //             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-                
-    //             std::cout << "**vel cmd rot, agent_" << agent_->id_ << ", current pose " << pose << ", start pose = " << start_ptf_ << ", target dir/ang = " << rot_ctl_->posi_rot_ << ", " << rot_ctl_->ang_ << std::endl;
-
-    //             cmd_vel = rot_ctl_->calculateCMD(pose, vel, time_interval);
-    //         } else {
-    //             // if out of current line (when move forward), stop and replan
-    //             double dist_to_line = pointDistToLine(Pointf<2>{pose[0], pose[1]}, 
-    //                                                 Pointf<2>{start_ptf_[0], start_ptf_[1]},
-    //                                                 Pointf<2>{target_ptf_[0], target_ptf_[1]});
-    //             if(dist_to_line > 0.1) { 
-    //                 std::stringstream ss;
-    //                 ss << "current pose " << pose << " out of target line " << start_ptf_ << "->" << target_ptf_
-    //                 << " in move forward, then stop and replan, dist_to_line = " << dist_to_line;
-    //                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-    //                 wait_ = true;
-    //                 lamapf_and_gazebo_msgs::msg::ErrorState msg;
-    //                 msg.agent_id = agent_->id_;
-    //                 msg.error_state = 0;
-    //                 error_state_publisher_->publish(msg);
-    //                 // sleep(1);
-    //                 // assert(0);
-    //                 return cmd_vel;
-    //             }
-    //             double dist_to_direct = std::fmod(target_ptf_[2] - pose[2], 2*M_PI);   
-    //             if(dist_to_direct > 0.1) { 
-    //                 std::stringstream ss;
-    //                 ss << "current pose " << pose << "'s direction out of target line " << start_ptf_ << "->" << target_ptf_
-    //                 << " in move forward, then stop and replan, dist_to_direct = " << dist_to_direct;
-    //                 RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-    //                 wait_ = true;
-    //                 lamapf_and_gazebo_msgs::msg::ErrorState msg;
-    //                 msg.agent_id = agent_->id_;
-    //                 msg.error_state = 0;
-    //                 error_state_publisher_->publish(msg); 
-    //                 // sleep(1);
-    //                 // assert(0);
-    //                 return cmd_vel;
-    //             }
-    //             // move forward
-    //             line_ctl_->pt1_ = Pointf<2>({start_ptf_[0],  start_ptf_[1]});
-    //             line_ctl_->pt2_ = Pointf<2>({target_ptf_[0], target_ptf_[1]}); // update target line
-
-    //             std::cout << "**vel cmd mov, agent_" << agent_->id_ << ", current pose " << pose << ", target line = " << line_ctl_->pt1_ << ", yaw= " << start_ptf_[2] << ", " << line_ctl_->pt2_ << ", yaw = " << target_ptf_[2] << std::endl;
-
-    //             cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); 
-    //         }
-    //     }
-    //     // TODO: predict whether there is obstacle in future path
-    //     // if is, wait utill run out of time
-    //     // if run out of time, call central controller to replan  
-    //     return cmd_vel;
-    // }
-
-        // calculate vel cmd for each agent
     Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
         count_of_iter_ ++;
         Pointf<3> cmd_vel = {0,0,0};
@@ -683,36 +641,6 @@ public:
         return cmd_vel;
     }
 
-    // publish simulated pose msg
-    void publishPoseMsgSim(const float& time_interval) {
-
-        velcmd_ = calculateCMD(cur_pose_, velcmd_, time_interval);
-
-        // Pointf<3> pose, Pointf<3> velcmd, float time_interval
-        auto pre_pose = cur_pose_;
-        cur_pose_ = updateAgentPose(cur_pose_, velcmd_, time_interval);
-        // if(agent_->id_ == 9) {
-        //     std::cout << "agent_id = " << agent_->id_ << ", velcmd_ = " << velcmd_ << ", pre pose = "
-        //           << pre_pose << ", cur pose = " << cur_pose_ << std::endl;
-        // }
-        lamapf_and_gazebo_msgs::msg::UpdatePose msg;
-        msg.x   = cur_pose_[0];
-        msg.y   = cur_pose_[1];
-        msg.yaw = cur_pose_[2];
-        msg.agent_id = agent_->id_;
-        pose_publisher_->publish(msg);
-
-        if(!wait_) {
-            std::stringstream ss;
-            ss << "agent_" << agent_->id_ << ", cmdvel = " << velcmd_ << ", pub pose(x,y,yaw) = " << msg.x << ", " << msg.y << ", " << msg.yaw;
-            RCLCPP_INFO(this->get_logger(), ss.str().c_str()); 
-        }
-    }
-
-    // TODO: publish pose by localization
-    void publishPoseMsg() const {
-        //
-    }
 
     // TODO: 
     // ros service: update pose in central controller
@@ -722,27 +650,27 @@ public:
  
     Pointf<3> start_ptf_, target_ptf_;
 
+    Pointf<3> velcmd_;
+
     AgentPtr<2> agent_;
 
     LineFollowControllerPtr line_ctl_;
 
     RotateControllerPtr rot_ctl_;
 
-    Pointf<3> cur_pose_;
-
-    Pointf<3> velcmd_;
-
-    Pointf<3> init_pose_;
-
-    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
-
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_subscriber_;
 
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_subscriber_;
 
-    sensor_msgs::msg::LaserScan::SharedPtr laserscan_msg_;
+    sensor_msgs::msg::LaserScan::SharedPtr laserscan_msg_ = nullptr;
+
+    geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose_msg_ = nullptr;
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_publisher_;
+
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_publisher_;
+
+    rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_subscriber_;
 
     rclcpp::TimerBase::SharedPtr timer_;
 
@@ -751,7 +679,115 @@ public:
 };
 
 
+// fake robot node
+// receive init pose, cmd vel and pub real time pose
+class FakeRobot : public rclcpp::Node {
+public:
+
+    FakeRobot(int agent_id,
+              const Pointf<3>& init_pose,
+              int all_agent_size,
+              const float& time_interval = 0.1): 
+              agent_id_(agent_id), cur_pose_(init_pose), rclcpp::Node((std::string("FakeRobot")+std::to_string(agent_id)).c_str()) {
+
+        time_interval_ = time_interval;
+
+        std::stringstream ss;
+        ss << "FakeRobot" << agent_id_ << "initialized";
+        RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        
+        pose_publisher_      = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
+
+        lamapf_and_gazebo_msgs::msg::UpdatePose init_pose_msg;
+        init_pose_msg.x   = init_pose[0];
+        init_pose_msg.y   = init_pose[1];
+        init_pose_msg.yaw = init_pose[2];
+        init_pose_msg.agent_id = this->agent_id_;
+        pose_publisher_->publish(init_pose_msg);
+            
+        std::stringstream ss4;
+        ss4 << "AmclPose" << agent_id_;
+        pose_ros_subscriber_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(ss4.str().c_str(), 10);
 
 
+        std::stringstream ss5;
+        ss5 << "CmdVel" << agent_id_;
+        cmdvel_subscriber_   = this->create_subscription<geometry_msgs::msg::Twist>(
+        ss5.str().c_str(), 10,
+        [this](geometry_msgs::msg::Twist::SharedPtr msg) {
+            cmdvel_msg_ = msg;
+
+            auto pre_pose = cur_pose_;
+            Pointf<3> velcmd;
+            velcmd[0] = cmdvel_msg_->linear.x;
+            velcmd[2] = cmdvel_msg_->angular.z;
+
+            cur_pose_ = updateAgentPose(pre_pose, velcmd, this->time_interval_);
+
+            
+            lamapf_and_gazebo_msgs::msg::UpdatePose pose_msg;
+            pose_msg.x   = cur_pose_[0];
+            pose_msg.y   = cur_pose_[1];
+            pose_msg.yaw = cur_pose_[2];
+            pose_msg.agent_id = this->agent_id_;
+            pose_publisher_->publish(pose_msg);
+
+            
+            geometry_msgs::msg::PoseWithCovarianceStamped pose_msg_ros;
+
+            // --- Header ---
+            pose_msg_ros.header.stamp = this->now();                // 当前时间戳
+            pose_msg_ros.header.frame_id = "map";                   // 坐标系
+
+            // --- Pose ---
+            pose_msg_ros.pose.pose.position.x = cur_pose_[0];
+            pose_msg_ros.pose.pose.position.y = cur_pose_[1];
+            pose_msg_ros.pose.pose.position.z = 0.0;
+
+            std::stringstream ss6;
+            ss6 << "fake robot"<< agent_id_ <<" pub pose " << cur_pose_;
+            RCLCPP_INFO(this->get_logger(), ss6.str().c_str());
+
+            tf2::Quaternion q;
+            q.setRPY(0, 0, cur_pose_[2]);  // 只设置Z轴旋转（yaw）
+
+            pose_msg_ros.pose.pose.orientation.x = q.x();
+            pose_msg_ros.pose.pose.orientation.y = q.y();
+            pose_msg_ros.pose.pose.orientation.z = q.z();
+            pose_msg_ros.pose.pose.orientation.w = q.w();
+
+
+            pose_ros_subscriber_->publish(pose_msg_ros);
+        });        
+
+    
+        // // std::chrono::milliseconds(int(1000*time_interval))
+        // timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
+        //     //std::stringstream ss;
+        //     //ss << "during LocalController loop, agent_" << agent->id_;
+        //     //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        //     //publishPoseMsgSim(time_interval);
+
+        // });
+
+    }
+
+    int agent_id_;
+
+    Pointf<3> cur_pose_;
+
+    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
+
+    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_ros_subscriber_;
+
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmdvel_subscriber_;
+
+    geometry_msgs::msg::Twist::SharedPtr cmdvel_msg_ = nullptr;
+
+    rclcpp::TimerBase::SharedPtr timer_;
+
+    float time_interval_;
+
+};
 
 #endif

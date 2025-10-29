@@ -17,13 +17,9 @@ int main() {
 
     YAMLMapConfigConverter yaml_converter(yaml_path, dim_local[1]);
 
-    std::cout << "haha" << std::endl;
-
-
     auto origin_ptf = yaml_converter.GridToPtfPicYaml(Pointi<2>{0, dim_local[1]-1});
 
     std::cout << "origin_ptf = " << origin_ptf << std::endl;
-
 
     auto origin_pt =  yaml_converter.PtfToGridYaml(Pointf<3>{0, 0, 0});
 
@@ -33,21 +29,13 @@ int main() {
     
     zoom_ratio = std::max(1., ceil(std::min(1000./dim_local[0], 1000./dim_local[1]))); 
     
-    Canvas canvas("Yaml visualization", dim_local[0], dim_local[1], 1./reso, zoom_ratio);
+    Canvas canvas("Yaml Converter visualization", dim_local[0], dim_local[1], 1./reso, zoom_ratio);
 
     std::cout << "canvas rows / cols = " << canvas.getCanvas().rows << " / " << canvas.getCanvas().cols << std::endl;
 
-    std::cout << "dim_[0] = " << dim_local[0] << ", dim_[1] = " << dim_local[1] << std::endl;
-
-    std::cout << "before zoom_ratio = " << zoom_ratio << ", canvas.resolution_ = " << canvas.resolution_ << std::endl;
-
     canvas.resolution_ = 1./reso;
 
-    std::cout << "after zoom_ratio = " << zoom_ratio << ", canvas.resolution_ = " << canvas.resolution_ << std::endl;
-
     bool paused = true;
-
-    std::cout << "haha " << std::endl;
 
     while(true) {
         canvas.resetCanvas();

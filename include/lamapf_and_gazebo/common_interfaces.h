@@ -35,6 +35,12 @@
 #include <tf2/LinearMath/Quaternion.h>
 // #include "large_agent_mapf/srv/path_execution.hpp" // 存在于install目录但找不到,cmakelist中自己包括自己就找到了
 #include "std_msgs/msg/string.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+
+#include "geometry_msgs/msg/twist.hpp"
+
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
 
 #include <yaml-cpp/yaml.h>
 

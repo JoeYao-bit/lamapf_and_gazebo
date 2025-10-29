@@ -1368,6 +1368,8 @@ ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
 
 所有机器人采用turtlebot
 
+重写专门局部控制节点
+
 2,根据当前各个机器人位姿动态随机选择（算法随机或人工临时设置）
 
 先试试第一个
