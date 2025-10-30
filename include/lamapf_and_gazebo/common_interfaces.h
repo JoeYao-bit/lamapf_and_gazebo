@@ -879,19 +879,19 @@ Pointi<2> PtfToGridPicOnly(const Pointf<3>& pt) {
     return retv;
 }
 
-Pointf<3> PoseIntToPtf(const Pose<int, 2>& pose, const GRID_TO_PTF_FUNC& gridToPtf) {
+Pointf<3> PoseIntToPtf(const Pose<int, 2>& pose, GRID_TO_PTF_FUNC gridToPtf) {
     Pointf<3> ptf = gridToPtf(pose.pt_);
     ptf[2] = orientToRadius(pose.orient_);
     return ptf;
 }
 
-Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose, const GRID_TO_PTF_FUNC& gridToPtf) {
+Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose, GRID_TO_PTF_FUNC gridToPtf) {
     Pointf<3> ptf = gridToPtf(pose->pt_);
     ptf[2] = orientToRadius(pose->orient_);
     return ptf;
 }
 
-Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, const PTF_TO_GRID_FUNC& ptfToGrid) {
+Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, PTF_TO_GRID_FUNC ptfToGrid) {
     Pose<int, 2> pose;
     pose.pt_ = ptfToGrid(ptf);
     pose.orient_ = radiusToOrient(ptf[2]);
@@ -969,7 +969,7 @@ public:
     // }
 
 
-    Pointf<3> GridToPtfPicYaml(const Pointi<2>& pt) {   
+    static Pointf<3> GridToPtfPicYaml(const Pointi<2>& pt) {   
         Pointf<3> retv = {0, 0, 0};
         retv[0] = origin_x_ + (pt[0] + 0.5) * resolution_;
         retv[1] = origin_y_ + (map_height_ - pt[1] - 0.5) * resolution_;
@@ -977,7 +977,7 @@ public:
     }
 
     // assume center of map is (0, 0) in the world coordinate system
-    Pointi<2> PtfToGridYaml(const Pointf<3>& pt) {
+    static Pointi<2> PtfToGridYaml(const Pointf<3>& pt) {
         Pointi<2> retv = {0, 0};
         retv[0] = static_cast<int>((pt[0] - origin_x_) / resolution_ - 0.5);
         retv[1] = static_cast<int>(map_height_ - (pt[1] - origin_y_) / resolution_ - 0.5);
@@ -986,11 +986,12 @@ public:
 
 //private:
 
-    double resolution_;
+    // C++17 起的新特性：inline static
+    inline static double resolution_ = 0;
 
-    double origin_x_, origin_y_, origin_yaw_;
+    inline static double origin_x_ = 0, origin_y_ = 0, origin_yaw_ = 0;
 
-    int map_height_;
+    inline static int map_height_ = 0;
 };
 
 #endif //LAYEREDMAPF_COMMON_INTERFACES_H

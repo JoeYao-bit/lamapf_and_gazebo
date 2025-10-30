@@ -17,13 +17,12 @@ int main() {
 
     YAMLMapConfigConverter yaml_converter(yaml_path, dim_local[1]);
 
-    auto origin_ptf = yaml_converter.GridToPtfPicYaml(Pointi<2>{0, dim_local[1]-1});
+    std::cout << "origin_ptf = " << PoseIntToPtf(Pose<int, 2>{Pointi<2>{0, dim_local[1]-1}, 1}, yaml_converter.GridToPtfPicYaml) << std::endl;
 
-    std::cout << "origin_ptf = " << origin_ptf << std::endl;
 
-    auto origin_pt =  yaml_converter.PtfToGridYaml(Pointf<3>{0, 0, 0});
+    auto origin_pt = yaml_converter.PtfToGridYaml(Pointf<3>{0, 0, 0});
 
-    std::cout << "origin_pt = " << origin_pt << std::endl;
+    std::cout << "origin_pt = " << PtfToPoseInt(Pointf<3>{0, 0, 0}, yaml_converter.PtfToGridYaml) << std::endl;
 
     reso = yaml_converter.resolution_;
     
