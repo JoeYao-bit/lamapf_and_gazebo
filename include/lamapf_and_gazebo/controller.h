@@ -268,10 +268,10 @@ public:
                     all_agent_poses_[msg->agent_id][1] = msg->y;
                     all_agent_poses_[msg->agent_id][2] = msg->yaw;
 
-                    // std::stringstream ss;
-                    // ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
-                    // ss << " = " << all_agent_poses_[msg->agent_id];
-                    // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    std::stringstream ss;
+                    ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
+                    ss << " = " << all_agent_poses_[msg->agent_id];
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 });
 
          error_state_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::ErrorState>(
@@ -550,7 +550,8 @@ public:
                     
                     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - 
                                                     Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
-                    float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
+
+                    float angle_to_target = shortestAngularDistance(target_ptf[2], cur_pose[2]);
 
                     std::stringstream ss;        
                     ss << "agent_"<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;

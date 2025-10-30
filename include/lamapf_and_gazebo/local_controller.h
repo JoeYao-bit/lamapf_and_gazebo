@@ -28,14 +28,19 @@ bool reachPosition(const float& x, const float& y, const float& target_x, const 
     return fabs(dist_to_target_position) < 0.03;                                            
 }
 
+float shortestAngularDistance(float a, float b) {
+    float diff = std::fmod(a - b + M_PI, 2 * M_PI);
+    if (diff < 0)
+        diff += 2 * M_PI;
+    diff -= M_PI;
+    return diff;
+}
+
+
 bool reachOrientation(const float& orientation, const float& target_orientation) {
-    float angle_to_target = fmod(orientation-target_orientation, 2*M_PI);
+    float angle_to_target = shortestAngularDistance(orientation, target_orientation);
     // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
-    if(angle_to_target <= M_PI) {
-        return fabs(angle_to_target) < 0.03;
-    } else {
-        return fabs(2*M_PI - angle_to_target) < 0.03;   
-    }
+    return fabs(angle_to_target) < 0.03;
 }
 
 bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
@@ -409,6 +414,8 @@ public:
 
         error_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::ErrorState>("AgentErrorState", 10);
 
+        pose_publisher_        = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
+
         std::stringstream ss3;
         ss3 << "GoalUpdate" << agent_->id_;
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
@@ -452,11 +459,36 @@ public:
         pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
                 ss5.str().c_str(), 10,
                 [this](geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
+
+
+                    pose_msg_ = msg;
+
+                    lamapf_and_gazebo_msgs::msg::UpdatePose pose_msg;
+                    pose_msg.x   = pose_msg_->pose.pose.position.x;
+                    pose_msg.y   = pose_msg_->pose.pose.position.y;
+
+                    // 获取姿态四元数
+                    double qx = pose_msg_->pose.pose.orientation.x;
+                    double qy = pose_msg_->pose.pose.orientation.y;
+                    double qz = pose_msg_->pose.pose.orientation.z;
+                    double qw = pose_msg_->pose.pose.orientation.w;
+
+                    // 构建 tf2 四元数对象
+                    tf2::Quaternion q(qx, qy, qz, qw);
+
+                    // 用 Matrix3x3 提取 roll, pitch, yaw
+                    double roll, pitch, yaw;
+                    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+                    
+                    pose_msg.yaw = yaw;
+                    pose_msg.agent_id = this->agent_->id_;
+                    this->pose_publisher_->publish(pose_msg);
+
                     std::stringstream ss_local;
                     ss_local << "agent " << agent_->id_ << " receive pose (" << msg->pose.pose.position.x << ", "
-                    << msg->pose.pose.position.y << ")";
+                    << msg->pose.pose.position.y << ", " << yaw << ")";
                     RCLCPP_INFO(this->get_logger(), ss_local.str().c_str());
-                    pose_msg_ = msg;
+
                 });        
         
         std::stringstream ss6;
@@ -678,6 +710,9 @@ public:
 
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_subscriber_;
 
+    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
+
+
     rclcpp::TimerBase::SharedPtr timer_;
 
     int count_of_iter_ = 0;
@@ -702,8 +737,6 @@ public:
         ss << "FakeRobot" << agent_id_ << " initialized";
         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
         
-        pose_publisher_      = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
-
         std::stringstream ss4;
         ss4 << "AmclPose" << agent_id_;
 
@@ -724,7 +757,7 @@ public:
             velcmd[2] = cmdvel_msg_->angular.z;
 
             std::stringstream ss7;
-            ss7 << "fake robot"<< agent_id_ <<" receive cmdvel(vx,w) = " << velcmd[0] << ", " << velcmd[2];
+            ss7 << "fake robot "<< agent_id_ <<" receive cmdvel(vx,w) = " << velcmd[0] << ", " << velcmd[2];
             RCLCPP_INFO(this->get_logger(), ss7.str().c_str());
 
             cur_pose_ = updateAgentPose(pre_pose, velcmd, this->time_interval_);
@@ -739,13 +772,6 @@ public:
             //ss << "during LocalController loop, agent_" << agent->id_;
             //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
             //publishPoseMsgSim(time_interval);
-
-            lamapf_and_gazebo_msgs::msg::UpdatePose pose_msg;
-            pose_msg.x   = cur_pose_[0];
-            pose_msg.y   = cur_pose_[1];
-            pose_msg.yaw = cur_pose_[2];
-            pose_msg.agent_id = this->agent_id_;
-            this->pose_publisher_->publish(pose_msg);
 
 
             geometry_msgs::msg::PoseWithCovarianceStamped pose_ros_msg;
@@ -777,8 +803,6 @@ public:
     int agent_id_;
 
     Pointf<3> cur_pose_;
-
-    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
 
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_ros_publisher_;
 
