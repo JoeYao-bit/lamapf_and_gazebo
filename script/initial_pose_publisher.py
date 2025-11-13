@@ -15,7 +15,7 @@ class InitialPosePublisher(Node):
         self.publisher_ = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
 
         # 获取 map yaml 路径（可通过参数传入）
-        self.declare_parameter('map_yaml_file', '/home/yaozhuo/my_map.yaml')
+        self.declare_parameter('map_yaml_file', '/home/wangweilab/my_map.yaml')
         map_yaml_file = self.get_parameter('map_yaml_file').value
 
         if not os.path.exists(map_yaml_file):

@@ -35,7 +35,14 @@
 #include <tf2/LinearMath/Quaternion.h>
 // #include "large_agent_mapf/srv/path_execution.hpp" // 存在于install目录但找不到,cmakelist中自己包括自己就找到了
 #include "std_msgs/msg/string.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
+#include "geometry_msgs/msg/twist.hpp"
+
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
+
+#include <yaml-cpp/yaml.h>
 
 //#include "path_execution.hpp"
 using std::placeholders::_1;
@@ -81,8 +88,16 @@ SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
         {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
 };
 
-//std::string map_path_pic = "/home/wangweilab/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.png";
-//std::string ins_path_pic = "/home/wangweilab/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.scen";
+
+std::map<std::string, std::string> demoMapYaml = {
+        {"map_name",       "demo"},
+        {"map_path",       "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/map/my_map.pgm"},
+        {"la_ins_path",    "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/map/my_map_ins.txt"},
+        {"yaml_file_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/map/my_map.yaml"}
+};
+
+//std::string map_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.png";
+//std::string ins_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.scen";
 
 double reso = 0.1; // how long a grid occupied in real world ?
 
@@ -92,6 +107,13 @@ auto map_test_config = MAPFTestConfig_IndustrialWarehouse;//MAPFTestConfig_Large
 auto is_grid_occupied = [](const cv::Vec3b& color) -> bool {
     if (color == cv::Vec3b::all(255)) { return false; }
     return true;
+};
+
+
+// ros2 generated pgm map
+auto is_grid_occupied_pgm = [](const cv::Vec3b& color) -> bool {
+    if (color[0]<240 || color[1]<240 || color[2] < 240) { return true; }
+    return false;
 };
 
 // load map
@@ -834,8 +856,15 @@ struct CenteralControllerFull;
 
 extern CenteralControllerFull* ctl;
 
+using GRID_TO_PTF_FUNC = std::function<Pointf<3>(const Pointi<2>&)>;
+
+using PTF_TO_GRID_FUNC = std::function<Pointi<2>(const Pointf<3>&)>;
+
+
 // assume center of map is (0, 0) in the world coordinate system
-Pointf<3> GridToPtf(const Pointi<2>& pt) {
+// use for map that have only a picture
+// on the constrast, is which have explicit origin, like slam_toolbox's yaml file
+Pointf<3> GridToPtfPicOnly(const Pointi<2>& pt) {   
     Pointf<3> retv = {0, 0, 0};
     retv[0] = reso*pt[0] - .5*dim[0]*reso;
     retv[1] = .5*dim[1]*reso - reso*pt[1];
@@ -843,28 +872,28 @@ Pointf<3> GridToPtf(const Pointi<2>& pt) {
 }
 
 // assume center of map is (0, 0) in the world coordinate system
-Pointi<2> PtfToGrid(const Pointf<3>& pt) {
+Pointi<2> PtfToGridPicOnly(const Pointf<3>& pt) {
     Pointi<2> retv = {0, 0};
     retv[0] = std::round(pt[0]/reso) + .5*dim[0];
     retv[1] = .5*dim[1] - std::round(pt[1]/reso);
     return retv;
 }
 
-Pointf<3> PoseIntToPtf(const Pose<int, 2>& pose) {
-    Pointf<3> ptf = GridToPtf(pose.pt_);
+Pointf<3> PoseIntToPtf(const Pose<int, 2>& pose, GRID_TO_PTF_FUNC gridToPtf) {
+    Pointf<3> ptf = gridToPtf(pose.pt_);
     ptf[2] = orientToRadius(pose.orient_);
     return ptf;
 }
 
-Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose) {
-    Pointf<3> ptf = GridToPtf(pose->pt_);
+Pointf<3> PoseIntToPtf(const PosePtr<int, 2>& pose, GRID_TO_PTF_FUNC gridToPtf) {
+    Pointf<3> ptf = gridToPtf(pose->pt_);
     ptf[2] = orientToRadius(pose->orient_);
     return ptf;
 }
 
-Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf) {
+Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, PTF_TO_GRID_FUNC ptfToGrid) {
     Pose<int, 2> pose;
-    pose.pt_ = PtfToGrid(ptf);
+    pose.pt_ = ptfToGrid(ptf);
     pose.orient_ = radiusToOrient(ptf[2]);
     return pose;
 };
@@ -888,6 +917,10 @@ std::vector<int> REAL_ROBOTS = {0,0,0,0,0,
                                 3,3,3,3,
                                 4,4,4,4};
 
+
+
+                                
+
 // related agent ptrs of above agents. in grid
 // AgentPtrs<2> agents = {
 //     std::make_shared<BlockAgent_2D >(Pointf<2>({-0.3/reso, -0.2/reso}), Pointf<2>({0.32/reso, 0.2/reso}), 0, dim),
@@ -899,5 +932,66 @@ std::vector<int> REAL_ROBOTS = {0,0,0,0,0,
 // };
 
 // specify a file state what agents in instance 
+
+
+class YAMLMapConfigConverter {
+public:
+
+    YAMLMapConfigConverter(std::string yaml_path, int map_height) {
+
+        map_height_ = map_height;
+
+        YAML::Node map = YAML::LoadFile(yaml_path);
+
+        resolution_ = map["resolution"].as<double>();
+        auto origin_list = map["origin"].as<std::vector<double>>();
+        origin_x_ = origin_list[0];
+        origin_y_ = origin_list[1];
+        origin_yaw_ = origin_list[2];
+
+        RCLCPP_INFO(rclcpp::get_logger("MapConverter"),
+                    "Loaded map:\n resolution = %.3f\n origin = [%.3f, %.3f, %.3f]",
+                    resolution_, origin_x_, origin_y_, origin_yaw_);
+    }
+
+    // // 像素坐标 → 世界坐标
+    // std::pair<double, double> pixelToWorld(int u, int v, int map_height) const {
+    //         double x = origin_x_ + (u + 0.5) * resolution_;
+    //         double y = origin_y_ + (map_height - v - 0.5) * resolution_;
+    //         return {x, y};
+    // }
+
+    // // 世界坐标 → 像素坐标
+    // std::pair<int, int> worldToPixel(double x, double y, int map_height) const {
+    //         int u = static_cast<int>((x - origin_x_) / resolution_ - 0.5);
+    //         int v = static_cast<int>(map_height - (y - origin_y_) / resolution_ - 0.5);
+    //         return {u, v};
+    // }
+
+
+    static Pointf<3> GridToPtfPicYaml(const Pointi<2>& pt) {   
+        Pointf<3> retv = {0, 0, 0};
+        retv[0] = origin_x_ + (pt[0] + 0.5) * resolution_;
+        retv[1] = origin_y_ + (map_height_ - pt[1] - 0.5) * resolution_;
+        return retv;
+    }
+
+    // assume center of map is (0, 0) in the world coordinate system
+    static Pointi<2> PtfToGridYaml(const Pointf<3>& pt) {
+        Pointi<2> retv = {0, 0};
+        retv[0] = static_cast<int>((pt[0] - origin_x_) / resolution_ - 0.5);
+        retv[1] = static_cast<int>(map_height_ - (pt[1] - origin_y_) / resolution_ - 0.5);
+        return retv;
+    }
+
+//private:
+
+    // C++17 起的新特性：inline static
+    inline static double resolution_ = 0;
+
+    inline static double origin_x_ = 0, origin_y_ = 0, origin_yaw_ = 0;
+
+    inline static int map_height_ = 0;
+};
 
 #endif //LAYEREDMAPF_COMMON_INTERFACES_H

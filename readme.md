@@ -1,4 +1,5 @@
- 
+[TOC] 
+
 更新launch后需要重新运行 colcon build 以更新位于install的launch复制文件，单独更新src节点内的launch无效
 
 运行下述代码启动gazebo以及相关world文件
@@ -1332,6 +1333,7 @@ ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocit
 
 
 ## 5, 启动建图
+改变yaml参数文件地址
 ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
 
 ## 6, 发布雷达到机器人底盘的静态transform
@@ -1342,12 +1344,19 @@ ros2 run tf2_tools view_frames
 应该是map->odom->base_footprint->laser
 
 ## 8, 保存地图
+
+安装地图服务器
+
+sudo apt install ros-jazzy-nav2-map-server
+
 ros2 run nav2_map_server map_saver_cli -f ~/my_map
 
 ## 9, 启动定位
+改变yaml参数文件地址
 ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
 
 ## 10, 发布初始位置
+改init_pose_publisher.py中的文件路径
 python3 /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
 
 ## 11, 初始位置不对则输入rviz2设置初始位置
@@ -1388,3 +1397,140 @@ colcon build --packages-select rplidar_ros
 安装ros2建图工具包
 
 sudo apt install ros-jazzy-slam-toolbox
+
+安装tf_transformations
+
+sudo apt install ros-jazzy-tf-transformations
+
+安装yaml-cpp和eigen，方便坐标变换
+
+sudo apt install libyaml-cpp-dev libeigen3-dev
+
+真机实验
+1,各个机器人的定位和局部控制节点有自己的唯一编号，共用用一张地图
+2,局部控制器接收唯一指定定位节点的结果
+3,定位节点接收指定编号的里程计和激光雷达信息，以及tf信息？
+
+
+tf树可以通过指定名称空间的方式隔离
+不同机器人的同类话题比如odom可以通过指定名称空间的方式避免话题名重复
+命名空间不会阻止跨空间通信；只要两个节点话题路径完全匹配（字符串相同），它们就能通信；
+ROS 2 不会自动在不同命名空间间桥接或阻断通信。
+
+构造如图所示的tf树
+
+map)
+ ├── robot1/odom → robot1/base_link → ...
+ ├── robot2/odom → robot2/base_link → ...
+ └── robot3/odom → robot3/base_link → ...
+
+
+kobuki_ros odom tf话题名字在 kobuki_node_params.yaml设置
+
+    odom_frame: odom
+    base_frame: base_footprint
+
+rplidar 的 frame_id 在rplidar_a2m8_launch.py中配置
+
+    frame_id = LaunchConfiguration('frame_id', default='laser')
+ 
+但laser到base_footprint的tf由我通过命令发布
+在这里需要改为指定机器人的laser名称
+
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
+
+假设各个机器人已经有准确定位信息，
+如何选择各个机器人目标点？
+
+1，固定地图，预设各个机器人的起点终点，即固定场景
+地图名称、各个机器人起末位置，均为固定参数，写入指定文件
+先制作地图，在选择每个机器人期末位姿，写入文件
+确保各个机器人均处于指定位置之后
+再加载文件对应的起末位姿，进行全局规划和局部运动控制
+
+需要根据地图yaml进行文件生成坐标系转换函数
+
+先获取各个机器人起末点的世界坐标，再将其转换为栅格地图坐标
+
+导入规划系统
+
+所有机器人采用turtlebot
+
+重写专门局部控制节点， 完成
+
+2,根据当前各个机器人位姿动态随机选择（算法随机或人工临时设置）
+
+先试试第一个
+
+
+测试加载yaml地图参数, 完成
+
+ros2 run lamapf_and_gazebo test_yaml_converter
+
+现有框架允许单一机器人在MAPF体系下工作
+
+后续计划
+
+机身电源供电
+建图（更大的室内地图）
+真实定位替换虚拟定位
+单机器人框架下导航
+
+## 万用表测量微型主机电源电压
+
+插好表笔
+
+黑表笔插在 COM 孔
+
+红表笔插在 VΩmA 孔
+
+选择量程档位
+
+把旋钮转到带有符号 “V—” 或 “DCV” 的区域
+
+选一个比你预期电压高的档位
+
+例如测 12V，用 “20V” 档最合适。
+如果不确定电压大小，可先用 “200V” 档，测到数值后再切低档。
+
+接触待测电源
+
+红表笔接 电源正极（+）
+
+黑表笔接 电源负极（−）或地
+
+读取数值
+
+屏幕上显示的就是电压值（单位 V）
+
+若显示 负号 “−”，说明你接反了（红黑笔接反），重新调换即可。
+
+## turtlebot 输出12V 5A电源正负极
+
+上、下两个孔分别是 正极 (+) 和 负极 (−)
+
+一般惯例：红色正极、黑色负极
+
+剥线钳用1.0的口径剥线
+
+## 远程桌面（TODO）
+实现微型主机和屏幕的无线通信，能通过桌面“看到”微型主机的屏幕。
+便于调试
+
+微型主机：
+通过 ip addr show查看在同一wifi下的ip地址，例如192.168.4.23
+点开系统。点开桌面共享，设置允许桌面共享和远程控制，以及用户名和登录密码
+
+笔记本电脑：
+安装remmina：sudo apt install remmina -y
+打开Remmina，输入微型主机的ip地址，输入微型主机设置的用户名，密码，域留空，登陆即可
+
+验证通过，但需要每次查看ip地址，而且ip地址每次开机可能会变。
+
+尝试通过rustdesk实现开机自启动，根据id和密码即可远程控制
+
+如何查看系统架构是x86 64还是arm 64? 输入uname -m
+威嵌沃微型主机和笔记本都是x86 64架构
+
+第一台微机的rust id是 342 459 772
+永久登录密码：Wangwei12345678

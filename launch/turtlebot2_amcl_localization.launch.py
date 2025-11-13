@@ -22,7 +22,7 @@ def generate_launch_description():
 
     declare_map_cmd = DeclareLaunchArgument(
         'map',
-        default_value='/home/yaozhuo/my_map.yaml',
+        default_value='/home/wangweilab/my_map.yaml',
         description='Full path to map file')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
@@ -32,7 +32,7 @@ def generate_launch_description():
 
     declare_params_file_cmd = DeclareLaunchArgument(
         'params_file',
-        default_value='/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/config/amcl_localization.yaml',
+        default_value='/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/config/amcl_localization.yaml',
         description='Full path to AMCL config file')
 
     # 地图服务器节点

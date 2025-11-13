@@ -33,7 +33,7 @@ def generate_launch_description():
         description='Use simulation/Gazebo clock')
     declare_slam_params_file_cmd = DeclareLaunchArgument(
         'slam_params_file',
-        default_value="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/config/turtlebot2_mapper_params_online_async.yaml",
+        default_value="/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/config/turtlebot2_mapper_params_online_async.yaml",
         description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
 
     start_async_slam_toolbox_node = LifecycleNode(

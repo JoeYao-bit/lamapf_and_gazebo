@@ -56,7 +56,7 @@ public:
                     //std::cout << "target_pose_id = " << target_pose_id << ", ADG_.all_poses_.size = " << ADG_.all_poses_.size() << std::endl;
 
                     target_pose = ADG_.all_poses_[target_pose_id];
-                    target_ptf = PoseIntToPtf(target_pose);
+                    target_ptf = PoseIntToPtf(target_pose, GridToPtfPicOnly);
                     
                     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
                     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
@@ -88,7 +88,7 @@ public:
                     finished = true;
                     target_pose_id = ADG_.paths_[i].back();
                     target_pose = ADG_.all_poses_[target_pose_id];
-                    target_ptf = PoseIntToPtf(target_pose);
+                    target_ptf = PoseIntToPtf(target_pose, GridToPtfPicOnly);
                     //std::cout << "agent_" << i << " finish all pose, now at " << poses[i] << ", final pose = " << target_ptf << std::endl;
                     break;
                 }
@@ -108,7 +108,7 @@ public:
                 // if not finish all pose, get cmd move to next pose, otherwise stop 
                 size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];;
                 PosePtr<int, 2> start_pose = ADG_.all_poses_[start_pose_id];
-                start_ptf = PoseIntToPtf(start_pose);
+                start_ptf = PoseIntToPtf(start_pose, GridToPtfPicOnly);
 
 
                 // check whether need wait, via ADG
@@ -149,7 +149,7 @@ public:
                 target_pose_id = ADG_.paths_[i].back();
                 // std::cout << "target_pose_id = " << target_pose_id << ", ADG_.all_poses_.size = " << ADG_.all_poses_.size() << std::endl;
                 target_pose = ADG_.all_poses_[target_pose_id];
-                target_ptf = PoseIntToPtf(target_pose);
+                target_ptf = PoseIntToPtf(target_pose, GridToPtfPicOnly);
                 //std::cout << "agent_" << i << " finish2, at " << poses[i] << ", target = " << target_ptf << std::endl;
             }
             //std::cout << "cur vel = " << cmd_vel << std::endl;
@@ -189,8 +189,10 @@ public:
                        const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
                        std::string lns_path,
                        const float& time_interval = 0.1,
-                       bool enable_opencv_window = true): 
-                       rclcpp::Node("central_controller") {        
+                       bool enable_opencv_window = true,
+                       const GRID_TO_PTF_FUNC& grid_to_ptf_func = GridToPtfPicOnly): 
+                       rclcpp::Node("central_controller"),
+                       grid_to_ptf_func_(grid_to_ptf_func) {        
                         
         
         dim_ = dim;
@@ -240,7 +242,7 @@ public:
         for(int i=0; i<instances.first.size(); i++) {
             size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
-            Pointf<3> start_ptf = PoseIntToPtf(start_pose);
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
             all_agent_poses_[i] = start_ptf;
 
             ADG_->setActionLeave(i, 0);
@@ -266,10 +268,10 @@ public:
                     all_agent_poses_[msg->agent_id][1] = msg->y;
                     all_agent_poses_[msg->agent_id][2] = msg->yaw;
 
-                    // std::stringstream ss;
-                    // ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
-                    // ss << " = " << all_agent_poses_[msg->agent_id];
-                    // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    std::stringstream ss;
+                    ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
+                    ss << " = " << all_agent_poses_[msg->agent_id];
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                 });
 
          error_state_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::ErrorState>(
@@ -307,7 +309,7 @@ public:
                 RCLCPP_INFO(this->get_logger(), "after finish replan, pub all agent's recover task"); 
                 for(int i=0; i<instances_.first.size(); i++) {
                     Pose<int, 2> pre_pose = *(ADG_->all_poses_[ADG_->paths_[i][progress_of_agents_[i]]]);
-                    Pointf<3> pre_ptf = PoseIntToPtf(pre_pose);
+                    Pointf<3> pre_ptf = PoseIntToPtf(pre_pose, grid_to_ptf_func_);
                     recover_tasks_.push_back(std::make_pair(this->all_agent_poses_[i], pre_ptf));
 
                     // tell all agents to return to last valid state
@@ -379,7 +381,7 @@ public:
 
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
             assert(start_pose != nullptr);
-            Pointf<3> start_ptf = PoseIntToPtf(start_pose);
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
 
             size_t target_pose_id = ADG_->paths_[i][1];
             
@@ -389,7 +391,7 @@ public:
 
             PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
             assert(target_pose != nullptr);
-            Pointf<3> target_ptf = PoseIntToPtf(target_pose);
+            Pointf<3> target_ptf = PoseIntToPtf(target_pose, grid_to_ptf_func_);
 
             lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
             msg.start_x   = start_ptf[0];
@@ -426,7 +428,7 @@ public:
             instances_.second[i].first = pre_pose;//PtfToPoseInt(poses[i]);
             std::stringstream ss;
             ss << "Agent " << i << "'s initial ptf: " << poses[i] << ", pose " << instances_.second[i].first;
-            ss << "| pose to ptf " << PoseIntToPtf(instances_.second[i].first);
+            ss << "| pose to ptf " << PoseIntToPtf(instances_.second[i].first, grid_to_ptf_func_);
             RCLCPP_INFO(this->get_logger(), ss.str().c_str());
         }
         // calculate initial paths 
@@ -459,12 +461,13 @@ public:
         for(int i=0; i<instances_.first.size(); i++) {
             size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
-            Pointf<3> start_ptf = PoseIntToPtf(start_pose);
+            Pointf<3> start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
             all_agent_poses_[i] = start_ptf;
 
             ADG_->setActionLeave(i, 0);
 
-        }                                                                                                             RCLCPP_INFO(this->get_logger(), "finish reupdate paths");
+        }                                                                                                             
+        RCLCPP_INFO(this->get_logger(), "finish reupdate paths");
 
         RCLCPP_INFO(this->get_logger(), "finish pub inital goal after reupdate paths");    
         
@@ -543,11 +546,12 @@ public:
                     target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
                     //RCLCPP_INFO(this->get_logger(), "flag 0.3");
                     target_pose = ADG_->all_poses_[target_pose_id];
-                    target_ptf = PoseIntToPtf(target_pose);
+                    target_ptf = PoseIntToPtf(target_pose, grid_to_ptf_func_);
                     
                     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - 
                                                     Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
-                    float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
+
+                    float angle_to_target = shortestAngularDistance(target_ptf[2], cur_pose[2]);
 
                     std::stringstream ss;        
                     ss << "agent_"<< i << ", dist_to_target = " << dist_to_target << ", angle_to_target = " << angle_to_target << ", target = " << target_ptf << ", cur pose = " << cur_pose;
@@ -580,11 +584,11 @@ public:
                             // update the agent's start and target state
                             size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
                             PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
-                            start_ptf = PoseIntToPtf(start_pose);
+                            start_ptf = PoseIntToPtf(start_pose, grid_to_ptf_func_);
 
                             size_t target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
                             PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
-                            target_ptf = PoseIntToPtf(target_pose);
+                            target_ptf = PoseIntToPtf(target_pose, grid_to_ptf_func_);
 
                             lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
                             msg.start_x   = start_ptf[0];
@@ -639,7 +643,7 @@ public:
     }
  
     static int PathVisualize(IS_OCCUPIED_FUNC<2> is_occupied) {
-        float zoom_ratio = std::max(1., ceil(std::min(1000./dim_[0], 1000./dim_[1]))); 
+        float zoom_ratio = std::max(1., ceil(std::min(800./dim_[0], 800./dim_[1]))); 
         Canvas canvas("LA-MAPF visualization", dim_[0], dim_[1], 1./reso, zoom_ratio);
         std::cout << "canvas rows / cols = " << canvas.getCanvas().rows << " / " << canvas.getCanvas().cols << std::endl;
         std::cout << "dim_[0] = " << dim_[0] << ", dim_[1] = " << dim_[1] << std::endl;
@@ -720,7 +724,7 @@ public:
 
     static bool need_replan_;
 
-
+    GRID_TO_PTF_FUNC grid_to_ptf_func_;
 };
 
 

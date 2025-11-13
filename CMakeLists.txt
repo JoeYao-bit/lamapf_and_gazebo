@@ -26,6 +26,8 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(lamapf_and_gazebo_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(yaml-cpp REQUIRED)
+
 
 ament_export_dependencies(rosidl_default_runtime)
 
@@ -69,6 +71,11 @@ add_executable(test_mpc_controller src/test_mpc_controller.cpp)
 target_link_libraries(test_mpc_controller ${EXTERNAL_LIBS} )
 ament_target_dependencies(test_mpc_controller ${dependencies})
 install(TARGETS test_mpc_controller DESTINATION lib/${PROJECT_NAME})
+
+add_executable(test_yaml_converter src/test_yaml_converter.cpp)
+target_link_libraries(test_yaml_converter ${EXTERNAL_LIBS} yaml-cpp )
+ament_target_dependencies(test_yaml_converter ${dependencies})
+install(TARGETS test_yaml_converter DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
