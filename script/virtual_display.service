@@ -4,7 +4,7 @@ After=graphical.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/virtual_display.sh
+ExecStart=/usr/local/bin/enable-virtual-display.sh
 
 [Install]
 WantedBy=graphical.target
