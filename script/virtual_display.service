@@ -1,0 +1,10 @@
+[Unit]
+Description=Adaptive Virtual Display
+After=graphical.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/virtual_display.sh
+
+[Install]
+WantedBy=graphical.target
