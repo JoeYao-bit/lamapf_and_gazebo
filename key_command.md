@@ -1,13 +1,6 @@
 [TOC] 
 
 
-# 最新关键操作指令
-
-## 1,配置USB连接规则
-
-查看所有连接的usb设备
-lsusb
-
 
 -
 
@@ -54,6 +47,56 @@ ls -l /dev/kobuki /dev/rplidar
 
 这样我一个usb口连turtlebot机器人，一个连rplidar，如何自动识别匹配usb号
 让系统自动识别并固定每个设备（即使拔插顺序改变，也不会错乱）。
+
+
+# 全部安装指令
+
+1, 安装kobuki相关的包
+ecl_core,ecl_lite,kobuki_core,kobuki_ros,kobuki_ros_interfaces
+
+git clone https://github.com/stonier/ecl_lite.git
+
+git clone https://github.com/stonier/ecl_core.git
+
+git clone https://github.com/kobuki-base/kobuki_ros.git
+
+git clone https://github.com/kobuki-base/kobuki_ros_interfaces.git
+
+git clone https://github.com/kobuki-base/kobuki_core.git
+
+
+ROS2 Jazzy 使用的 GCC/Clang 默认把 所有警告当作错误 (-Werror)，
+
+所以即便只是警告，也会直接导致构建失败。
+在编译时禁止将警告当作错误
+colcon build --cmake-args -DCMAKE_CXX_FLAGS="-Wno-error=overloaded-virtual"
+
+
+2, 安装 ROS 2 版 RPLIDAR 驱动包
+git clone -b ros2 https://github.com/Slamtec/rplidar_ros.git
+
+安装 ROS 2 版 RPLIDAR 驱动包
+git clone -b ros2 git@github.com:Slamtec/rplidar_ros.git
+
+单独编译某个包
+colcon build --packages-select rplidar_ros
+
+安装ros2建图工具包
+
+sudo apt install ros-jazzy-slam-toolbox
+
+安装tf_transformations
+
+sudo apt install ros-jazzy-tf-transformations
+
+# 最新关键操作指令
+
+## 1,配置USB连接规则
+
+查看所有连接的usb设备
+
+lsusb
+
 
 ## 2, 启动激光雷达
 ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_baudrate:=115200
@@ -112,44 +155,3 @@ ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_tim
 python3 /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
 
 ## 11, 初始位置不对则输入rviz2设置初始位置
-
-
-# 全部安装指令
-
-1, 安装kobuki相关的包
-ecl_core,ecl_lite,kobuki_core,kobuki_ros,kobuki_ros_interfaces
-
-git clone https://github.com/stonier/ecl_lite.git
-
-git clone https://github.com/stonier/ecl_core.git
-
-git clone https://github.com/kobuki-base/kobuki_ros.git
-
-git clone https://github.com/kobuki-base/kobuki_ros_interfaces.git
-
-git clone https://github.com/kobuki-base/kobuki_core.git
-
-
-ROS2 Jazzy 使用的 GCC/Clang 默认把 所有警告当作错误 (-Werror)，
-
-所以即便只是警告，也会直接导致构建失败。
-在编译时禁止将警告当作错误
-colcon build --cmake-args -DCMAKE_CXX_FLAGS="-Wno-error=overloaded-virtual"
-
-
-2, 安装 ROS 2 版 RPLIDAR 驱动包
-git clone -b ros2 https://github.com/Slamtec/rplidar_ros.git
-
-安装 ROS 2 版 RPLIDAR 驱动包
-git clone -b ros2 git@github.com:Slamtec/rplidar_ros.git
-
-单独编译某个包
-colcon build --packages-select rplidar_ros
-
-安装ros2建图工具包
-
-sudo apt install ros-jazzy-slam-toolbox
-
-安装tf_transformations
-
-sudo apt install ros-jazzy-tf-transformations
