@@ -131,8 +131,8 @@ ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocit
 改变yaml参数文件地址
 ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
 
-## 6, 发布雷达到机器人底盘的静态transform
-ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_footprint laser
+## 6, 发布雷达到机器人底盘的静态transform(激光雷达方向朝正后，而不是朝正前)
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 1 0 base_footprint laser
 
 ## 7, tf树可视化
 ros2 run tf2_tools view_frames 
@@ -149,6 +149,8 @@ ros2 run nav2_map_server map_saver_cli -f ~/my_map
 ## 9, 启动定位
 改变yaml参数文件地址
 ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
+
+在turtlebot2_amcl_localization.launch.py和initial_pose_publisher.py中设置地图名称
 
 ## 10, 发布初始位置
 改init_pose_publisher.py中的文件路径
