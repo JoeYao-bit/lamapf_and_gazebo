@@ -401,7 +401,10 @@ public:
                     const LineFollowControllerPtr& line_ctl,
                     const RotateControllerPtr& rot_ctl,
                     int all_agent_size,
-                    const float& time_interval = 0.1):
+                    const float& time_interval = 0.1,
+                    std::string goal_topic = "",
+                    std::string laser_topic = "",
+                    std::string cmdvel_topic = ""):
                      agent_(agent),
                      line_ctl_(line_ctl),
                      rot_ctl_(rot_ctl),
@@ -417,7 +420,11 @@ public:
         pose_publisher_        = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
 
         std::stringstream ss3;
-        ss3 << "GoalUpdate" << agent_->id_;
+        if(goal_topic == "") {
+            ss3 << "GoalUpdate" << agent_->id_; 
+        } else {
+            ss3 << goal_topic;
+        }
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
                 ss3.str().c_str(), 2*all_agent_size,
                 [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
@@ -445,7 +452,12 @@ public:
 
 
         std::stringstream ss4;
-        ss4 << "LaseScan" << agent_->id_;
+        if(laser_topic == "") {
+            ss4 << "LaseScan" << agent_->id_;
+        } else {
+            ss4 << laser_topic;
+        }
+
         laserscan_subscriber_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
                 ss4.str().c_str(), 10,
                 [this](sensor_msgs::msg::LaserScan::SharedPtr msg) {
@@ -492,7 +504,12 @@ public:
                 });        
         
         std::stringstream ss6;
-        ss6 << "CmdVel" << agent_->id_;
+        if(cmdvel_topic == "") {
+            ss6 << "CmdVel" << agent_->id_;
+        } else {
+            ss6 << cmdvel_topic;
+        }
+
         cmd_vel_publisher_ =  this->create_publisher<geometry_msgs::msg::Twist>(ss6.str(), 10);
 
         // std::chrono::milliseconds(int(1000*time_interval))
