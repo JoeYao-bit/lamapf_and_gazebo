@@ -1468,4 +1468,26 @@ ros2 run lamapf_and_gazebo test_yaml_converter
 M3，长度12mm以上为佳
 
 11.17测试发现串口根据设备id匹配似乎失效。
-激光雷达和键盘控制仍然可用
+需要手动调整串口连接微型主机的位置
+成功连接后激光雷达和键盘控制仍然可用
+
+## 工作流程设计
+1, 启动激光雷达和turtlebot
+
+2, 启动定位，设置初始位置，确保定位准确
+
+3, 设置各个机器人路径终点（起点为当前位置）写入参数文件
+
+4, 从参数文件启动中央控制器，给各个局部控制器下发局部运动目标
+
+
+接下来先测试局部控制器，再实现上述中央控制器
+
+
+模拟发布给局部控制器的指令
+--once表示只发布一次
+
+
+ros2 topic pub --once /task my_msgs/msg/Task "{start_x: 1.0, start_y: 2.0, start_yaw: 0.0, target_x: 5.0, target_y: 6.0, target_yaw: 1.57, agent_id: 1, wait: true}"
+
+

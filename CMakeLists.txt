@@ -74,6 +74,11 @@ target_link_libraries(test_yaml_converter ${EXTERNAL_LIBS} yaml-cpp )
 ament_target_dependencies(test_yaml_converter ${dependencies})
 install(TARGETS test_yaml_converter DESTINATION lib/${PROJECT_NAME})
 
+add_executable(test_local_controller src/test_local_controller.cpp)
+target_link_libraries(test_local_controller ${EXTERNAL_LIBS} yaml-cpp )
+ament_target_dependencies(test_local_controller ${dependencies})
+install(TARGETS test_local_controller DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
