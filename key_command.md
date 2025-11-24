@@ -102,6 +102,8 @@ lsusb
 ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_baudrate:=115200
 
 ## 3, 启动连接turtlebot2
+配置 kobuki_ros/kobuki_node/config/kobuki_node_params.yaml 中 device_port 为/dev/kobuki
+然后更新参数 colcon build --packages-select kobuki_node
 ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
 
 需要root 和 dialout 用户组可以访问
