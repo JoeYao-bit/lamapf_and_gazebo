@@ -1195,11 +1195,11 @@ sudo nano /etc/udev/rules.d/99-robot-usb.rules
 需要给每个机器人都配置一遍
 
 # TurtleBot Kobuki base (FTDI USB)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="kobuki"
+KERNEL=="ttyUSB*", SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="kobuki", MODE:="0666"
+
 
 # RPLIDAR (Silicon Labs CP210x)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="rplidar"
-
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", ATTR{idVendor}=="10c4", ATTR{idProduct}=="ea60", SYMLINK+="rplidar"
 
 2️⃣ 重新加载规则并触发
 
@@ -1219,7 +1219,10 @@ ls -l /dev/kobuki /dev/rplidar
 ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar serial_baudrate:=115200
 
 ## 3, 启动连接turtlebot2
-ros2 launch kobuki_node kobuki_node-launch.py serial_port:=/dev/kobuki serial_baudrate:=115200
+
+配置 kobuki_ros/kobuki_node/config/kobuki_node_params.yaml 中 device_port 为/dev/kobuki
+然后更新参数 colcon build --packages-select kobuki_node
+ros2 launch kobuki_node kobuki_node-launch.py serial_baudrate:=115200
 
 需要root 和 dialout 用户组可以访问
 
@@ -1488,6 +1491,7 @@ M3，长度12mm以上为佳
 --once表示只发布一次
 
 
-ros2 topic pub --once /task my_msgs/msg/Task "{start_x: 1.0, start_y: 2.0, start_yaw: 0.0, target_x: 5.0, target_y: 6.0, target_yaw: 1.57, agent_id: 1, wait: true}"
+ros2 topic pub --once /goal lamapf_and_gazebo_msgs/msg/UpdateGoal "{start_x: 1.0, start_y: 2.0, start_yaw: 0.0, target_x: 5.0, target_y: 6.0, target_yaw: 1.57, agent_id: 1, wait: true}"
 
 
+串口识别失败，连接turtlebot 出问题了
