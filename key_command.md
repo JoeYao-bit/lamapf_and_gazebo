@@ -21,18 +21,18 @@
 
 执行：
 
-sudo nano /etc/udev/rules.d/99-robot-usb.rules
+sudo gedit /etc/udev/rules.d/99-robot-usb.rules
 
 填入以下内容：
 
 需要给每个机器人都配置一遍
 
 # TurtleBot Kobuki base (FTDI USB)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="kobuki"
+KERNEL=="ttyUSB*", SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="kobuki", MODE:="0666"
+
 
 # RPLIDAR (Silicon Labs CP210x)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="rplidar"
-
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="0001", SYMLINK+="rplidar", MODE:="0666"
 
 2️⃣ 重新加载规则并触发
 
