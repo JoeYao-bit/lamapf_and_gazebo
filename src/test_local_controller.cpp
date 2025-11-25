@@ -48,6 +48,9 @@ public:
                 RCLCPP_INFO(this->get_logger(),
                             "Current pose: x=%.3f, y=%.3f, theta=%.3f rad",
                             x, y, yaw);
+                x_ = x;
+                y_ = y;
+                theta_ = yaw;
 
                 got_pose_ = true;  // 获取一次后退出循环
             }
@@ -61,9 +64,12 @@ public:
         }
     }
 
-private:
+    float x_, y_, theta_;
+
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+    
     bool got_pose_;
 };
 
@@ -80,7 +86,6 @@ public:
 
     bool goalReceived() const { return got_goal_; }
 
-private:
     void goalCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
         if (got_goal_) return; // 已获取一次就返回
@@ -100,12 +105,17 @@ private:
         RCLCPP_INFO(this->get_logger(),
                     "Received one-time goal: x=%.3f, y=%.3f, theta=%.3f rad",
                     x, y, yaw);
-
+        x_ = x;
+        y_ = y;
+        theta_ = yaw;
         got_goal_ = true;
     }
 
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_;
+
     bool got_goal_;
+
+    float x_, y_, theta_;
 };
 
 int main(int argc, char ** argv) {
@@ -126,7 +136,7 @@ int main(int argc, char ** argv) {
         rclcpp::sleep_for(std::chrono::milliseconds(100));
     }
 
-    return 0;
+    //return 0;
 
     // 创建初始控制器
 
@@ -141,9 +151,32 @@ int main(int argc, char ** argv) {
     double time_interval = 0.1;//.1; // second
 
     auto agent_control_node = std::make_shared<LocalController>(agent, line_ctl, rot_ctl, 1, time_interval,
+                                                                "/amcl_pose",
                                                                 "/goal",
                                                                 "/scan",
                                                                 "/commands/velocity");
+
+    // set start and goal state
+    
+    agent_control_node->start_ptf_[0]  = node1->x_;    
+    agent_control_node->start_ptf_[1]  = node1->y_;    
+    agent_control_node->start_ptf_[2]  = node1->theta_;    
+    agent_control_node->target_ptf_[0] = node2->x_;    
+    agent_control_node->target_ptf_[1] = node2->y_;    
+    agent_control_node->target_ptf_[2] = node2->theta_;  
+    agent_control_node->wait_          = false;
+
+    agent_control_node->line_ctl_->finish_rotate_ = false;
+    agent_control_node->line_ctl_->finish_move_ = false;
+    
+    agent_control_node->line_ctl_->pt1_ = agent_control_node->start_ptf_;
+    agent_control_node->line_ctl_->pt2_ = agent_control_node->target_ptf_;
+
+    std::stringstream ss2;
+    ss2 << "in LocalController, set external goal, agent_" << agent_control_node->agent_->id_ << " ";
+    ss2 << agent_control_node->start_ptf_ << "->" << agent_control_node->target_ptf_;
+    ss2 << ", wait = " << agent_control_node->wait_;
+    RCLCPP_INFO(node2->get_logger(), ss2.str().c_str());
 
     rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 3);
 

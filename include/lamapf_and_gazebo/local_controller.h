@@ -402,6 +402,7 @@ public:
                     const RotateControllerPtr& rot_ctl,
                     int all_agent_size,
                     const float& time_interval = 0.1,
+                    std::string pose_topic = "",
                     std::string goal_topic = "",
                     std::string laser_topic = "",
                     std::string cmdvel_topic = ""):
@@ -465,7 +466,11 @@ public:
                 });
 
         std::stringstream ss5;
-        ss5 << "AmclPose" << agent_->id_;
+        if(pose_topic == "") {
+            ss5 << "AmclPose" << agent_->id_;
+        } else {
+            ss5 << pose_topic;
+        }
         std::cout << "Agent " << agent_->id_ << "'s pose sub ros topic name " << ss5.str() << std::endl;
 
         pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
