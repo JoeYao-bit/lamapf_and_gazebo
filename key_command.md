@@ -149,11 +149,21 @@ sudo apt install ros-jazzy-nav2-map-server
 ros2 run nav2_map_server map_saver_cli -f ~/my_map
 
 ## 9, 启动定位
-改变yaml参数文件地址
+
+
+改变yaml参数文件地址到当前文件地址
+
+启动rviz
+输入rviz2
+
 ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
 
 在turtlebot2_amcl_localization.launch.py和initial_pose_publisher.py中设置地图名称
 
 初始位置在amcl_localization.yaml中设置
+
+第一次启动launch如果rviz2收不到地图，那就关了定位再开一次
+
+
 
 ## 11, 初始位置不对则输入rviz2设置初始位置
