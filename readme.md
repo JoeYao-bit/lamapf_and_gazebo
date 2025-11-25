@@ -1361,7 +1361,7 @@ ros2 run nav2_map_server map_saver_cli -f ~/my_map
 改变yaml参数文件地址
 ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_time:=false
 
-## 10, 发布初始位置
+## 10, 发布初始位置（更新amcl_localization.yaml，在启动时设置初始位置后已经可以废弃）
 改init_pose_publisher.py中的文件路径
 python3 /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
 
@@ -1584,3 +1584,19 @@ ros2 topic pub --once /goal lamapf_and_gazebo_msgs/msg/UpdateGoal "{start_x: 1.0
 
 
 串口识别失败，连接turtlebot 出问题了
+
+已解决，流程已经更新
+
+为什么启动amcl一开始收不到地图并显示？
+
+1️⃣ TF 不对导致地图显示失败
+
+RViz2 渲染地图依赖 map → odom → base_link 的 TF 树
+
+如果启动时 TF 不连通或者丢失，RViz2 即使收到了 /map 消息，也无法显示
+
+设置初始位置之前，amcl的tf树里没有map，rviz收到地图也不显示
+设置初始位置后，收到地图就能正常显示了
+
+TODO：
+想办法直接从参数文件中启动时设置初始位置
