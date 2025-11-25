@@ -154,8 +154,6 @@ ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_tim
 
 在turtlebot2_amcl_localization.launch.py和initial_pose_publisher.py中设置地图名称
 
-## 10, 发布初始位置
-改init_pose_publisher.py中的文件路径
-python3 /home/wangweilab/ros2_ws/src/lamapf_and_gazebo/script/initial_pose_publisher.py
+初始位置在amcl_localization.yaml中设置
 
 ## 11, 初始位置不对则输入rviz2设置初始位置

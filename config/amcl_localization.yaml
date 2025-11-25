@@ -16,3 +16,8 @@ amcl:
     laser_likelihood_max_dist: 2.0
     tf_broadcast: true
     use_map_topic: true
+    set_initial_pose: True
+    initial_pose:
+      x: 1.0
+      y: 2.0
+      yaw: 1.57
