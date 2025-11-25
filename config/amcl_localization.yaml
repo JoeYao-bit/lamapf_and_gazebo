@@ -21,3 +21,5 @@ amcl:
       x: 1.0
       y: 2.0
       yaw: 1.57
+    save_pose_rate: 10.0   # 10Hz 发布 amcl_pose     
+    tf_broadcast_frequency: 20.0  # 20Hz 发布 TF，tf_broadcast必须为true 
