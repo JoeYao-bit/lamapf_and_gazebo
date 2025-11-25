@@ -69,7 +69,7 @@ public:
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-    
+
     bool got_pose_;
 };
 
@@ -182,5 +182,9 @@ int main(int argc, char ** argv) {
 
     executor.add_node(agent_control_node);
 
+    std::thread t1([&]() { executor.spin(); });
+    
+    t1.join();
+    
     return 0;
 }
