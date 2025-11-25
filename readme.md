@@ -1510,5 +1510,20 @@ RViz2 渲染地图依赖 map → odom → base_link 的 TF 树
 设置初始位置之前，amcl的tf树里没有map，rviz收到地图也不显示
 设置初始位置后，收到地图就能正常显示了
 
-TODO：
+
 想办法直接从参数文件中启动时设置初始位置
+
+
+通过配置amcl_localization.yaml已经完成
+    set_initial_pose: True
+    initial_pose:
+      x: 1.0
+      y: 2.0
+      yaw: 1.57
+
+      
+TODO：
+配置amcl使得其周期发布位姿
+
+save_pose_rate: 10.0
+tf_broadcast_frequency: 20.0
