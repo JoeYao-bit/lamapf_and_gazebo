@@ -1521,9 +1521,40 @@ RViz2 渲染地图依赖 map → odom → base_link 的 TF 树
       y: 2.0
       yaw: 1.57
 
-      
+
 TODO：
 配置amcl使得其周期发布位姿
 
 save_pose_rate: 10.0
 tf_broadcast_frequency: 20.0
+
+失败，
+
+save_pose_rate 控制的是“将机器人位姿保存到磁盘的频率”
+
+不会触发周期性发布 /amcl_pose
+
+/amcl_pose 只会在以下情况发布：
+
+激光数据到来 → 位姿估计更新
+
+位姿变化超过 update_min_d / update_min_a
+
+设置初始位置 /initialpose
+
+⚠ 即使 save_pose_rate 设置成 1000.0，也不会定时发布 /amcl_pose
+
+查看两坐标系之间的实时 TF 变换：
+
+ros2 run tf2_ros tf2_echo <target_frame> <source_frame>
+
+ros2 run tf2_ros tf2_echo map base_footprint
+
+/amcl_pose无法实时发布
+
+但tf中可以实时查看map base_footprint之间的tf，即定位结果
+
+安装tf2_ros,tf2_geometry_msgs
+
+sudo apt install ros-jazzy-tf2-ros 
+sudo apt install ros-jazzy-tf2-geometry-msgs

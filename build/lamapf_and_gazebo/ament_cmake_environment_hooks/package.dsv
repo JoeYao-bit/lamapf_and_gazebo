@@ -1,0 +1,4 @@
+source;share/lamapf_and_gazebo/local_setup.bash
+source;share/lamapf_and_gazebo/local_setup.dsv
+source;share/lamapf_and_gazebo/local_setup.sh
+source;share/lamapf_and_gazebo/local_setup.zsh

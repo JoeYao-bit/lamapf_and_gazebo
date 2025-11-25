@@ -1,0 +1,111 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter
+-- Found rclcpp: 28.1.12 (/opt/ros/jazzy/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 7.3.2 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+-- Found rmw_cyclonedds_cpp: 2.2.3 (/opt/ros/jazzy/share/rmw_cyclonedds_cpp/cmake)
+-- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+-- Found ros_gz_interfaces: 1.0.16 (/opt/ros/jazzy/share/ros_gz_interfaces/cmake)
+-- Found tf2: 0.36.14 (/opt/ros/jazzy/share/tf2/cmake)
+-- Found tf2_ros: 0.36.16 (/opt/ros/jazzy/share/tf2_ros/cmake)
+-- Found tf2_geometry_msgs: 0.36.16 (/opt/ros/jazzy/share/tf2_geometry_msgs/cmake)
+-- Found eigen3_cmake_module: 0.3.0 (/opt/ros/jazzy/share/eigen3_cmake_module/cmake)
+-- Found Eigen3: TRUE (found version "3.4.0")
+-- Ensuring Eigen3 include directory is part of orocos-kdl CMake target
+-- Found OpenCV: /usr/local (found version "4.12.0")
+-- Found sensor_msgs: 5.3.6 (/opt/ros/jazzy/share/sensor_msgs/cmake)
+-- Found lamapf_and_gazebo_msgs: 0.0.0 (/home/yaozhuo/code/ros2_ws/install/lamapf_and_gazebo_msgs/share/lamapf_and_gazebo_msgs/cmake)
+-- Found ament_lint_auto: 0.17.3 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+-- Added test 'cppcheck' to perform static code analysis on C / C++ code
+-- Configured cppcheck include dirs: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/include
+-- Configured cppcheck exclude dirs and/or files: 
+-- Added test 'flake8' to check Python code syntax and style conventions
+-- Configured 'flake8' exclude dirs and/or files: 
+-- Added test 'lint_cmake' to check CMake code style
+-- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+-- Added test 'uncrustify' to check C / C++ code style
+-- Configured uncrustify additional arguments: 
+-- Added test 'xmllint' to check XML markup files
+-- Configuring done (4.3s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/build/lamapf_and_gazebo
+[  7%] [32mBuilding CXX object CMakeFiles/test_central_controller.dir/src/test_central_controller.cpp.o[0m
+[ 14%] [32mBuilding CXX object CMakeFiles/spawn_entity.dir/src/test_spawn_entity.cpp.o[0m
+[ 21%] [32mBuilding CXX object CMakeFiles/generate_instance_node.dir/src/generate_instance.cpp.o[0m
+[ 35%] [32mBuilding CXX object CMakeFiles/test_mpc_controller.dir/src/test_mpc_controller.cpp.o[0m
+[ 35%] [32mBuilding CXX object CMakeFiles/test_lamapf_planner_node.dir/src/test_lamapf_planner_node.cpp.o[0m
+[ 42%] [32mBuilding CXX object CMakeFiles/test_yaml_converter.dir/src/test_yaml_converter.cpp.o[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/test_local_controller.dir/src/test_local_controller.cpp.o[0m
+[ 57%] [32m[1mLinking CXX executable test_yaml_converter[0m
+[ 57%] Built target test_yaml_converter
+[ 64%] [32m[1mLinking CXX executable generate_instance_node[0m
+[ 64%] Built target generate_instance_node
+[ 71%] [32m[1mLinking CXX executable spawn_entity[0m
+[ 71%] Built target spawn_entity
+[ 78%] [32m[1mLinking CXX executable test_mpc_controller[0m
+[ 78%] Built target test_mpc_controller
+[ 85%] [32m[1mLinking CXX executable test_lamapf_planner_node[0m
+[ 85%] Built target test_lamapf_planner_node
+[ 92%] [32m[1mLinking CXX executable test_local_controller[0m
+[ 92%] Built target test_local_controller
+[100%] [32m[1mLinking CXX executable test_central_controller[0m
+[100%] Built target test_central_controller
+-- Install configuration: ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/turtlebot2_amcl_localization.launch.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/ros_gz_launch.launch
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/turtlebot2_localization.launch.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/cartographer_turtlebot2.launch.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/__pycache__
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/__pycache__/cartographer_turtlebot2.launch.cpython-312.pyc
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/ros_gz_launch.launch.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/turtlebot2_online_async_launch.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/gazebo_launch.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/single_agent_localization.launch.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/Type-4.launch
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo//launch/lamapf_planner.py
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/spawn_entity
+-- Set non-toolchain portion of runtime path of "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/spawn_entity" to ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_lamapf_planner_node
+-- Set non-toolchain portion of runtime path of "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_lamapf_planner_node" to ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/generate_instance_node
+-- Set non-toolchain portion of runtime path of "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/generate_instance_node" to ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_central_controller
+-- Set non-toolchain portion of runtime path of "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_central_controller" to ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_mpc_controller
+-- Set non-toolchain portion of runtime path of "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_mpc_controller" to ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_yaml_converter
+-- Set non-toolchain portion of runtime path of "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_yaml_converter" to ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_local_controller
+-- Set non-toolchain portion of runtime path of "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/lib/lamapf_and_gazebo/test_local_controller" to ""
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/ament_index/resource_index/package_run_dependencies/lamapf_and_gazebo
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/ament_index/resource_index/parent_prefix_path/lamapf_and_gazebo
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/environment/ament_prefix_path.sh
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/environment/ament_prefix_path.dsv
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/environment/path.sh
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/environment/path.dsv
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/local_setup.bash
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/local_setup.sh
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/local_setup.zsh
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/local_setup.dsv
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/package.dsv
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/ament_index/resource_index/packages/lamapf_and_gazebo
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/cmake/lamapf_and_gazeboConfig.cmake
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/cmake/lamapf_and_gazeboConfig-version.cmake
+-- Installing: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/install/lamapf_and_gazebo/share/lamapf_and_gazebo/package.xml

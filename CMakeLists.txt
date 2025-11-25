@@ -17,6 +17,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(ros_gz_interfaces REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -41,8 +43,8 @@ include_directories(include
                     ${EIGEN3_INCLUDE_DIRS}   # 把 Eigen 头文件路径加进来
                     )
 
-set(dependencies rclcpp ros_gz_interfaces tf2 std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs)        
-
+set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs)        
+ 
 add_executable(spawn_entity src/test_spawn_entity.cpp)
 ament_target_dependencies(spawn_entity ${dependencies})
 install(TARGETS spawn_entity DESTINATION lib/${PROJECT_NAME})

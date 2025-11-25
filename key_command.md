@@ -134,10 +134,13 @@ ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/commands/velocit
 ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
 
 ## 6, 发布雷达到机器人底盘的静态transform(激光雷达方向朝正后，而不是朝正前)
+
 ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 1 0 base_footprint laser
 
 ## 7, tf树可视化
+
 ros2 run tf2_tools view_frames 
+
 应该是map->odom->base_footprint->laser
 
 ## 8, 保存地图
