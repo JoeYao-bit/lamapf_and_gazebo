@@ -124,7 +124,7 @@ int main(int argc, char ** argv) {
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
         deserializer.getTestInstance({10}, 1).front(); // get all instances
 
-    std::vector<LineFollowControllerPtr> line_ctls;
+    std::vector<TwoPhaseLineFollowControllerPtr> line_ctls;
 
     // MPCLineFollowController
     // ConstantLineFollowController
@@ -166,7 +166,7 @@ int main(int argc, char ** argv) {
 
     std::vector<std::shared_ptr<LocalController> > local_control_nodes;
     for(int i=0; i<agents.size(); i++) {
-        auto agent_control_node = std::make_shared<LocalController>(agents[i], line_ctls[i], rot_ctls[i], instances.second.size(), time_interval);
+        auto agent_control_node = std::make_shared<LocalController>(agents[i], line_ctls[i], instances.second.size(), time_interval);
         executor.add_node(agent_control_node);
         local_control_nodes.push_back(agent_control_node); 
 
