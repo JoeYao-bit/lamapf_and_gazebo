@@ -1657,3 +1657,6 @@ sudo apt install ros-jazzy-tf2-geometry-msgs
 加载激光雷达，连接turtlebot，发布静态transform，启动定位，启动rviz
 
 ros2 launch lamapf_and_gazebo localization_full.launch.py
+
+启动定位后需要在rviz上设置初始位置，
+在运行键盘控制使得amcl修复初始位置的误差

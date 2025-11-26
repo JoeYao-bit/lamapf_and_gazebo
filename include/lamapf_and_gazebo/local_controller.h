@@ -12,13 +12,13 @@
 
 // m/s, rad/s
 struct MotionConfig {
-    float max_v_x = .5, min_v_x = 0;
+    float max_v_x = .1, min_v_x = 0;
     float max_v_y = 0, min_v_y = 0;
-    float max_v_w = .25*M_PI, min_v_w = -.25*M_PI;
+    float max_v_w = .1*M_PI, min_v_w = -.1*M_PI;
 
     float max_a_x = 3.0, min_a_x = -3.;
     float max_a_y = 0, min_a_y = 0;
-    float max_a_w = 2*M_PI, min_a_w = -2*M_PI;
+    float max_a_w = M_PI, min_a_w = -M_PI;
 
     bool is_nonholonomic = true;
 };
