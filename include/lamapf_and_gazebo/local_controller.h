@@ -545,6 +545,8 @@ public:
             bool get_tf_localization = false;
             if(pose_msg_ == nullptr) {
                 try {
+                    RCLCPP_WARN(this->get_logger(), "no pose data, try get tf data");
+
                     // 获取最新 transform，阻塞最多50ms秒
                     auto transformStamped = tf_buffer_->lookupTransform(
                         "map", "base_footprint", tf2::TimePointZero,
@@ -577,19 +579,19 @@ public:
 
             // after initialized calculate vel cmd and pub
             if(pose_msg_ != nullptr || get_tf_localization) {
-                RCLCPP_WARN(this->get_logger(), "no pose data, try get tf data");
+
+                // // 位姿应尽量实时，位姿时刻与当前时间差距过大则不更新位姿
+                // rclcpp::Time now = this->get_clock()->now();
+                // // 消息时间
+                // rclcpp::Time msg_time(pose_msg_->header.stamp);
+
+                // // 计算纳秒差
+                // int64_t diff_ns = (now - msg_time).nanoseconds();
+
+                // // 转为毫秒（double 类型）
+                // double diff_ms = diff_ns / 1e6;
 
 
-                // 位姿应尽量实时，位姿时刻与当前时间差距过大则不更新位姿
-                rclcpp::Time now = this->get_clock()->now();
-                // 消息时间
-                rclcpp::Time msg_time(pose_msg_->header.stamp);
-
-                // 计算纳秒差
-                int64_t diff_ns = (now - msg_time).nanoseconds();
-
-                // 转为毫秒（double 类型）
-                double diff_ms = diff_ns / 1e6;
                 geometry_msgs::msg::Twist cmd_vel;
 
                 // 设置线速度（前进 0.2 m/s）
