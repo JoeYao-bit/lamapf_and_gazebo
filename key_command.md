@@ -167,6 +167,8 @@ ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_tim
 
 第一次启动launch如果rviz2收不到地图，那就关了定位再开一次
 
+初始位置不对则输入rviz2设置初始位置
 
+启动局部控制器测试
 
-## 11, 初始位置不对则输入rviz2设置初始位置
+ros2 run lamapf_and_gazebo test_local_controller 

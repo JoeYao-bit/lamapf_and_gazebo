@@ -420,12 +420,18 @@ public:
 
         pose_publisher_        = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
 
+        tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+        
+        tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
         std::stringstream ss3;
         if(goal_topic == "") {
             ss3 << "GoalUpdate" << agent_->id_; 
         } else {
             ss3 << goal_topic;
         }
+        RCLCPP_INFO(this->get_logger(), "Agent %i's pose sub goal topic name %s", agent_->id_, ss3.str().c_str());
+
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
                 ss3.str().c_str(), 2*all_agent_size,
                 [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
@@ -458,6 +464,7 @@ public:
         } else {
             ss4 << laser_topic;
         }
+        RCLCPP_INFO(this->get_logger(), "Agent %i's pose sub laser topic name %s", agent_->id_, ss4.str().c_str());
 
         laserscan_subscriber_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
                 ss4.str().c_str(), 10,
@@ -471,15 +478,20 @@ public:
         } else {
             ss5 << pose_topic;
         }
-        std::cout << "Agent " << agent_->id_ << "'s pose sub ros topic name " << ss5.str() << std::endl;
+        //std::cout << "Agent " << agent_->id_ << "'s pose sub ros topic name " << ss5.str() << std::endl;
+        RCLCPP_INFO(this->get_logger(), "Agent %i's pose sub pose topic name %s", agent_->id_, ss5.str().c_str());
 
         pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
                 ss5.str().c_str(), 10,
                 [this](geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
 
-
+                        
                     pose_msg_ = msg;
 
+                    cur_pose_[0] = pose_msg_->pose.pose.position.x;
+                    cur_pose_[1] = pose_msg_->pose.pose.position.y;
+
+                    
                     lamapf_and_gazebo_msgs::msg::UpdatePose pose_msg;
                     pose_msg.x   = pose_msg_->pose.pose.position.x;
                     pose_msg.y   = pose_msg_->pose.pose.position.y;
@@ -498,6 +510,9 @@ public:
                     tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
                     
                     pose_msg.yaw = yaw;
+
+                    cur_pose_[2] = yaw;
+
                     pose_msg.agent_id = this->agent_->id_;
                     this->pose_publisher_->publish(pose_msg);
 
@@ -515,6 +530,8 @@ public:
             ss6 << cmdvel_topic;
         }
 
+        RCLCPP_INFO(this->get_logger(), "Agent %i's pose pub velcmd topic name %s", agent_->id_, ss6.str().c_str());
+
         cmd_vel_publisher_ =  this->create_publisher<geometry_msgs::msg::Twist>(ss6.str(), 10);
 
         // std::chrono::milliseconds(int(1000*time_interval))
@@ -524,9 +541,45 @@ public:
             //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
             //publishPoseMsgSim(time_interval);
 
+            // if no pose_msg_ yet, try get tf as source of localization
+            bool get_tf_localization = false;
+            if(pose_msg_ == nullptr) {
+                try {
+                    // 获取最新 transform，阻塞最多50ms秒
+                    auto transformStamped = tf_buffer_->lookupTransform(
+                        "map", "base_footprint", tf2::TimePointZero,
+                        std::chrono::milliseconds(50));
+
+                    double x = transformStamped.transform.translation.x;
+                    double y = transformStamped.transform.translation.y;
+
+                    // geometry_msgs::Quaternion -> tf2::Quaternion
+                    tf2::Quaternion q;
+                    tf2::fromMsg(transformStamped.transform.rotation, q);
+
+                    double roll, pitch, yaw;
+                    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
+                    RCLCPP_INFO(this->get_logger(),
+                                "When no amcl pose, from tf, get current pose: x=%.3f, y=%.3f, theta=%.3f rad",
+                                x, y, yaw);
+                    cur_pose_[0] = x;
+                    cur_pose_[1] = y;
+                    cur_pose_[2] = yaw;
+
+                    get_tf_localization = true;
+                }
+                catch (tf2::TransformException & ex) {
+                    RCLCPP_WARN(this->get_logger(), "Waiting for transform map -> base_footprint: %s", ex.what());
+                    rclcpp::sleep_for(std::chrono::milliseconds(500));
+                }
+            }
 
             // after initialized calculate vel cmd and pub
-            if(pose_msg_ != nullptr) {
+            if(pose_msg_ != nullptr || get_tf_localization) {
+                RCLCPP_WARN(this->get_logger(), "no pose data, try get tf data");
+
+
                 // 位姿应尽量实时，位姿时刻与当前时间差距过大则不更新位姿
                 rclcpp::Time now = this->get_clock()->now();
                 // 消息时间
@@ -558,26 +611,7 @@ public:
                 //     cmd_vel_publisher_->publish(cmd_vel);
                 // }
 
-                Pointf<3> cur_pose;
-                cur_pose[0] = pose_msg_->pose.pose.position.x;
-                cur_pose[1] = pose_msg_->pose.pose.position.y;
-
-                // 获取姿态四元数
-                double qx = pose_msg_->pose.pose.orientation.x;
-                double qy = pose_msg_->pose.pose.orientation.y;
-                double qz = pose_msg_->pose.pose.orientation.z;
-                double qw = pose_msg_->pose.pose.orientation.w;
-
-                // 构建 tf2 四元数对象
-                tf2::Quaternion q(qx, qy, qz, qw);
-
-                // 用 Matrix3x3 提取 roll, pitch, yaw
-                double roll, pitch, yaw;
-                tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
-
-                cur_pose[2] = yaw;
-
-                velcmd_ = calculateCMD(cur_pose, velcmd_, time_interval);
+                velcmd_ = calculateCMD(cur_pose_, velcmd_, time_interval);
                 // pub vel cmd
                 cmd_vel.linear.x  = velcmd_[0];
                 cmd_vel.angular.z = velcmd_[2];
@@ -726,6 +760,8 @@ public:
 
     geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose_msg_ = nullptr;
 
+    Pointf<3> cur_pose_;
+
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_publisher_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_publisher_;
@@ -734,6 +770,9 @@ public:
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_publisher_;
 
+    std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
     rclcpp::TimerBase::SharedPtr timer_;
 
