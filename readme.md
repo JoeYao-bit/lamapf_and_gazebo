@@ -1571,7 +1571,9 @@ sudo apt install ros-jazzy-tf2-geometry-msgs
 ros2 launch lamapf_and_gazebo localization_full.launch.py
 
 启动定位后需要在rviz上设置初始位置，
-在运行键盘控制使得amcl修复初始位置的误差
+在运行键盘控制使得amcl慢慢修复初始位置的微小误差
+
+但键盘控制会和局部控制器抢控制权，因此调整完定位初始误差后就关掉
 
 跑起来了，但速度有点快，结尾姿态调整时还振荡，左右摆头
 
