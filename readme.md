@@ -1562,3 +1562,10 @@ sudo apt install ros-jazzy-tf2-geometry-msgs
 充电时不一定需要底盘电源开关打开，电池本身是可充电的独立单元，充电器直接给电池供电即可
 
 由于/amcl_pose不会持续发送，考虑在local planner中使用tf作为定位信息获取来源
+
+通过localization_full.launch.py直接启动
+完成以下五件事
+
+加载激光雷达，连接turtlebot，发布静态transform，启动定位，启动rviz
+
+ros2 launch lamapf_and_gazebo localization_full.launch.py
