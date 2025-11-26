@@ -61,11 +61,7 @@ public:
     MotionConfig cfg_;
     Pointf<3> pt1_, pt2_;
 
-    // used only in two phase line follower
-    bool finish_rotate_ = false;
-
-    bool finish_move_ = false;
-
+    virtual void reset() = 0;
 
 };
 
@@ -93,6 +89,8 @@ public:
 
         return retv;
     }
+
+    void reset() override{}
 };
 
 // have no linear velocity
@@ -195,6 +193,9 @@ public:
         
         return retv;
     }
+
+    void reset() override {}
+
 };
 
 
@@ -210,8 +211,12 @@ public:
     // poseposi_rot: x, y, theta / vel: x, y, theta
     virtual Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) = 0;
 
+    virtual void reset() = 0;
+
     MotionConfig cfg_;
+
     bool posi_rot_;
+    
     float ang_;
 
 };
@@ -248,6 +253,8 @@ public:
 
         return retv;
     }
+
+    void reset() override {}
 
 };
 
@@ -344,9 +351,20 @@ public:
         return retv;
     }
 
+    void reset() override {
+        finish_rotate_ = false;
+        finish_move_ = false;
+        rot_ctl_->reset();
+    }
+
+    bool finish_rotate_ = false, finish_move_ = false;
+
     RotateControllerPtr rot_ctl_;
 
 };
+
+typedef std::shared_ptr<TwoPhaseLineFollowController> TwoPhaseLineFollowControllerPtr;
+
 
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 
@@ -391,6 +409,7 @@ Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float 
 };
 
 
+
 // for single robot, receive goal state and target state from CentralController
 // run on single robot
 // compute vel cmd, no decision, except detect route is obstructed
@@ -398,8 +417,7 @@ class LocalController : public rclcpp::Node {
 public:
 
     LocalController(const AgentPtr<2>& agent,
-                    const LineFollowControllerPtr& line_ctl,
-                    const RotateControllerPtr& rot_ctl,
+                    const TwoPhaseLineFollowControllerPtr& line_ctl,
                     int all_agent_size,
                     const float& time_interval = 0.1,
                     std::string pose_topic = "",
@@ -408,7 +426,6 @@ public:
                     std::string cmdvel_topic = ""):
                      agent_(agent),
                      line_ctl_(line_ctl),
-                     rot_ctl_(rot_ctl),
                      velcmd_(Pointf<3>{0,0,0}),
                      Node((std::string("agent_")+std::to_string(agent->id_)).c_str()) {
 
@@ -444,8 +461,7 @@ public:
                         target_ptf_[2] = msg->target_yaw;  
                         wait_          = msg->wait;
 
-                        line_ctl_->finish_rotate_ = false;
-                        line_ctl_->finish_move_ = false;
+                        line_ctl_->reset();
                         
                         line_ctl_->pt1_ = start_ptf_;
                         line_ctl_->pt2_ = target_ptf_;
@@ -750,9 +766,7 @@ public:
 
     AgentPtr<2> agent_;
 
-    LineFollowControllerPtr line_ctl_;
-
-    RotateControllerPtr rot_ctl_;
+    TwoPhaseLineFollowControllerPtr line_ctl_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_subscriber_;
 
