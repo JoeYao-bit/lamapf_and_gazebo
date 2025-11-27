@@ -826,12 +826,22 @@ public:
     Pointf<3> calculateCMD(const Pointf<3>& pose, const Pointf<3>& vel, const float& time_interval) {
         count_of_iter_ ++;
         Pointf<3> cmd_vel = {0,0,0};
+
+        float dist_to_target_position = (Pointf<2>{pose[0], pose[1]} - Pointf<2>{target_ptf_[0], target_ptf_[1]}).Norm();
+        float angle_to_target = shortestAngularDistance(pose[2], target_ptf_[2]);
+        std::stringstream ss;
+        ss << "agent_" << agent_->id_ << " dist to target = " << dist_to_target_position 
+           << ", angle to tareget = " << angle_to_target;
+        RCLCPP_INFO(this->get_logger(), ss.str().c_str()); 
+
+
         // if is required to wait, then wait
         if(wait_) { return cmd_vel; }
         if(reachTarget(pose, target_ptf_)) {
             wait_ = true;
             return cmd_vel;
         }
+
         cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); ;
         return cmd_vel;
     }
