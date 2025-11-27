@@ -907,8 +907,8 @@ Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, PTF_TO_GRID_FUNC ptfToGrid) {
 
 float wFilter(float w) {
     if(fabs(w) < 0.1) {
-        if(w>0) { return 0.06; }
-        if(w<0) { return -0.06; }
+        if(w>0) { return 0.08; }
+        if(w<0) { return -0.08; }
     }
     return w;
 }
