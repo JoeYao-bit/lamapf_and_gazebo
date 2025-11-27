@@ -14,7 +14,7 @@
 struct MotionConfig {
     float max_v_x = .1, min_v_x = 0;
     float max_v_y = 0, min_v_y = 0;
-    float max_v_w = .1*M_PI, min_v_w = -.1*M_PI;
+    float max_v_w = .06*M_PI, min_v_w = -.06*M_PI;
 
     float max_a_x = 3.0, min_a_x = -3.;
     float max_a_y = 0, min_a_y = 0;
