@@ -903,6 +903,16 @@ Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, PTF_TO_GRID_FUNC ptfToGrid) {
     return pose;
 };
 
+// 实测发现turtlebot角速度低于某个值(约0.03)就不动了，因此必须大于这个值
+
+float wFilter(float w) {
+    if(fabs(w) < 0.1) {
+        if(w>0) { return 0.06; }
+        if(w<0) { return -0.06; }
+    }
+    return w;
+}
+
 // sdf file path of real robot Circle/Block2D agents in LA-MAPF
 std::vector<std::string> ROBOT_SDFS = {
     "/home/yaozhuo/.gz_models_yz/youbot/model.sdf", // ok
