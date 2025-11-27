@@ -1678,3 +1678,5 @@ ros2 launch lamapf_and_gazebo localization_full.launch.py
 ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&1
 
 实测发现turtlebot角速度低于某个值(约0.03)就不动了，因此必须大于这个值
+
+太大会超调，局部反复振荡，太小则会卡在到达目标姿态前动不了
