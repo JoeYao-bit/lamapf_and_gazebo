@@ -25,7 +25,7 @@ struct MotionConfig {
 
 bool reachPosition(const float& x, const float& y, const float& target_x, const float& target_y) {
     float dist_to_target_position = (Pointf<2>{x, y} - Pointf<2>{target_x, target_y}).Norm();
-    return fabs(dist_to_target_position) < 0.03;                                            
+    return fabs(dist_to_target_position) < 0.05;                                            
 }
 
 float shortestAngularDistance(float a, float b) {
@@ -40,7 +40,7 @@ float shortestAngularDistance(float a, float b) {
 bool reachOrientation(const float& orientation, const float& target_orientation) {
     float angle_to_target = shortestAngularDistance(orientation, target_orientation);
     // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
-    return fabs(angle_to_target) < 0.03;
+    return fabs(angle_to_target) < M_PI*10./180.;
 }
 
 bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {

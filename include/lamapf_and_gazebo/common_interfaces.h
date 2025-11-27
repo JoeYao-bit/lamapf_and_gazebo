@@ -75,22 +75,22 @@ bool draw_visit_grid_table = false;
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
 {
         {"map_name",     "LargeOfficeEnv"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
+        {"map_path",     "/home/wangweilab/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
+        {"la_ins_path", "/home/wangweilab/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
 };
 
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
 {
         {"map_name",     "LargeOfficeEnvSeccond"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white_second.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_second.txt"},
+        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white_second.png"},
+        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_second.txt"},
 };
 
 SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
 {
         {"map_name",     "IndustrialWarehouse"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
+        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
+        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
 };
 
 
@@ -907,8 +907,8 @@ Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, PTF_TO_GRID_FUNC ptfToGrid) {
 
 float wFilter(float w) {
     if(fabs(w) < 0.1) {
-        if(w>0) { return 0.06; }
-        if(w<0) { return -0.06; }
+        if(w>0) { return 0.08; }
+        if(w<0) { return -0.08; }
     }
     return w;
 }
