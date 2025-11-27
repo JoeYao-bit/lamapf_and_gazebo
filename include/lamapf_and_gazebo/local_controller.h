@@ -258,7 +258,6 @@ public:
 
 };
 
-// have no linear velocity
 class TwoPhaseLineFollowController : public LineFollowController {
 public:
     TwoPhaseLineFollowController(const MotionConfig& cfg) 
@@ -365,6 +364,79 @@ public:
 
 typedef std::shared_ptr<TwoPhaseLineFollowController> TwoPhaseLineFollowControllerPtr;
 
+
+class TwoPhaseLineFollowControllerReal : public TwoPhaseLineFollowController {
+public:
+
+    TwoPhaseLineFollowControllerReal(const MotionConfig& cfg) : TwoPhaseLineFollowController(cfg) {}
+
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
+        Pointf<3> retv = {0, 0, 0};
+
+        if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
+            // rotate
+            double ref_theta = std::fmod(pt2_[2], 2*M_PI);
+            if(ref_theta < 0) { ref_theta += 2*M_PI; } 
+
+            double cur_theta = std::fmod(pose[2], 2*M_PI);
+            if(cur_theta < 0) { cur_theta += 2*M_PI; } 
+
+            if(!reachOrientation(cur_theta, ref_theta)) {
+                rot_ctl_->ang_ = ref_theta; 
+
+                if(fabs(ref_theta - cur_theta) <= M_PI) {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
+                    else { rot_ctl_->posi_rot_ = false; }
+                } else {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
+                    else { rot_ctl_->posi_rot_ = true; }                    
+                }
+
+                retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+                std::cout << "rotate 2 positive = " << rot_ctl_->posi_rot_ << ", retv v = " << retv << std::endl;
+
+            } else {
+                std::cout << "finish both rotate and move" << std::endl;
+            }
+        } else {
+            Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
+
+            // if head to target, move forward
+            double ref_theta = std::fmod(std::atan2(ref_vec.y(), ref_vec.x()), 2*M_PI);
+            if(ref_theta < 0) { ref_theta += 2*M_PI; } 
+
+            double cur_theta = std::fmod(pose[2], 2*M_PI);
+            if(cur_theta < 0) { cur_theta += 2*M_PI; } 
+
+            if(reachOrientation(cur_theta, ref_theta)) {
+                double dist_to_end = ref_vec.norm();
+                if(dist_to_end > cfg_.max_v_x*time_interval) {
+                    retv[0] = cfg_.max_v_x;
+                } else {
+                    retv[0] = dist_to_end/time_interval;
+                }
+                std::cout << "move to target, retv = " << retv << std::endl;
+            } else {
+                rot_ctl_->ang_ = ref_theta; // update target angle
+
+                if(fabs(ref_theta - cur_theta) <= M_PI) {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
+                    else { rot_ctl_->posi_rot_ = false; }
+                } else {
+                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
+                    else { rot_ctl_->posi_rot_ = true; }                    
+                }
+
+                retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+                std::cout << "rotate 1 positive = " << rot_ctl_->posi_rot_ << ", retv = " << retv << std::endl;
+            }
+        }
+        return retv;
+
+    }
+};
 
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 
