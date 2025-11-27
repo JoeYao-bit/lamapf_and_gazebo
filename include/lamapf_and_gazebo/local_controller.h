@@ -394,10 +394,11 @@ public:
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
-                if(fabs(retv[2]) < 0.05) {
-                    if(retv[2]>0) { retv[2]=0.05; }
-                    if(retv[2]<0) { retv[2]=-0.05; }
+                if(fabs(retv[2]) < 0.1) {
+                    if(retv[2]>0) { retv[2]=0.1; }
+                    if(retv[2]<0) { retv[2]=-0.1; }
                 }
+
 
                 std::cout << "rotate 2 positive = " << rot_ctl_->posi_rot_ << ", retv v = " << retv << std::endl;
 
@@ -435,9 +436,9 @@ public:
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
-                if(fabs(retv[2]) < 0.05) {
-                    if(retv[2]>0) { retv[2]=0.05; }
-                    if(retv[2]<0) { retv[2]=-0.05; }
+                if(fabs(retv[2]) < 0.1) {
+                    if(retv[2]>0) { retv[2]=0.1; }
+                    if(retv[2]<0) { retv[2]=-0.1; }
                 }
 
                 std::cout << "rotate 1 positive = " << rot_ctl_->posi_rot_ << ", retv = " << retv << std::endl;
