@@ -1582,4 +1582,9 @@ ros2 launch lamapf_and_gazebo localization_full.launch.py
 降低了速度上限后，振荡现象好像消失了, 继续观察
 
 11-25
-局部控制器测试基本通过
+局部控制器测试容易走直线就停不下来
+
+
+通过launch启动局部控制器的测试
+
+ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&1

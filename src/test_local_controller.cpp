@@ -141,7 +141,7 @@ int main(int argc, char ** argv) {
 
     // 创建初始控制器
 
-    auto line_ctl = std::make_shared<TwoPhaseLineFollowController>(MotionConfig());
+    auto line_ctl = std::make_shared<TwoPhaseLineFollowControllerReal>(MotionConfig());
     auto rot_ctl  = std::make_shared<ConstantRotateController>(MotionConfig());
 
     // create circle agent represent turtlebot
