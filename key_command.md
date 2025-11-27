@@ -174,4 +174,4 @@ ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_tim
 
 启动局部控制器测试
 
-ros2 run lamapf_and_gazebo test_local_controller 
+ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&1

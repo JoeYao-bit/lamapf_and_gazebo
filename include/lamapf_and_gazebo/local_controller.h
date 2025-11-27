@@ -701,7 +701,7 @@ public:
                 //     cmd_vel_publisher_->publish(cmd_vel);
                 // }
 
-                velcmd_ = calculateCMD(cur_pose_, velcmd_, time_interval);
+                velcmd_ = calculateCMD(cur_pose_, velcmd_, 1.0);
                 // pub vel cmd
                 cmd_vel.linear.x  = velcmd_[0];
                 cmd_vel.angular.z = velcmd_[2];
