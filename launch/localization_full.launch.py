@@ -89,9 +89,9 @@ def generate_launch_description():
         PushRosNamespace(robot_ns),
 
         lidar_node,
-        kobuki_node,
-        static_tf,
-        delayed_amcl,
+        # kobuki_node,
+        # static_tf,
+        # delayed_amcl,
         delayed_rviz,
     ])
 

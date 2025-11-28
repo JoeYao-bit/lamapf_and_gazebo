@@ -43,6 +43,11 @@ def generate_launch_description():
             description='Specifying frame_id of lidar'),
 
         DeclareLaunchArgument(
+            'scan_topic',
+            default_value=scan_topic,
+            description='Specifying topic of lidar'),
+
+        DeclareLaunchArgument(
             'inverted',
             default_value=inverted,
             description='Specifying whether or not to invert scan data'),
@@ -51,6 +56,7 @@ def generate_launch_description():
             'angle_compensate',
             default_value=angle_compensate,
             description='Specifying whether or not to enable angle_compensate of scan data'),
+
         DeclareLaunchArgument(
             'scan_mode',
             default_value=scan_mode,
@@ -65,11 +71,9 @@ def generate_launch_description():
                          'serial_port': serial_port,
                          'serial_baudrate': serial_baudrate,
                          'frame_id': frame_id,
+                         'scan_topic': scan_topic,
                          'inverted': inverted,
                          'angle_compensate': angle_compensate}],
-            output='screen',
-            remappings=[
-                    ('/scan', scan_topic),   # 全局重映射
-            ]),
+            output='screen')
     ])
 

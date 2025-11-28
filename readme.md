@@ -1688,3 +1688,6 @@ ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&
 TODO: 
 为增加各个节点名称增加名称空间，以免多个机器人同时工作时话题重名
 
+查看节点参数
+
+ros2 param dump /amcl
