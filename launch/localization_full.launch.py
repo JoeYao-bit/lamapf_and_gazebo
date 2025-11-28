@@ -29,7 +29,7 @@ def generate_launch_description():
         }.items()
     )
 
-    # Kobuki, odom->base_footprint tf, remname ok
+    # Kobuki, odom->base_footprint tf, rename ok
     kobuki_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -64,8 +64,8 @@ def generate_launch_description():
         ),
         launch_arguments={
             'use_sim_time': 'false',
-            'map_topic':'map',
-            'scan_topic': f'{robot_ns}/scan',                  # 指定订阅话题
+            'map_topic':'/map',
+            'scan_topic': '/scan',                  # 指定订阅话题
             'base_frame_id': f'{robot_ns}/base_footprint',
             'odom_frame_id': f'{robot_ns}/odom',
             'global_frame_id': '/map'
@@ -90,8 +90,8 @@ def generate_launch_description():
         lidar_node,
         kobuki_node,
         static_tf,
-        delayed_amcl,
-        delayed_rviz,
+        #delayed_amcl,
+        #delayed_rviz,
     ])
 
     return LaunchDescription([
