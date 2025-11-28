@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 import os
 from launch import LaunchDescription
-from launch.actions import TimerAction, IncludeLaunchDescription
+from launch.actions import (
+    TimerAction, IncludeLaunchDescription, GroupAction
+)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory  # ✅ 必须加
+from launch_ros.actions import Node, PushRosNamespace
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
 
+    robot_ns = 'robot0'
+    
     # LIDAR
     lidar_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -43,7 +47,7 @@ def generate_launch_description():
     static_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
-        arguments=['0','0','0','0','0','1','0','base_footprint','laser']
+        arguments=['0','0','0','0','0','1','0',f'{robot_ns}/base_footprint',f'{robot_ns}/scan']
     )
 
     # AMCL
@@ -71,10 +75,17 @@ def generate_launch_description():
     delayed_amcl = TimerAction(period=2.0, actions=[amcl_node])
     delayed_rviz = TimerAction(period=3.0, actions=[rviz])
 
-    return LaunchDescription([
+    # ⭐⭐ 关键部分：把所有节点放入 GroupAction + PushRosNamespace
+    ns_group = GroupAction([
+        PushRosNamespace(robot_ns),
+
         lidar_node,
         kobuki_node,
         static_tf,
         delayed_amcl,
         delayed_rviz,
+    ])
+
+    return LaunchDescription([
+        ns_group
     ])
