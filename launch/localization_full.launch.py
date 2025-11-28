@@ -25,7 +25,8 @@ def generate_launch_description():
         launch_arguments={
             'serial_port': '/dev/rplidar',
             'serial_baudrate': '115200',
-            'scan_topic': '/scan', # f'{robot_ns}/scan'   
+            'scan_topic': f'{robot_ns}/scan',
+            'frame_id': f'{robot_ns}/laser'
         }.items()
     )
 
