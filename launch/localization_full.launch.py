@@ -29,7 +29,7 @@ def generate_launch_description():
         }.items()
     )
 
-    # Kobuki, odom->base_footprint tf
+    # Kobuki, odom->base_footprint tf, remname ok
     kobuki_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -89,9 +89,9 @@ def generate_launch_description():
 
         lidar_node,
         kobuki_node,
-        # static_tf,
-        # delayed_amcl,
-        # delayed_rviz,
+        static_tf,
+        delayed_amcl,
+        delayed_rviz,
     ])
 
     return LaunchDescription([
