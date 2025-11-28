@@ -19,6 +19,11 @@ def generate_launch_description():
     map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
+    scan_topic = LaunchConfiguration('scan_topic')
+    map_topic = LaunchConfiguration('map_topic')
+    global_frame_id = LaunchConfiguration('global_frame_id')
+    base_frame_id = LaunchConfiguration('base_frame_id')
+    odom_frame_id = LaunchConfiguration('odom_frame_id')
 
     declare_map_cmd = DeclareLaunchArgument(
         'map',
@@ -34,7 +39,32 @@ def generate_launch_description():
         'params_file',
         default_value='/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/config/amcl_localization.yaml',
         description='Full path to AMCL config file')
+    
+    declare_scan_topic_cmd = DeclareLaunchArgument(
+        'scan_topic',
+        default_value='/scan',
+        description='Laser scan topic name')
+    
+    declare_map_topic_cmd = DeclareLaunchArgument(
+        'map_topic',
+        default_value='/map',
+        description='Map topic name')
+    
+    declare_global_frame_id_cmd = DeclareLaunchArgument(
+        'global_frame_id',
+        default_value='map',
+        description='Global frame id')
+    
+    declare_base_frame_id_cmd = DeclareLaunchArgument(
+        'base_frame_id',
+        default_value='base_footprint',
+        description='Base frame id')
 
+    declare_odom_frame_id_cmd = DeclareLaunchArgument(
+        'odom_frame_id',
+        default_value='odom',
+        description='Odom frame id')
+    
     # 地图服务器节点
     map_server_node = Node(
         package='nav2_map_server',
@@ -51,7 +81,15 @@ def generate_launch_description():
         executable='amcl',
         name='amcl',
         output='screen',
-        parameters=[params_file]
+        parameters=[params_file,
+                   {                     
+                    # 动态覆盖参数
+                    'scan_topic': scan_topic,
+                    'map_topic': map_topic,
+                    'global_frame_id': global_frame_id,
+                    'base_frame_id': base_frame_id,
+                    'odom_frame_id': odom_frame_id
+                   }]
     )
 
     # 生命周期管理器节点（自动激活 map_server 和 amcl）
@@ -77,6 +115,12 @@ def generate_launch_description():
         declare_map_cmd,
         declare_use_sim_time_cmd,
         declare_params_file_cmd,
+        declare_scan_topic_cmd,
+        declare_map_topic_cmd,
+        declare_global_frame_id_cmd,
+        declare_base_frame_id_cmd,
+        declare_odom_frame_id_cmd,
+
         map_server_node,
         amcl_node,
         lifecycle_manager_node,
