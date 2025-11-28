@@ -47,7 +47,7 @@ def generate_launch_description():
     
     declare_map_topic_cmd = DeclareLaunchArgument(
         'map_topic',
-        default_value='/map',
+        default_value='map',
         description='Map topic name')
     
     declare_global_frame_id_cmd = DeclareLaunchArgument(

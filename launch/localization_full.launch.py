@@ -63,12 +63,12 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            'use_sim_time': 'false',
-            'map_topic':'/map',
-            'scan_topic': '/scan',                  # 指定订阅话题
+            #'use_sim_time': 'false',
+            #'map_topic':'map',
+            #'scan_topic': '/scan',                  # 指定订阅话题
             'base_frame_id': f'{robot_ns}/base_footprint',
             'odom_frame_id': f'{robot_ns}/odom',
-            'global_frame_id': '/map'
+            #'global_frame_id': 'map'
         }.items()
     )
 
