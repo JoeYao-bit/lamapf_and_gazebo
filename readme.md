@@ -1344,7 +1344,9 @@ ros2 launch lamapf_and_gazebo   turtlebot2_online_async_launch.py
 ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 1 0 base_footprint laser
 
 ## 7, tf树可视化
+
 ros2 run tf2_tools view_frames 
+
 应该是map->odom->base_footprint->laser
 
 ## 8, 保存地图

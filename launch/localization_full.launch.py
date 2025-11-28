@@ -29,11 +29,11 @@ def generate_launch_description():
         }.items()
     )
 
-    # Kobuki
+    # Kobuki, odom->base_footprint tf
     kobuki_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory('kobuki_node'),
+                get_package_share_directory('lamapf_and_gazebo'),
                 'launch',
                 'kobuki_node-launch.py'
             )
@@ -41,6 +41,8 @@ def generate_launch_description():
         launch_arguments={
             'serial_port': '/dev/kobuki',
             'serial_baudrate': '115200',
+            'odom_frame': f'{robot_ns}/odom',
+            'base_frame': f'{robot_ns}/base_footprint'
         }.items()
     )
 
