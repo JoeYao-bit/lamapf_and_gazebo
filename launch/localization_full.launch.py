@@ -13,7 +13,7 @@ def generate_launch_description():
 
     robot_ns = 'robot0'
     
-    # LIDAR
+    # LIDAR, remap ok
     lidar_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -86,7 +86,7 @@ def generate_launch_description():
         PushRosNamespace(robot_ns),
 
         lidar_node,
-        # kobuki_node,
+        kobuki_node,
         # static_tf,
         # delayed_amcl,
         # delayed_rviz,
