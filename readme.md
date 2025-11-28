@@ -1691,3 +1691,54 @@ TODO:
 查看节点参数
 
 ros2 param dump /amcl
+
+
+对，在 ROS 中，frame_id 不能以 / 开头（即不能是绝对路径）。
+
+原因如下：
+
+1️⃣ ROS TF frame 名称规则
+
+合法字符：大小写字母、数字、下划线 _、斜杠 /（但用作命名空间分隔符）
+
+不允许：以 / 开头的完整名字作为 frame_id
+
+长度限制：一般不超过 255 字符
+
+11-26-2110
+增加了传参重命名后，amcl_localization.yaml中设置的参数似乎已经无效了，
+必须在turtlebot2_amcl_localization.launch.py中启动amcl时设置参数才有效
+
+
+🔍 常见误解
+❌ 误解：给 RViz 设置 namespace 后，它发布的话题也会带 namespace
+
+实际上不会。
+
+❌ 误解：TF namespace 会影响 initial pose 的 topic
+
+不会。
+
+改成启动时remapping可解决
+
+robot0工作空间下的定位测试以及键盘控制成功
+
+Node(
+    package='rviz2',
+    executable='rviz2',
+    name='rviz2',
+    output='screen',
+    remappings=[
+        ('/initialpose', f'/{robot_ns}/initialpose'),
+    ],
+)
+启动键盘控制时需要remapping发布速度指令的话题
+ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/robot0/commands/velocity
+
+下一步，
+测试名称空间下的局部控制器
+
+再下一步，
+测试单机器人在中央控制器下沿着规划轨迹移动
+
+再再下一步，将单机器人扩展到二机器人，再拓展到多机器人
