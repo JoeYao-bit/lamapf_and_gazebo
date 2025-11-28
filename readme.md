@@ -1592,3 +1592,9 @@ ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&
 实测发现turtlebot角速度低于某个值(约0.03)就不动了，因此必须大于这个值
 
 太大会超调，局部反复振荡，太小则会卡在到达目标姿态前动不了
+通过设置最低速度以及增大计算速度的time interval，减少速度的突变
+已经跑通
+
+TODO: 
+为增加各个节点名称增加名称空间，以免多个机器人同时工作时话题重名
+
