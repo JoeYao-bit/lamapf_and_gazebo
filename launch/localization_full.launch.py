@@ -11,7 +11,7 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
-    robot_ns = ''#'robot0'
+    robot_ns = 'robot0'
     
     # LIDAR, remap ok
     lidar_node = IncludeLaunchDescription(
@@ -25,7 +25,7 @@ def generate_launch_description():
         launch_arguments={
             'serial_port': '/dev/rplidar',
             'serial_baudrate': '115200',
-            'scan_topic': f'{robot_ns}/scan',
+            'scan_topic': 'scan',
             'frame_id': f'{robot_ns}/laser'
         }.items()
     )
@@ -64,12 +64,13 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            #'use_sim_time': 'false',
-            #'map_topic':'map',
-            #'scan_topic': '/scan',                  # 指定订阅话题
+            'use_sim_time': 'False',
+            'map_topic':'map',
+            'scan_topic': 'scan',                  # 指定订阅话题
             'base_frame_id': f'{robot_ns}/base_footprint',
             'odom_frame_id': f'{robot_ns}/odom',
-            #'global_frame_id': 'map'
+            'global_frame_id': 'map',
+            'params_file': '/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/config/amcl_localization.yaml',
         }.items()
     )
 
@@ -77,7 +78,11 @@ def generate_launch_description():
     rviz = Node(
         package='rviz2',
         executable='rviz2',
-        name='rviz2'
+        name='rviz2',
+        remappings=[
+            ('/initialpose', f'/{robot_ns}/initialpose'),
+            ('/goal_pose', f'/{robot_ns}/goal_pose'),
+        ],
     )
 
     # 顺序控制：延迟 2 秒启动 AMCL，延迟 3 秒启动 RVIZ
@@ -89,9 +94,9 @@ def generate_launch_description():
         PushRosNamespace(robot_ns),
 
         lidar_node,
-        # kobuki_node,
-        # static_tf,
-        # delayed_amcl,
+        kobuki_node,
+        static_tf,
+        delayed_amcl,
         delayed_rviz,
     ])
 

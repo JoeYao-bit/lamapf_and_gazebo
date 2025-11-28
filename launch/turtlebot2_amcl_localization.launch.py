@@ -42,7 +42,7 @@ def generate_launch_description():
     
     declare_scan_topic_cmd = DeclareLaunchArgument(
         'scan_topic',
-        default_value='/scan',
+        default_value='scan',
         description='Laser scan topic name')
     
     declare_map_topic_cmd = DeclareLaunchArgument(
@@ -88,7 +88,10 @@ def generate_launch_description():
                     'map_topic': map_topic,
                     'global_frame_id': global_frame_id,
                     'base_frame_id': base_frame_id,
-                    'odom_frame_id': odom_frame_id
+                    'odom_frame_id': odom_frame_id,
+                    'set_initial_pose': True,
+                    'update_min_d': 0.01,
+                    'update_min_a': 0.01
                    }]
     )
 
