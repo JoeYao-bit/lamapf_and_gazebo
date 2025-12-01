@@ -187,7 +187,6 @@ public:
     CenteralController(DimensionLength* dim, 
                        IS_OCCUPIED_FUNC<2> is_occupied,
                        const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
-                       std::string lns_path,
                        const float& time_interval = 0.1,
                        bool enable_opencv_window = true,
                        const GRID_TO_PTF_FUNC& grid_to_ptf_func = GridToPtfPicOnly): 

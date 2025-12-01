@@ -29,13 +29,15 @@ public:
 
     bool goalReceived() const { return got_goal_; }
 
+    Pointf<3> goal_, start_;
+
 private:
 
     void goalCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
 
-        goal_x_ = msg->pose.position.x;
-        goal_y_ = msg->pose.position.y;
+        goal_[0] = msg->pose.position.x;
+        goal_[1] = msg->pose.position.y;
 
         tf2::Quaternion q(
             msg->pose.orientation.x,
@@ -48,9 +50,9 @@ private:
 
         RCLCPP_INFO(this->get_logger(),
                     "Received one-time goal: x=%.3f, y=%.3f, theta=%.3f rad",
-                    goal_x_, goal_y_, yaw);
+                    goal_[0], goal_[1], yaw);
 
-        goal_theta_ = yaw;
+        goal_[2] = yaw;
 
         // get start from tf tree
         try {
@@ -59,9 +61,9 @@ private:
                 "map", "robot0/base_footprint", tf2::TimePointZero,
                 std::chrono::seconds(2));
 
-            start_x_ = transformStamped.transform.translation.x;
+            start_[0] = transformStamped.transform.translation.x;
 
-            start_y_ = transformStamped.transform.translation.y;
+            start_[1] = transformStamped.transform.translation.y;
 
             // geometry_msgs::Quaternion -> tf2::Quaternion
             tf2::Quaternion q2;
@@ -71,9 +73,9 @@ private:
 
             RCLCPP_INFO(this->get_logger(),
                         "Get start from current pose: x=%.3f, y=%.3f, theta=%.3f rad",
-                        start_x_, start_y_, yaw);
+                        start_[0], start_[1], yaw);
 
-            start_theta_ = yaw;
+            start_[2] = yaw;
 
         }
         catch (tf2::TransformException & ex) {
@@ -90,9 +92,6 @@ private:
 
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
-    float goal_x_,  goal_y_,  goal_theta_;
-
-    float start_x_, start_y_, start_theta_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_;
 
@@ -100,10 +99,44 @@ private:
 
 };
 
+std::shared_ptr<ActionDependencyGraph<2> > CenteralController::ADG_ = nullptr;
+
+bool CenteralController::paused_ = true;
+
+std::vector<int> CenteralController::progress_of_agents_ = {};  
+
+std::vector<std::shared_ptr<Pose<int, 2>> > CenteralController::all_poses_ = {};
+
+Pointfs<3> CenteralController::all_agent_poses_ = {};
+
+std::pair<AgentPtrs<2>, InstanceOrients<2> > CenteralController::instances_ = {};
+
+DimensionLength* CenteralController::dim_ = nullptr;
+
+std::vector<std::pair<Pointf<3>, Pointf<3> > > CenteralController::recover_tasks_ = {};  
+
+bool CenteralController::pub_init_target_ = true;
+
+bool CenteralController::need_replan_ = false;
+
+// load map
+PictureLoader loader_local("/home/wangweilab/my_map.pgm", is_grid_occupied);
+
+DimensionLength* dim_local = loader_local.getDimensionInfo();
+
+auto is_occupied_local = [](const Pointi<2> & pt) -> bool { return loader_local.isOccupied(pt); };
+
 
 int main(int argc, char ** argv) {
     
     rclcpp::init(argc, argv);
+
+    // set config for using of PtfToGridPicOnly
+    dim[0] = dim_local[0];
+    
+    dim[1] = dim_local[1];
+
+    reso = 0.05;
 
     auto node = std::make_shared<OneShotGoalListener>();
 
@@ -114,33 +147,47 @@ int main(int argc, char ** argv) {
         rclcpp::spin_some(node);
         rclcpp::sleep_for(std::chrono::milliseconds(100));
     }
-
-    return 0;
-
-    // TODO: 启动中央控制器，路径可视化
-
-    // 创建局部控制器
-
-    auto line_ctl = std::make_shared<TwoPhaseLineFollowControllerReal>(MotionConfig());
-    auto rot_ctl  = std::make_shared<ConstantRotateController>(MotionConfig());
-
-    // create circle agent represent turtlebot
-    auto agent = std::make_shared<CircleAgent<2> >(0.2, 0, dim);
-
-    // create local control node
-
-    double time_interval = 0.1;//.1; // second
-
+    //return 0;
     rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 3);
 
-    auto agent_control_node = std::make_shared<LocalController>(agent, line_ctl, 1, time_interval,
-                                                                "/robot0/amcl_pose",
-                                                                "/robot0/local_goal",
-                                                                "/robot0/scan",
-                                                                "/robot0/commands/velocity");  
+    // construct instance
+    // create circle agent represent turtlebot
+    auto agent_ptr = std::make_shared<CircleAgent<2> >(0.2, 0, dim_local);
+    double time_interval = 0.1;// s
+
+    std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
+        {}; // get all instances
+
+    instances.first.push_back(agent_ptr);    
+
+    Pose<int, 2> start_pose = PtfToPoseInt(node->start_, PtfToGridPicOnly), target_pose = PtfToPoseInt(node->goal_, PtfToGridPicOnly);
+
+    instances.second.push_back({start_pose, target_pose});    
+
+    // 启动中央控制器，路径可视化
+    // start central controller
+    auto central_controller = std::make_shared<CenteralController>(dim_local, is_occupied_local, instances, 
+                                                                   time_interval, 
+                                                                   true); // enable opencv window
+
+
+
+
+    // // 创建局部控制器
+
+    // auto line_ctl = std::make_shared<TwoPhaseLineFollowControllerReal>(MotionConfig());
+    // auto rot_ctl  = std::make_shared<ConstantRotateController>(MotionConfig());
+
+    // // create local control node
+
+    // auto agent_control_node = std::make_shared<LocalController>(agent, line_ctl, 1, time_interval,
+    //                                                             "/robot0/amcl_pose",
+    //                                                             "/robot0/local_goal",
+    //                                                             "/robot0/scan",
+    //                                                             "/robot0/commands/velocity");  
                                                         
 
-    executor.add_node(agent_control_node);
+    // executor.add_node(agent_control_node);
 
     std::thread t1([&]() { executor.spin(); });
     

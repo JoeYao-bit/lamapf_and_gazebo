@@ -176,7 +176,7 @@ int main(int argc, char ** argv) {
 
     rclcpp::executors::MultiThreadedExecutor executor2;
     // start central controller
-    auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, file_path, 
+    auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, 
                                                                    time_interval, 
                                                                    true); // enable opencv window
     executor2.add_node(central_controller);
