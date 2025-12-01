@@ -163,7 +163,7 @@ int main(int argc, char ** argv) {
 
     executor.add_node(agent_control_node);
 
-    auto goal_listener_node = std::make_shared<GoalListener>(0, "/goal");                                     
+    auto goal_listener_node = std::make_shared<GoalListener>(0, "/goal_listener");                                     
 
     executor.add_node(goal_listener_node);
 
