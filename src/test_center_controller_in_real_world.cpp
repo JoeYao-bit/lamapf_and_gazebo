@@ -56,7 +56,7 @@ private:
         try {
             // 获取最新 transform，阻塞最多2秒
             auto transformStamped = tf_buffer_->lookupTransform(
-                "map", "/robot0/base_footprint", tf2::TimePointZero,
+                "map", "robot0/base_footprint", tf2::TimePointZero,
                 std::chrono::seconds(2));
 
             start_x_ = transformStamped.transform.translation.x;
