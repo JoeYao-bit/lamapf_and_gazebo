@@ -29,7 +29,7 @@ public:
         goal_pub_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>(goal_pub_topic, 10);
 
         // goal_pose receive rviz's Nav Goal
-        sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/goal_pose", 10,
+        sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("/robot0/goal", 10,
             std::bind(&GoalListener::goalCallback, this, std::placeholders::_1));
            
         timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this]() {
