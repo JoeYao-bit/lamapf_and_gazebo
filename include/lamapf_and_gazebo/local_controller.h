@@ -639,9 +639,13 @@ public:
                 try {
                     RCLCPP_WARN(this->get_logger(), "no pose data, try get tf data");
 
+                    int agent_id = agent_->id_;
+                    std::stringstream base_ss;
+                    base_ss << "/robot" << agent_id << "/base_footprint";
+                    
                     // 获取最新 transform，阻塞最多50ms秒
                     auto transformStamped = tf_buffer_->lookupTransform(
-                        "map", "base_footprint", tf2::TimePointZero,
+                        "map", base_ss.str().c_str(), tf2::TimePointZero,
                         std::chrono::milliseconds(50));
 
                     double x = transformStamped.transform.translation.x;

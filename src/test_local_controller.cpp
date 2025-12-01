@@ -153,11 +153,12 @@ int main(int argc, char ** argv) {
 
     rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 3);
 
+
     auto agent_control_node = std::make_shared<LocalController>(agent, line_ctl, 1, time_interval,
-                                                                "/amcl_pose",
-                                                                "/goal",
-                                                                "/scan",
-                                                                "/commands/velocity");  
+                                                                "/robot0/amcl_pose",
+                                                                "/robot0/goal",
+                                                                "/robot0/scan",
+                                                                "/robot0/commands/velocity");  
                                                         
 
     executor.add_node(agent_control_node);
