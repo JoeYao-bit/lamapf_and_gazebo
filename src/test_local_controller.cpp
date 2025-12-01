@@ -156,14 +156,14 @@ int main(int argc, char ** argv) {
 
     auto agent_control_node = std::make_shared<LocalController>(agent, line_ctl, 1, time_interval,
                                                                 "/robot0/amcl_pose",
-                                                                "/robot0/goal",
+                                                                "/robot0/local_goal",
                                                                 "/robot0/scan",
                                                                 "/robot0/commands/velocity");  
                                                         
 
     executor.add_node(agent_control_node);
 
-    auto goal_listener_node = std::make_shared<GoalListener>(0, "/goal_listener");                                     
+    auto goal_listener_node = std::make_shared<GoalListener>(0, "/robot0/local_goal");                                     
 
     executor.add_node(goal_listener_node);
 
