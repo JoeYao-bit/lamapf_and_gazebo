@@ -19,7 +19,7 @@ public:
     OneShotGoalListener() : Node("one_shot_goal_listener")
     {
         sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/goal_pose", 10,
+            "/robot0/goal_pose", 10,
             std::bind(&OneShotGoalListener::goalCallback, this, std::placeholders::_1));
 
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
