@@ -184,3 +184,6 @@ ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&
 
 加载激光雷达，连接turtlebot，发布静态transform，启动定位，启动rviz
 
+## 11, 启动中央控制器，并导出日志到指定文件
+
+ros2 launch lamapf_and_gazebo center_controller_test.launch.py >  my_node.log 2>&1
