@@ -641,7 +641,7 @@ public:
 
                     int agent_id = agent_->id_;
                     std::stringstream base_ss;
-                    base_ss << "/robot" << agent_id << "/base_footprint";
+                    base_ss << "robot" << agent_id << "/base_footprint";
                     
                     // 获取最新 transform，阻塞最多50ms秒
                     auto transformStamped = tf_buffer_->lookupTransform(
