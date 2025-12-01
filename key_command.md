@@ -172,6 +172,15 @@ ros2 launch lamapf_and_gazebo turtlebot2_amcl_localization.launch.py use_sim_tim
 
 初始位置不对则输入rviz2设置初始位置
 
-启动局部控制器测试，并导出日志到指定文件
+整合各个启动项：
+
+加载激光雷达，连接turtlebot，发布静态transform，启动定位，启动rviz
+
+ros2 launch lamapf_and_gazebo localization_full.launch.py
+
+## 10, 启动局部控制器测试，并导出日志到指定文件
 
 ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&1
+
+加载激光雷达，连接turtlebot，发布静态transform，启动定位，启动rviz
+

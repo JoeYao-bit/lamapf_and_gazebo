@@ -833,9 +833,17 @@ public:
 
 
         // if is required to wait, then wait
-        if(wait_) { return cmd_vel; }
+        if(wait_) { 
+            std::stringstream ss1;
+            ss1 << "wait, zero vel cmd";
+            RCLCPP_INFO(this->get_logger(), ss1.str().c_str()); 
+            return cmd_vel;
+        }
         if(reachTarget(pose, target_ptf_)) {
             wait_ = true;
+            std::stringstream ss2;
+            ss2 << "reach target";
+            RCLCPP_INFO(this->get_logger(), ss2.str().c_str()); 
             return cmd_vel;
         }
 
