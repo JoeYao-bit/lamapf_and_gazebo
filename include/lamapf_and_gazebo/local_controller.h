@@ -495,7 +495,8 @@ public:
                     std::string pose_topic = "",
                     std::string goal_topic = "",
                     std::string laser_topic = "",
-                    std::string cmdvel_topic = ""):
+                    std::string cmdvel_topic = "",
+                    std::string base_frame_id = ""):
                      agent_(agent),
                      line_ctl_(line_ctl),
                      velcmd_(Pointf<3>{0,0,0}),
@@ -622,6 +623,14 @@ public:
 
         cmd_vel_publisher_ =  this->create_publisher<geometry_msgs::msg::Twist>(ss6.str(), 10);
 
+        if(base_frame_id == "") {
+            int agent_id = agent_->id_;
+            std::stringstream base_ss;
+            base_ss << "robot" << agent_id << "/base_footprint";
+            base_frame_id_ = base_ss.str();
+        } else {
+            base_frame_id_ = base_frame_id;
+        }
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this,time_interval,agent]() {
             //std::stringstream ss;
@@ -635,13 +644,10 @@ public:
                 try {
                     RCLCPP_WARN(this->get_logger(), "no pose data, try get tf data");
 
-                    int agent_id = agent_->id_;
-                    std::stringstream base_ss;
-                    base_ss << "robot" << agent_id << "/base_footprint";
                     
                     // 获取最新 transform，阻塞最多50ms秒
                     auto transformStamped = tf_buffer_->lookupTransform(
-                        "map", base_ss.str().c_str(), tf2::TimePointZero,
+                        "map", base_frame_id_.c_str(), tf2::TimePointZero,
                         std::chrono::milliseconds(50));
 
                     double x = transformStamped.transform.translation.x;
@@ -885,6 +891,8 @@ public:
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
     rclcpp::TimerBase::SharedPtr timer_;
+
+    std::string base_frame_id_;
 
     int count_of_iter_ = 0;
 
