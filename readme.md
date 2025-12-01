@@ -1742,3 +1742,16 @@ ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/robot0/commands/
 测试单机器人在中央控制器下沿着规划轨迹移动
 
 再再下一步，将单机器人扩展到二机器人，再拓展到多机器人
+
+
+备注：TurtleBot2 / Kobuki 的速度控制是“加速度受限”的
+
+Kobuki 底盘驱动系统内部带有加速度限制（acceleration limit），为了保证：
+
+防止电机过载
+
+避免急加速导致打滑或倾倒
+
+保护变速箱
+
+保持控制稳定性

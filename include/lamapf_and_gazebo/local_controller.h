@@ -14,7 +14,7 @@
 struct MotionConfig {
     float max_v_x = .1, min_v_x = 0;
     float max_v_y = 0, min_v_y = 0;
-    float max_v_w = .06*M_PI, min_v_w = -.06*M_PI;
+    float max_v_w = M_PI/9, min_v_w = M_PI/20; // abs value, should considering sign when use
 
     float max_a_x = 3.0, min_a_x = -3.;
     float max_a_y = 0, min_a_y = 0;
@@ -29,18 +29,18 @@ bool reachPosition(const float& x, const float& y, const float& target_x, const 
 }
 
 float shortestAngularDistance(float a, float b) {
-    float diff = std::fmod(a - b + M_PI, 2 * M_PI);
-    if (diff < 0)
-        diff += 2 * M_PI;
-    diff -= M_PI;
-    return diff;
+    double d = fmod(b - a + M_PI, 2.0 * M_PI);
+    if (d < 0)
+        d += 2.0 * M_PI;
+    return d - M_PI;
+    return d;
 }
 
 
 bool reachOrientation(const float& orientation, const float& target_orientation) {
     float angle_to_target = shortestAngularDistance(orientation, target_orientation);
     // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
-    return fabs(angle_to_target) < M_PI*10./180.;
+    return fabs(angle_to_target) < M_PI*6./180.;
 }
 
 bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
@@ -231,20 +231,14 @@ public:
     // set posi_rot_ and ang_ before call calculateCMD
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         //assert(ang_ >= 0 && ang_ <= 2*M_PI);
-        float ang = std::fmod(ang_, 2*M_PI);
         Pointf<3> retv = {0, 0, 0};
-        if(posi_rot_) {
-            while(pose[2] > ang) {
-                pose[2] = pose[2] - 2*M_PI;
-            }
-            //std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
-            retv[2] = std::min(cfg_.max_v_w, (ang - pose[2])/time_interval);
-        } else {
-            while(pose[2] < ang) {
-                pose[2] = pose[2] + 2*M_PI;
-            }
-            //std::cout << "posi_rot_ " << posi_rot_ << ", (ang - pose[2]) = " << ang - pose[2] << std::endl;
-            retv[2] = std::max(cfg_.min_v_w, (ang - pose[2])/time_interval);
+        float diff = shortestAngularDistance(pose[2], ang_);
+
+        retv[2] = std::min(cfg_.max_v_w, fabs(diff)/time_interval);
+        retv[2] = std::max(cfg_.min_v_w, retv[2]);
+
+        if(diff<0) {
+            retv[2] = -retv[2];
         }
 
         // retv[2] = std::clamp(retv[2],
@@ -373,7 +367,8 @@ public:
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
 
-        if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
+        if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
+            finish_move_ = true;
             // rotate
             double ref_theta = std::fmod(pt2_[2], 2*M_PI);
             if(ref_theta < 0) { ref_theta += 2*M_PI; } 
@@ -384,13 +379,13 @@ public:
             if(!reachOrientation(cur_theta, ref_theta)) {
                 rot_ctl_->ang_ = ref_theta; 
 
-                if(fabs(ref_theta - cur_theta) <= M_PI) {
-                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
-                    else { rot_ctl_->posi_rot_ = false; }
-                } else {
-                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
-                    else { rot_ctl_->posi_rot_ = true; }                    
-                }
+                // if(fabs(ref_theta - cur_theta) <= M_PI) {
+                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
+                //     else { rot_ctl_->posi_rot_ = false; }
+                // } else {
+                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
+                //     else { rot_ctl_->posi_rot_ = true; }                    
+                // }
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
@@ -422,13 +417,13 @@ public:
             } else {
                 rot_ctl_->ang_ = ref_theta; // update target angle
 
-                if(fabs(ref_theta - cur_theta) <= M_PI) {
-                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
-                    else { rot_ctl_->posi_rot_ = false; }
-                } else {
-                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
-                    else { rot_ctl_->posi_rot_ = true; }                    
-                }
+                // if(fabs(ref_theta - cur_theta) <= M_PI) {
+                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
+                //     else { rot_ctl_->posi_rot_ = false; }
+                // } else {
+                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
+                //     else { rot_ctl_->posi_rot_ = true; }                    
+                // }
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
@@ -440,6 +435,7 @@ public:
         return retv;
 
     }
+
 };
 
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
