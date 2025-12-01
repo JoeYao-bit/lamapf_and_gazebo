@@ -160,7 +160,9 @@ int main(int argc, char ** argv) {
 
     instances.first.push_back(agent_ptr);    
 
-    Pose<int, 2> start_pose = PtfToPoseInt(node->start_, PtfToGridPicOnly), target_pose = PtfToPoseInt(node->goal_, PtfToGridPicOnly);
+    // TODO: 转换到地图坐标系下，参考地图yaml文件中的原点和姿态
+    Pose<int, 2> start_pose = PtfToPoseInt(node->start_, PtfToGridPicOnly),
+                 target_pose = PtfToPoseInt(node->goal_, PtfToGridPicOnly);
 
     instances.second.push_back({start_pose, target_pose});    
 
