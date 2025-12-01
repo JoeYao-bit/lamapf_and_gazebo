@@ -147,7 +147,7 @@ int main(int argc, char ** argv) {
         rclcpp::spin_some(node);
         rclcpp::sleep_for(std::chrono::milliseconds(100));
     }
-    //return 0;
+    //return 0; // AC till here
     rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 3);
 
     // construct instance
