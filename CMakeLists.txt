@@ -56,26 +56,26 @@ set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs
 add_executable(spawn_entity src/test_spawn_entity.cpp)
 ament_target_dependencies(spawn_entity ${dependencies})
 install(TARGETS spawn_entity DESTINATION lib/${PROJECT_NAME})
-target_link_libraries(spawn_entity ${EXTERNAL_LIBS} )
+target_link_libraries(spawn_entity ${EXTERNAL_LIBS} yaml-cpp)
 
 
 add_executable(test_lamapf_planner_node src/test_lamapf_planner_node.cpp)
-target_link_libraries(test_lamapf_planner_node ${EXTERNAL_LIBS} )
+target_link_libraries(test_lamapf_planner_node ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(test_lamapf_planner_node ${dependencies})
 install(TARGETS test_lamapf_planner_node DESTINATION lib/${PROJECT_NAME})
 
 add_executable(generate_instance_node src/generate_instance.cpp)
-target_link_libraries(generate_instance_node ${EXTERNAL_LIBS} )
+target_link_libraries(generate_instance_node ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(generate_instance_node ${dependencies})
 install(TARGETS generate_instance_node DESTINATION lib/${PROJECT_NAME})
 
 add_executable(test_central_controller src/test_central_controller.cpp)
-target_link_libraries(test_central_controller ${EXTERNAL_LIBS} )
+target_link_libraries(test_central_controller ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(test_central_controller ${dependencies})
 install(TARGETS test_central_controller DESTINATION lib/${PROJECT_NAME})
 
 add_executable(test_mpc_controller src/test_mpc_controller.cpp)
-target_link_libraries(test_mpc_controller ${EXTERNAL_LIBS} )
+target_link_libraries(test_mpc_controller ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(test_mpc_controller ${dependencies})
 install(TARGETS test_mpc_controller DESTINATION lib/${PROJECT_NAME})
 
@@ -90,7 +90,7 @@ ament_target_dependencies(test_local_controller ${dependencies})
 install(TARGETS test_local_controller DESTINATION lib/${PROJECT_NAME})
 
 add_executable(test_center_controller_in_read_world src/test_center_controller_in_real_world.cpp)
-target_link_libraries(test_center_controller_in_read_world ${EXTERNAL_LIBS} yaml-cpp )
+target_link_libraries(test_center_controller_in_read_world ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(test_center_controller_in_read_world ${dependencies})
 install(TARGETS test_center_controller_in_read_world DESTINATION lib/${PROJECT_NAME})
 

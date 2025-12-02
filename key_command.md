@@ -89,6 +89,10 @@ sudo apt install ros-jazzy-slam-toolbox
 
 sudo apt install ros-jazzy-tf-transformations
 
+安装yaml相关依赖
+
+sudo apt install libyaml-cpp-dev
+
 # 最新关键操作指令
 
 ## 1,配置USB连接规则

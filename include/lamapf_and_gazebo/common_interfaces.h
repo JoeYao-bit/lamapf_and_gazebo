@@ -7,6 +7,7 @@
 #pragma once
 #include "rclcpp/rclcpp.hpp"
 #include <iostream>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <string>
@@ -1008,5 +1009,100 @@ public:
 
     inline static int map_height_ = 0;
 };
+
+
+// 转换函数：世界坐标 -> 像素坐标
+// 参数:
+// x_world, y_world : 世界坐标
+// ox, oy, theta    : origin（左下角的世界坐标 + 地图旋转角）
+// resolution       : 每像素代表的米
+// map_height       : 图像高度（像素数）
+void worldToPixelYAML(float x_world, float y_world,
+                      float ox, double oy, float otheta,
+                      float resolution, int map_height,
+                      int &px, int &py)
+{
+    // 1. 平移到原点
+    float x_shift = x_world - ox;
+    float y_shift = y_world - oy;
+
+    // 2. 旋转 -theta
+    float x_rot =  std::cos(-otheta) * x_shift - std::sin(-otheta) * y_shift;
+    float y_rot =  std::sin(-otheta) * x_shift + std::cos(-otheta) * y_shift;
+
+    // 3. 转像素坐标，注意 Y 轴翻转
+    px = static_cast<int>(x_rot / resolution + 0.5); // +0.5 四舍五入
+    py = map_height - static_cast<int>(y_rot / resolution + 0.5);
+}
+
+
+void pixelToWorldYAML(int px, int py,
+                      float ox, float oy, float otheta,
+                      float resolution, int map_height,
+                      float &x_world, float &y_world)
+{
+    // 1. 像素坐标转地图坐标
+    float x_map = px * resolution;
+    float y_map = (map_height - py) * resolution;
+
+    // 2. 地图坐标旋转到世界坐标
+    x_world = std::cos(otheta) * x_map - std::sin(otheta) * y_map + ox;
+    y_world = std::sin(otheta) * x_map + std::cos(otheta) * y_map + oy;
+
+}
+
+
+void getOriginFromYAMLFile(std::string yaml_file_path, float& x, float& y, float& theta) {
+    
+
+    // 读取 YAML
+    YAML::Node map_data = YAML::LoadFile(yaml_file_path);
+
+    // 获取 origin
+    if (!map_data["origin"]) {
+        std::cerr << "YAML file has no 'origin' field!" << std::endl;
+        exit(1);
+    }
+
+    YAML::Node origin = map_data["origin"];
+    if (!origin.IsSequence() || origin.size() != 3) {
+        std::cerr << "'origin' should be a sequence of 3 numbers!" << std::endl;
+        exit(1);
+    }
+
+    x = origin[0].as<double>();
+    y = origin[1].as<double>();
+    theta = origin[2].as<double>();
+
+} 
+
+
+void getResolutionFromYAMLFile(std::string yaml_file_path, float& resolution) {
+    
+
+    // 读取 YAML
+    YAML::Node map_data = YAML::LoadFile(yaml_file_path);
+
+    // 获取 origin
+    if (!map_data["resolution"]) {
+        std::cerr << "YAML file has no 'resolution' field!" << std::endl;
+        exit(1);
+    }
+
+    YAML::Node reso = map_data["resolution"];
+    resolution = reso.as<float>();
+} 
+
+// 世界角（rad） -> 像素角（rad）
+double worldYawToPixelYaw(double yaw_world, double map_yaw)
+{
+    return -yaw_world + map_yaw;
+}
+
+// 像素角（rad） -> 世界角（rad）
+double pixelYawToWorldYaw(double yaw_pixel, double map_yaw)
+{
+    return -yaw_pixel + map_yaw;
+}
 
 #endif //LAYEREDMAPF_COMMON_INTERFACES_H

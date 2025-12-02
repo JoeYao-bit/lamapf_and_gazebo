@@ -121,6 +121,7 @@ bool CenteralController::need_replan_ = false;
 
 // load map
 PictureLoader loader_local("/home/wangweilab/my_map.pgm", is_grid_occupied);
+std::string yaml_file_path = "/home/wangweilab/my_map.yaml";
 
 DimensionLength* dim_local = loader_local.getDimensionInfo();
 
@@ -160,9 +161,22 @@ int main(int argc, char ** argv) {
 
     instances.first.push_back(agent_ptr);    
 
-    // TODO: 转换到地图坐标系下，参考地图yaml文件中的原点和姿态
-    Pose<int, 2> start_pose = PtfToPoseInt(node->start_, PtfToGridPicOnly),
-                 target_pose = PtfToPoseInt(node->goal_, PtfToGridPicOnly);
+    float ox,oy,otheta;
+    getOriginFromYAMLFile(yaml_file_path, ox, oy, otheta);
+
+    float reso;
+    getResolutionFromYAMLFile(yaml_file_path, reso);
+
+    // 转换到地图坐标系下，参考地图yaml文件中的原点和姿态
+    Pose<int, 2> start_pose, target_pose;
+
+    worldToPixelYAML(node->start_[0], node->start_[1], ox, oy, otheta, reso, dim[1], start_pose.pt_[0],  start_pose.pt_[1]);
+
+    worldToPixelYAML(node->goal_[0],  node->goal_[1],  ox, oy, otheta, reso, dim[1], target_pose.pt_[0], target_pose.pt_[1]);
+
+    start_pose.orient_  = radiusToOrient(worldYawToPixelYaw(node->start_[2], otheta));
+
+    target_pose.orient_ = radiusToOrient(worldYawToPixelYaw(node->goal_[2], otheta));
 
     instances.second.push_back({start_pose, target_pose});    
 
