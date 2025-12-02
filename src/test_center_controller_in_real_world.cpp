@@ -16,7 +16,7 @@
 class OneShotGoalListener : public rclcpp::Node
 {
 public:
-    OneShotGoalListener() : Node("one_shot_goal_listener")
+    OneShotGoalListener(std::string node_name) : Node(node_name)
     {
         sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
             "/robot0/goal_pose", 10,
@@ -24,7 +24,7 @@ public:
 
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
 
-        tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+        tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this);
     }
 
     bool goalReceived() const { return got_goal_; }
@@ -139,7 +139,7 @@ int main(int argc, char ** argv) {
 
     reso = 0.05;
 
-    auto node = std::make_shared<OneShotGoalListener>();
+    auto node = std::make_shared<OneShotGoalListener>("one_shot_goal_listener");
 
     RCLCPP_INFO(node->get_logger(), "Waiting for one-time 2D Nav Goal from RViz2...");
 
