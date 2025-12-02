@@ -128,6 +128,10 @@ DimensionLength* dim_local = loader_local.getDimensionInfo();
 auto is_occupied_local = [](const Pointi<2> & pt) -> bool { return loader_local.isOccupied(pt); };
 
 
+void StartAndTargetVisualize() {
+    //
+}
+
 int main(int argc, char ** argv) {
     
     rclcpp::init(argc, argv);
@@ -170,9 +174,9 @@ int main(int argc, char ** argv) {
     // 转换到地图坐标系下，参考地图yaml文件中的原点和姿态
     Pose<int, 2> start_pose, target_pose;
 
-    worldToPixelYAML(node->start_[0], node->start_[1], ox, oy, otheta, reso, dim[1], start_pose.pt_[0],  start_pose.pt_[1]);
+    worldToPixelYAML(node->start_[0], node->start_[1], ox, oy, otheta, reso, dim_local[1], start_pose.pt_[0],  start_pose.pt_[1]);
 
-    worldToPixelYAML(node->goal_[0],  node->goal_[1],  ox, oy, otheta, reso, dim[1], target_pose.pt_[0], target_pose.pt_[1]);
+    worldToPixelYAML(node->goal_[0],  node->goal_[1],  ox, oy, otheta, reso, dim_local[1], target_pose.pt_[0], target_pose.pt_[1]);
 
     start_pose.orient_  = radiusToOrient(worldYawToPixelYaw(node->start_[2], otheta));
 
@@ -180,11 +184,28 @@ int main(int argc, char ** argv) {
 
     instances.second.push_back({start_pose, target_pose});    
 
+    {
+        Canvas canvas("LA-MAPF visualization", dim_local[0], dim_local[1], 1./reso, 5);
+        canvas.resolution_ = 1./reso;
+        while(true) {
+            canvas.resetCanvas();
+            canvas.drawEmptyGrid();
+            canvas.drawGridMap(dim_local, is_occupied_local);
+
+            agent_ptr->drawOnCanvas(start_pose, canvas, COLOR_TABLE[0], false);
+
+            agent_ptr->drawOnCanvas(target_pose, canvas, COLOR_TABLE[1], false);
+
+            char key = canvas.show();
+        }
+        return 0;
+    }
+
     // 启动中央控制器，路径可视化
     // start central controller
-    auto central_controller = std::make_shared<CenteralController>(dim_local, is_occupied_local, instances, 
-                                                                   time_interval, 
-                                                                   true); // enable opencv window
+    // auto central_controller = std::make_shared<CenteralController>(dim_local, is_occupied_local, instances, 
+    //                                                                time_interval, 
+    //                                                                true); // enable opencv window
 
 
 
@@ -205,9 +226,9 @@ int main(int argc, char ** argv) {
 
     // executor.add_node(agent_control_node);
 
-    std::thread t1([&]() { executor.spin(); });
+    // std::thread t1([&]() { executor.spin(); });
     
-    t1.join();
+    // t1.join();
     
     return 0;
 }
