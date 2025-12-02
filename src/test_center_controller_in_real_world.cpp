@@ -120,7 +120,7 @@ bool CenteralController::pub_init_target_ = true;
 bool CenteralController::need_replan_ = false;
 
 // load map
-PictureLoader loader_local("/home/wangweilab/my_map.pgm", is_grid_occupied);
+PictureLoader loader_local("/home/wangweilab/my_map.pgm", is_grid_occupied_pgm);
 std::string yaml_file_path = "/home/wangweilab/my_map.yaml";
 
 DimensionLength* dim_local = loader_local.getDimensionInfo();
@@ -184,22 +184,23 @@ int main(int argc, char ** argv) {
 
     instances.second.push_back({start_pose, target_pose});    
 
-    {
-        Canvas canvas("LA-MAPF visualization", dim_local[0], dim_local[1], 1./reso, 5);
-        canvas.resolution_ = 1./reso;
-        while(true) {
-            canvas.resetCanvas();
-            canvas.drawEmptyGrid();
-            canvas.drawGridMap(dim_local, is_occupied_local);
+    // start_pose and target_pose is right
+    // {
+    //     Canvas canvas("LA-MAPF visualization", dim_local[0], dim_local[1], 1./reso, 5);
+    //     canvas.resolution_ = 1./reso;
+    //     while(rclcpp::ok()) {
+    //         canvas.resetCanvas();
+    //         canvas.drawEmptyGrid();
+    //         canvas.drawGridMap(dim_local, is_occupied_local);
 
-            agent_ptr->drawOnCanvas(start_pose, canvas, COLOR_TABLE[0], false);
+    //         agent_ptr->drawOnCanvas(start_pose, canvas, COLOR_TABLE[0], false);
 
-            agent_ptr->drawOnCanvas(target_pose, canvas, COLOR_TABLE[1], false);
+    //         agent_ptr->drawOnCanvas(target_pose, canvas, COLOR_TABLE[1], false);
 
-            char key = canvas.show();
-        }
-        return 0;
-    }
+    //         char key = canvas.show();
+    //     }
+    //     return 0;
+    // }
 
     // 启动中央控制器，路径可视化
     // start central controller
