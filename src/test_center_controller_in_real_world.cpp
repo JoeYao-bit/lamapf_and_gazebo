@@ -202,14 +202,26 @@ int main(int argc, char ** argv) {
     //     return 0;
     // }
 
+
+
+    POSE_TO_PTF_FUNC ptpfunc = [ox, oy, otheta, reso, dim_local](const Pose<int, 2>& pose) -> Pointf<3> {
+        Pointf<3> retv;
+        pixelToWorldYAML(pose.pt_[0], pose.pt_[1], ox, oy, otheta, reso, dim_local[1], retv[0], retv[1]);
+        retv[2] = worldYawToPixelYaw(orientToRadius(pose.orient_), otheta);
+        return retv;
+
+    };
+    // need test
     // 启动中央控制器，路径可视化
     // start central controller
-    // auto central_controller = std::make_shared<CenteralController>(dim_local, is_occupied_local, instances, 
-    //                                                                time_interval, 
-    //                                                                true); // enable opencv window
+    auto central_controller = std::make_shared<CenteralController>(dim_local, is_occupied_local, instances, 
+                                                                   ptpfunc,
+                                                                   time_interval, 
+                                                                   true); // enable opencv window
 
 
 
+    executor.add_node(central_controller);
 
     // // 创建局部控制器
 
@@ -227,9 +239,9 @@ int main(int argc, char ** argv) {
 
     // executor.add_node(agent_control_node);
 
-    // std::thread t1([&]() { executor.spin(); });
+    std::thread t1([&]() { executor.spin(); });
     
-    // t1.join();
+    t1.join();
     
     return 0;
 }

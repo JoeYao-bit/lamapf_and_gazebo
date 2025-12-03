@@ -174,9 +174,14 @@ int main(int argc, char ** argv) {
 
     std::thread t1([&]() { executor.spin(); });
 
+    POSE_TO_PTF_FUNC ptpfunc = [](const Pose<int, 2>& pose) -> Pointf<3> {
+      return PoseIntToPtf(pose, GridToPtfPicOnly);
+    };
+
     rclcpp::executors::MultiThreadedExecutor executor2;
     // start central controller
     auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, 
+                                                                   ptpfunc,
                                                                    time_interval, 
                                                                    true); // enable opencv window
     executor2.add_node(central_controller);

@@ -76,8 +76,8 @@ bool draw_visit_grid_table = false;
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
 {
         {"map_name",     "LargeOfficeEnv"},
-        {"map_path",     "/home/wangweilab/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
-        {"la_ins_path", "/home/wangweilab/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
+        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
+        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
 };
 
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
@@ -90,8 +90,8 @@ SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
 SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
 {
         {"map_name",     "IndustrialWarehouse"},
-        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
-        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
+        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
+        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
 };
 
 
@@ -866,6 +866,9 @@ using GRID_TO_PTF_FUNC = std::function<Pointf<3>(const Pointi<2>&)>;
 
 using PTF_TO_GRID_FUNC = std::function<Pointi<2>(const Pointf<3>&)>;
 
+using PTF_TO_POSE_FUNC = std::function<Pose<int, 2>(const Pointf<3>&)>;
+
+using POSE_TO_PTF_FUNC = std::function<Pointf<3>(const Pose<int, 2>&)>;
 
 // assume center of map is (0, 0) in the world coordinate system
 // use for map that have only a picture

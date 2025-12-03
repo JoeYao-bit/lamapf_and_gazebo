@@ -516,7 +516,7 @@ public:
 
         std::stringstream ss3;
         if(goal_topic == "") {
-            ss3 << "GoalUpdate" << agent_->id_; 
+            ss3 << "/robot" << agent_->id_ << "/local_goal"; 
         } else {
             ss3 << goal_topic;
         }
