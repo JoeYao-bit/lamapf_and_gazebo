@@ -182,9 +182,9 @@ int main(int argc, char ** argv) {
 
     target_pose.orient_ = radiusToOrient(worldYawToPixelYaw(node->goal_[2], otheta));
 
-    std::cout << "raw/new start  yaw = " << pixelYawToWorldYaw(orientToRadius(start_pose.orient_), otheta) << std::endl;
+    std::cout << "raw/new start  yaw = " << node->start_[2] << "/" << pixelYawToWorldYaw(orientToRadius(start_pose.orient_), otheta) << std::endl;
 
-    std::cout << "raw/new target yaw = " << pixelYawToWorldYaw(orientToRadius(target_pose.orient_), otheta) << std::endl;
+    std::cout << "raw/new target yaw = " << node->goal_[2] << "/" << pixelYawToWorldYaw(orientToRadius(target_pose.orient_), otheta) << std::endl;
 
     instances.second.push_back({start_pose, target_pose});    
 
