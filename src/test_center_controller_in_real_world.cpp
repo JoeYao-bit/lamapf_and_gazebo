@@ -223,21 +223,21 @@ int main(int argc, char ** argv) {
 
     executor.add_node(central_controller);
 
-    // // 创建局部控制器
+    // 创建局部控制器
 
-    // auto line_ctl = std::make_shared<TwoPhaseLineFollowControllerReal>(MotionConfig());
-    // auto rot_ctl  = std::make_shared<ConstantRotateController>(MotionConfig());
+    auto line_ctl = std::make_shared<TwoPhaseLineFollowControllerReal>(MotionConfig());
+    auto rot_ctl  = std::make_shared<ConstantRotateController>(MotionConfig());
 
-    // // create local control node
+    // create local control node
 
-    // auto agent_control_node = std::make_shared<LocalController>(agent, line_ctl, 1, time_interval,
-    //                                                             "/robot0/amcl_pose",
-    //                                                             "/robot0/local_goal",
-    //                                                             "/robot0/scan",
-    //                                                             "/robot0/commands/velocity");  
+    auto agent_control_node = std::make_shared<LocalController>(agent_ptr, line_ctl, 1, time_interval,
+                                                                "/robot0/amcl_pose",
+                                                                "/robot0/local_goal",
+                                                                "/robot0/scan",
+                                                                "/robot0/commands/velocity");  
                                                         
 
-    // executor.add_node(agent_control_node);
+    executor.add_node(agent_control_node);
 
     std::thread t1([&]() { executor.spin(); });
     
