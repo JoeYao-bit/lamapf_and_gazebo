@@ -368,7 +368,7 @@ public:
         Pointf<3> retv = {0, 0, 0};
 
         if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
-            //finish_move_ = true;
+            finish_move_ = true;
             // rotate
             double ref_theta = std::fmod(pt2_[2], 2*M_PI);
             if(ref_theta < 0) { ref_theta += 2*M_PI; } 

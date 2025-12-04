@@ -191,3 +191,9 @@ ros2 launch lamapf_and_gazebo local_controller_test.launch.py >  my_node.log 2>&
 ## 11, 启动中央控制器，并导出日志到指定文件
 
 ros2 launch lamapf_and_gazebo center_controller_test.launch.py >  my_node.log 2>&1
+
+增加名称空间后的速度话题变了，因此需要更改速度发布话题：
+新的键盘控制指令
+
+ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/robot0/commands/velocity
+
