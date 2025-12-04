@@ -182,6 +182,10 @@ int main(int argc, char ** argv) {
 
     target_pose.orient_ = radiusToOrient(worldYawToPixelYaw(node->goal_[2], otheta));
 
+    std::cout << "raw/new start  yaw = " << pixelYawToWorldYaw(orientToRadius(start_pose.orient_), otheta) << std::endl;
+
+    std::cout << "raw/new target yaw = " << pixelYawToWorldYaw(orientToRadius(target_pose.orient_), otheta) << std::endl;
+
     instances.second.push_back({start_pose, target_pose});    
 
     // start_pose and target_pose is right
@@ -207,7 +211,7 @@ int main(int argc, char ** argv) {
     POSE_TO_PTF_FUNC ptpfunc = [ox, oy, otheta, reso, dim_local](const Pose<int, 2>& pose) -> Pointf<3> {
         Pointf<3> retv;
         pixelToWorldYAML(pose.pt_[0], pose.pt_[1], ox, oy, otheta, reso, dim_local[1], retv[0], retv[1]);
-        retv[2] = worldYawToPixelYaw(orientToRadius(pose.orient_), otheta);
+        retv[2] = pixelYawToWorldYaw(orientToRadius(pose.orient_), otheta);
         return retv;
 
     };
