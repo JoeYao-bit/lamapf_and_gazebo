@@ -50,6 +50,15 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
+#include "lamapf_and_gazebo_msgs/msg/update_pose.hpp"
+#include "lamapf_and_gazebo_msgs/msg/update_goal.hpp"
+#include "lamapf_and_gazebo_msgs/msg/error_state.hpp"
+#include "lamapf_and_gazebo_msgs/msg/agent_state.hpp"
+
+#include <Eigen/Dense>
+#include <Eigen/Cholesky>
+#include "sensor_msgs/msg/laser_scan.hpp"
+
 //#include "path_execution.hpp"
 using std::placeholders::_1;
 

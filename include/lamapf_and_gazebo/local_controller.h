@@ -2,13 +2,6 @@
 #define LOCAL_CONTROLLER
 
 #include "common_interfaces.h"
-#include "lamapf_and_gazebo_msgs/msg/update_pose.hpp"
-#include "lamapf_and_gazebo_msgs/msg/update_goal.hpp"
-#include "lamapf_and_gazebo_msgs/msg/error_state.hpp"
-
-#include <Eigen/Dense>
-#include <Eigen/Cholesky>
-#include "sensor_msgs/msg/laser_scan.hpp"
 
 // m/s, rad/s
 struct MotionConfig {
@@ -347,12 +340,15 @@ public:
     void reset() override {
         finish_rotate_ = false;
         finish_move_ = false;
+        finished_ = false;
         rot_ctl_->reset();
     }
 
     bool finish_rotate_ = false, finish_move_ = false;
 
     RotateControllerPtr rot_ctl_;
+
+    bool finished_ = false;
 
 };
 
@@ -366,7 +362,10 @@ public:
 
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
-
+        if(finished_) { 
+            std::cout << "have finish both rotate and move, now wait" << std::endl;
+            return retv; 
+        }
         if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
             finish_move_ = true;
             // rotate
@@ -395,6 +394,7 @@ public:
 
             } else {
                 std::cout << "finish both rotate and move" << std::endl;
+                finished_ = true;
             }
         } else {
             Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
@@ -508,6 +508,8 @@ public:
 
         error_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::ErrorState>("AgentErrorState", 10);
 
+        agent_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::AgentState>("AgentState", 10);
+
         pose_publisher_        = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
 
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -535,6 +537,8 @@ public:
                         wait_          = msg->wait;
 
                         line_ctl_->reset();
+
+                        finished_ = false;
                         
                         line_ctl_->pt1_ = start_ptf_;
                         line_ctl_->pt2_ = target_ptf_;
@@ -712,6 +716,7 @@ public:
                 // }
 
                 velcmd_ = calculateCMD(cur_pose_, velcmd_, 1.0);
+
                 // pub vel cmd
                 cmd_vel.linear.x  = velcmd_[0];
                 cmd_vel.angular.z = velcmd_[2];
@@ -849,7 +854,16 @@ public:
             return cmd_vel;
         }
 
-        cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); ;
+        cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);
+        if(finished_ == false && line_ctl_->finished_ == true) {
+            finished_ = true;
+            // only pub finished once
+            lamapf_and_gazebo_msgs::msg::AgentState msg;
+            msg.agent_id    = agent_->id_;
+            msg.agent_state = 0;
+            std::cout << "agent " << agent_->id_ << ", local planner finish current task and tell center" << std::endl;
+            agent_state_publisher_->publish(msg); 
+        }
         return cmd_vel;
     }
 
@@ -857,6 +871,8 @@ public:
     // TODO: 
     // ros service: update pose in central controller
     // ros service: call replan in central controller when encounter exception
+
+    bool finished_ = false; // whether current agent finish current task
 
     bool wait_ = true;
  
@@ -879,6 +895,8 @@ public:
     Pointf<3> cur_pose_;
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_publisher_;
+
+    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::AgentState>::SharedPtr agent_state_publisher_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_publisher_;
 
