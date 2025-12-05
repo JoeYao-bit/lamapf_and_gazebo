@@ -847,11 +847,11 @@ public:
             return cmd_vel;
         }
         if(reachTarget(pose, target_ptf_)) {
-            wait_ = true;
+            //wait_ = true;
             std::stringstream ss2;
-            ss2 << "reach target";
+            ss2 << "local controller detect reach target";
             RCLCPP_INFO(this->get_logger(), ss2.str().c_str()); 
-            return cmd_vel;
+            //return cmd_vel;
         }
 
         cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);

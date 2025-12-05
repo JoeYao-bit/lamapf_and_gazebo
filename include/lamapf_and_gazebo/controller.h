@@ -796,7 +796,15 @@ public:
         
         agent_finishes_.resize(instances.first.size(), false);
 
+        all_agent_poses_.resize(instances.first.size());
+
         for(int i=0; i<instances.first.size(); i++) {
+            
+            size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+            Pointf<3> start_ptf = pose_to_ptf_func_(*start_pose);//PoseIntToPtf(start_pose, grid_to_ptf_func_);
+            all_agent_poses_[i] = start_ptf;
+
             ADG_->setActionLeave(i, 0);
         }
 
@@ -810,6 +818,20 @@ public:
             goal_publishers_.push_back(
                 this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>(ss3.str().c_str(), 2*instances.first.size()));
         }
+
+        pose_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>(
+            "PoseUpdate", 2*instances.first.size(),
+            [this](lamapf_and_gazebo_msgs::msg::UpdatePose::SharedPtr msg) {
+
+                all_agent_poses_[msg->agent_id][0] = msg->x;
+                all_agent_poses_[msg->agent_id][1] = msg->y;
+                all_agent_poses_[msg->agent_id][2] = msg->yaw;
+
+                std::stringstream ss;
+                ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
+                ss << " = " << all_agent_poses_[msg->agent_id];
+                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            });
 
         error_state_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::ErrorState>(
                 "AgentErrorState", 2*instances.first.size(),
@@ -1083,6 +1105,22 @@ public:
                     canvas.drawLineInt(pt1[0], pt1[1], pt2[0], pt2[1], true, std::max(1., zoom_ratio/10.), COLOR_TABLE[(i) % 30]);
                 }
             }
+            // draw every agent's pose
+            for(int i=0; i<instances_.second.size(); i++)
+            {
+                //const auto &instance = instances[current_subgraph_id]; // zoom_ratio/10
+                const auto &instance = instances_.second[i]; // zoom_ratio/10
+                //std::cout << "Agent " << *instances.first[i] << "'s pose "  << allAgentPoses[i] << std::endl;
+                //std::cout << "canvas.reso = " << canvas.resolution_ << std::endl;
+                //std::cout << "canvas.zoom_ratio = " << canvas.zoom_ratio_ << std::endl;
+                double x = all_agent_poses_[i][0], y = all_agent_poses_[i][1], orient = all_agent_poses_[i][2];
+
+                
+                instances_.first[i]->drawOnCanvas(Pointf<3>{x, y, orient}, canvas, COLOR_TABLE[i%30], false);
+                
+                //canvas.drawArrowInt(allAgentPoses[i].pt_[0], allAgentPoses[i].pt_[1], -orientToPi_2D(allAgentPoses[i].orient_), 1, std::max(1, zoom_ratio/10));
+                //break;
+            }
             char key = canvas.show();
             if(key == 32) {
                 paused_ = !paused_;
@@ -1101,6 +1139,8 @@ public:
     static std::vector<std::shared_ptr<Pose<int, 2>> > all_poses_;
 
     static std::shared_ptr<ActionDependencyGraph<2> > ADG_;
+
+    static Pointfs<3> all_agent_poses_;
 
     static std::vector<int> progress_of_agents_;
 
