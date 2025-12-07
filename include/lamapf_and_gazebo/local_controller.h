@@ -4,42 +4,7 @@
 #include "common_interfaces.h"
 
 
-// m/s, rad/s
-struct MotionConfig {
-    float max_v_x = .1, min_v_x = 0;
-    float max_v_y = 0, min_v_y = 0;
-    float max_v_w = M_PI/9, min_v_w = M_PI/20; // abs value, should considering sign when use
 
-    float max_a_x = 3.0, min_a_x = -3.;
-    float max_a_y = 0, min_a_y = 0;
-    float max_a_w = M_PI, min_a_w = -M_PI;
-
-    bool is_nonholonomic = true;
-};
-
-bool reachPosition(const float& x, const float& y, const float& target_x, const float& target_y) {
-    float dist_to_target_position = (Pointf<2>{x, y} - Pointf<2>{target_x, target_y}).Norm();
-    return fabs(dist_to_target_position) < 0.05;                                            
-}
-
-float shortestAngularDistance(float a, float b) {
-    double d = fmod(b - a + M_PI, 2.0 * M_PI);
-    if (d < 0)
-        d += 2.0 * M_PI;
-    return d - M_PI;
-    return d;
-}
-
-
-bool reachOrientation(const float& orientation, const float& target_orientation) {
-    float angle_to_target = shortestAngularDistance(orientation, target_orientation);
-    // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
-    return fabs(angle_to_target) < M_PI*6./180.;
-}
-
-bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
-    return reachPosition(cur_pose[0], cur_pose[1], target_ptf[0], target_ptf[1]) && reachOrientation(cur_pose[2], target_ptf[2]);
-}
 
 // there are two kinds of controller, follow a line and rotate
 class LineFollowController {

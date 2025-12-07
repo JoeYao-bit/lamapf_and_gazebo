@@ -37,16 +37,16 @@ find_package(yaml-cpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 
 # dwa dependencies
-find_package(pluginlib REQUIRED)
-find_package(nav2_core REQUIRED)
-find_package(nav2_costmap_2d REQUIRED)
-find_package(dwb_core REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(dwb_critics REQUIRED)
-find_package(dwb_plugins REQUIRED)
-find_package(nav2_controller REQUIRED)
-find_package(nav2_util REQUIRED)
-find_package(nav2_msgs REQUIRED)
+#find_package(pluginlib REQUIRED)
+#find_package(nav2_core REQUIRED)
+#find_package(nav2_costmap_2d REQUIRED)
+#find_package(dwb_core REQUIRED)
+#find_package(nav_msgs REQUIRED)
+#find_package(dwb_critics REQUIRED)
+#find_package(dwb_plugins REQUIRED)
+#find_package(nav2_controller REQUIRED)
+#find_package(nav2_util REQUIRED)
+#find_package(nav2_msgs REQUIRED)
 
 ament_export_dependencies(rosidl_default_runtime)
 
@@ -63,12 +63,8 @@ include_directories(include
                     ${EIGEN3_INCLUDE_DIRS}   # 把 Eigen 头文件路径加进来
                     )
 
-set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs pluginlib nav2_core nav2_costmap_2d dwb_core dwb_critics dwb_plugins nav_msgs   rclcpp
-  rclcpp_lifecycle
-  nav2_controller
-  nav2_msgs
-  nav2_util
-  
+set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs rclcpp_lifecycle
+#pluginlib nav2_core nav2_costmap_2d dwb_core dwb_critics dwb_plugins nav_msgs nav2_controller nav2_msgs nav2_util
   )        
  
 add_executable(spawn_entity src/test_spawn_entity.cpp)

@@ -1790,7 +1790,7 @@ Kobuki 底盘驱动系统内部带有加速度限制（acceleration limit），�
 尝试dwa控制器
 安装依赖
 
-sudo apt install ros-jazzy-nav2-common \
+<!-- sudo apt install ros-jazzy-nav2-common \
                  ros-jazzy-nav2-core \
                  ros-jazzy-nav2-controller \
                  ros-jazzy-nav2-dwb-controller \
@@ -1812,7 +1812,9 @@ sudo apt install ros-jazzy-nav2-map-server \
                  ros-jazzy-nav2-amcl
 
 
-sudo apt install ros-jazzy-navigation2
+sudo apt install ros-jazzy-navigation2 -->
+
+
 
 🔹 普通 rclcpp::Node VS rclcpp_lifecycle::LifecycleNode
 功能差异	Normal Node	Lifecycle Node
@@ -1821,3 +1823,15 @@ sudo apt install ros-jazzy-navigation2
 插件依赖的资源是否能动态启停	❌ 不能	✔ 能（地图 / costmap / controller / planner 都能重配置）
 参数是否能控制性地加载	随启动加载	在 configure() 阶段加载
 是否适用于可热启动导航系统	❌ 不适合	✔ 适合
+
+尝试失败，配置太麻烦
+
+源代码开发dwa，规划阶段已经考虑避障，因此运动控制不必再考虑
+
+启动测试
+
+ros2 run lamapf_ang_gazebo test_dwa_local_planner
+
+dwa到达位置成功，但到达姿态仍不行
+
+考虑分成两步，先到位置，再通过旋转到达姿态
