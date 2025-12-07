@@ -3,6 +3,7 @@
 
 #include "common_interfaces.h"
 
+
 // m/s, rad/s
 struct MotionConfig {
     float max_v_x = .1, min_v_x = 0;
@@ -479,8 +480,6 @@ Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float 
     // return Pointf<3>{new_x, new_y, new_theta};
 
 };
-
-
 
 // for single robot, receive goal state and target state from CentralController
 // run on single robot

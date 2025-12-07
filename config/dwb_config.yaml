@@ -1,0 +1,17 @@
+dwb_controller:
+  ros__parameters:
+    controller_frequency: 10.0
+    critics:
+      - RotateToGoal
+      - PathAlign
+      - PathDistance
+      - GoalAlign
+      - GoalDistance
+      - ObstacleFootprint
+
+    RotateToGoal.scale:  1.0
+    PathAlign.scale:     32.0
+    PathDistance.scale:  32.0
+    GoalAlign.scale:     24.0
+    GoalDistance.scale:  24.0
+    ObstacleFootprint.scale: 0.01

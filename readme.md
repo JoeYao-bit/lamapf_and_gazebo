@@ -1784,3 +1784,40 @@ Kobuki 底盘驱动系统内部带有加速度限制（acceleration limit），�
 相关改动通过了仿真验证，但因为微型主机端无法git pull更新代码尚未测试，vpn hiddify添加配置超时失败不可用
 
 实在不行通过u盘复制代码到微型主机再实机测试
+
+考虑降低地图分辨率，换更好的局部运动控制器
+
+尝试dwa控制器
+安装依赖
+
+sudo apt install ros-jazzy-nav2-common \
+                 ros-jazzy-nav2-core \
+                 ros-jazzy-nav2-controller \
+                 ros-jazzy-nav2-dwb-controller \
+                 ros-jazzy-nav2-costmap-2d \
+                 ros-jazzy-nav2-util \
+                 ros-jazzy-dwb-core \
+                 ros-jazzy-dwb-plugins \
+                 ros-jazzy-nav2-msgs
+
+
+sudo apt install ros-jazzy-pluginlib \
+                 ros-jazzy-tf2-ros \
+                 ros-jazzy-tf2 \
+                 ros-jazzy-nav2-costmap-2d
+
+sudo apt install ros-jazzy-nav2-map-server \
+                 ros-jazzy-nav2-behavior-tree \
+                 ros-jazzy-nav2-planner \
+                 ros-jazzy-nav2-amcl
+
+
+sudo apt install ros-jazzy-navigation2
+
+🔹 普通 rclcpp::Node VS rclcpp_lifecycle::LifecycleNode
+功能差异	Normal Node	Lifecycle Node
+节点是否一直运行	✔ 运行后永不变化	❌ 有明确状态机（configure、activate、deactivate、cleanup、shutdown）
+是否支持系统级状态管理	❌ 无	✔ 可以由生命周期管理器驱动
+插件依赖的资源是否能动态启停	❌ 不能	✔ 能（地图 / costmap / controller / planner 都能重配置）
+参数是否能控制性地加载	随启动加载	在 configure() 阶段加载
+是否适用于可热启动导航系统	❌ 不适合	✔ 适合
