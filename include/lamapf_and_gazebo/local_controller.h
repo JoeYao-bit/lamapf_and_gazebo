@@ -2,7 +2,7 @@
 #define LOCAL_CONTROLLER
 
 #include "common_interfaces.h"
-
+#include "dwa_local_controller.h"
 
 
 
@@ -403,6 +403,50 @@ public:
     }
 
 };
+
+
+
+class TwoPhaseLineFollowControllerDWA : public TwoPhaseLineFollowController {
+public:
+
+    TwoPhaseLineFollowControllerDWA(const MotionConfig& cfg) : TwoPhaseLineFollowController(cfg) {
+        DWAParams params;
+        planner_.initialize(params, cfg);
+    }
+
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
+        Pointf<3> retv = {0, 0, 0};
+        if(finished_) { 
+            std::cout << "have finish both rotate and move, now wait" << std::endl;
+            return retv; 
+        }
+        if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
+            finish_move_ = true;
+            // rotate
+            if(!reachOrientation(pose[0], pt2_[2])) {
+                rot_ctl_->ang_ = pt2_[2]; 
+
+                retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+                retv[2] = wFilter(retv[2]);
+
+                std::cout << "rotate positive = " << rot_ctl_->posi_rot_ << ", retv v = " << retv << std::endl;
+
+            } else {
+                std::cout << "finish both rotate and move" << std::endl;
+                finished_ = true;
+            }
+        } else {
+            retv = planner_.computeVelocity(pose, vel, pt2_);
+        }
+        return retv;
+
+    }
+
+    DWASimple planner_;
+
+};
+
 
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 

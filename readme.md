@@ -1835,3 +1835,7 @@ ros2 run lamapf_ang_gazebo test_dwa_local_planner
 dwa到达位置成功，但到达姿态仍不行
 
 考虑分成两步，先到位置，再通过旋转到达姿态
+
+启动中央控制器仿真
+
+ros2 run lamapf_and_gazebo test_central_controller

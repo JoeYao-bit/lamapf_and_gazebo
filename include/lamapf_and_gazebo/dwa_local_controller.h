@@ -166,6 +166,7 @@ public:
 
     // initialize with parameters (call once)
     void initialize(const DWAParams & params, const MotionConfig& config) {
+        // std::cout << "dwa initialize" << std::endl;
         params_ = params;
         motion_config_ = config;
     }
@@ -173,11 +174,11 @@ public:
     // compute velocity: inputs are current pose, current velocity (linear, angular), and goal pose
     Pointf<3> computeVelocity(const Pointf<3> &cur_pose, const Pointf<3> &cur_vel, const Pointf<3> &goal) {
 
-        std::cout << "-- start DWA" << std::endl;
+        //std::cout << "-- start DWA" << std::endl;
 
         // if within goal tolerance, stop
         float dist_to_goal = hypot(goal[0] - cur_pose[0], goal[1] - cur_pose[1]);
-        float dist_to_heading = fabs(shortestAngularDistance(cur_pose[2], goal[2]));
+        float dist_to_heading = 0;//fabs(shortestAngularDistance(cur_pose[2], goal[2]));
         if (dist_to_goal <= params_.dist_tolerance && dist_to_heading <= params_.heading_tolerance) {
             std::cout << "DWA reach goal, dist_to_goal = " << dist_to_goal << ", dist_to_heading = " << dist_to_heading << std::endl; 
             return Pointf<3>{0., 0., 0.};

@@ -154,7 +154,7 @@ int main(int argc, char ** argv) {
 
 
     for(int i=0; i<instances.first.size(); i++) {
-      line_ctls.push_back(std::make_shared<TwoPhaseLineFollowControllerReal>(MotionConfig()));
+      line_ctls.push_back(std::make_shared<TwoPhaseLineFollowControllerDWA>(MotionConfig()));
       rot_ctls.push_back(std::make_shared<ConstantRotateController>(MotionConfig()));
     }
 
@@ -202,7 +202,7 @@ int main(int argc, char ** argv) {
     rclcpp::executors::MultiThreadedExecutor executor2;
     // start central controller
     // CenteralController
-    auto central_controller = std::make_shared<CenteralControllerNew>(dim, is_occupied, instances, 
+    auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, 
                                                                    ptpfunc,
                                                                    time_interval, 
                                                                    true); // enable opencv window
