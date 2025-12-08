@@ -103,6 +103,27 @@ bool CenteralController::pub_init_target_ = true;
 
 bool CenteralController::need_replan_ = false;
 
+
+std::shared_ptr<ActionDependencyGraph<2> > CenteralControllerNew::ADG_ = nullptr;
+
+bool CenteralControllerNew::paused_ = true;
+
+Pointfs<3> CenteralControllerNew::all_agent_poses_ = {};
+
+std::vector<int> CenteralControllerNew::progress_of_agents_ = {};  
+
+std::vector<std::shared_ptr<Pose<int, 2>> > CenteralControllerNew::all_poses_ = {};
+
+std::pair<AgentPtrs<2>, InstanceOrients<2> > CenteralControllerNew::instances_ = {};
+
+DimensionLength* CenteralControllerNew::dim_ = nullptr;
+
+bool CenteralControllerNew::pub_init_target_ = true;
+
+bool CenteralControllerNew::need_replan_ = false;
+
+std::vector<bool> CenteralControllerNew::agent_finishes_ = {};
+
 int main(int argc, char ** argv) {
 
     rclcpp::init(argc, argv);
@@ -133,7 +154,7 @@ int main(int argc, char ** argv) {
 
 
     for(int i=0; i<instances.first.size(); i++) {
-      line_ctls.push_back(std::make_shared<TwoPhaseLineFollowController>(MotionConfig()));
+      line_ctls.push_back(std::make_shared<TwoPhaseLineFollowControllerDWA>(MotionConfig()));
       rot_ctls.push_back(std::make_shared<ConstantRotateController>(MotionConfig()));
     }
 
@@ -180,6 +201,7 @@ int main(int argc, char ** argv) {
 
     rclcpp::executors::MultiThreadedExecutor executor2;
     // start central controller
+    // CenteralController
     auto central_controller = std::make_shared<CenteralController>(dim, is_occupied, instances, 
                                                                    ptpfunc,
                                                                    time_interval, 

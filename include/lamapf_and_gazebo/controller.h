@@ -181,7 +181,11 @@ public:
 
 // maintain a action dependency graph, 
 // tell single robots when to move, move to where and when stop
-// 
+// using agent's pose to determine whether finish current task
+// there are more than one place determine whether the agent reach target
+// so when they are check at different time and localization is shaking (ususally in real robot)
+// some part think reach target and other think not
+// this cause error 
 class CenteralController : public rclcpp::Node  {
 public:
     CenteralController(DimensionLength* dim, 
@@ -716,6 +720,439 @@ public:
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_subscriber_;
+
+    rclcpp::TimerBase::SharedPtr timer_;
+
+    static bool paused_;
+
+    static bool pub_init_target_;
+
+    static bool need_replan_;
+
+    //GRID_TO_PTF_FUNC grid_to_ptf_func_;
+
+    POSE_TO_PTF_FUNC pose_to_ptf_func_;
+
+};
+
+// maintain a action dependency graph, 
+// do not require each agent's pose to determine whether move to next target
+// receive local controller's plan state to determine whether
+class CenteralControllerNew : public rclcpp::Node  {
+public:
+    CenteralControllerNew(DimensionLength* dim, 
+                       IS_OCCUPIED_FUNC<2> is_occupied,
+                       const std::pair<AgentPtrs<2>, InstanceOrients<2> >& instances,
+                       const POSE_TO_PTF_FUNC& pose_to_ptf_func,
+                       const float& time_interval = 0.1,
+                       bool enable_opencv_window = true
+                       //const GRID_TO_PTF_FUNC& grid_to_ptf_func = GridToPtfPicOnly
+                    ): 
+                       rclcpp::Node("central_controller"),
+                       pose_to_ptf_func_(pose_to_ptf_func) {        
+                        
+        
+        dim_ = dim;
+        instances_ = instances;                
+        paused_ = false;
+        pub_init_target_ = true;
+        std::cout << "construct all possible poses" << std::endl;
+
+        Id total_index = getTotalIndexOfSpace<2>(this->dim_);
+
+        all_poses_.resize(total_index * 2 * 2, nullptr); // a position with 2*N orientation
+
+        Pointi<2> pt;
+
+        for (Id id = 0; id < total_index; id++) {
+            pt = IdToPointi<2>(id, this->dim_);
+            if (!is_occupied(pt)) {
+                for (int orient = 0; orient < 2 * 2; orient++) {
+                    PosePtr<int, 2> pose_ptr = std::make_shared<Pose<int, 2> >(pt, orient);
+                    all_poses_[id * 2 * 2 + orient] = pose_ptr;
+                }
+            }
+        }
+
+        // calculate initial paths 
+        auto paths = MAPF(dim, is_occupied, instances);
+        
+        if(paths.empty()) {
+            RCLCPP_INFO(this->get_logger(), "failed to generate initial paths");
+            return;
+        }
+
+        assert(paths.size() == instances.first.size());
+
+        auto agents = instances.first;
+
+        for(int i=0; i<agents.size(); i++) {
+            std::cout << "path " << i << " size = " << paths[i].size() << std::endl;
+        }
+
+        ADG_ = std::make_shared<ActionDependencyGraph<2>>(paths, agents, all_poses_);
+
+        progress_of_agents_.resize(instances.first.size(), 0);
+        
+        agent_finishes_.resize(instances.first.size(), false);
+
+        all_agent_poses_.resize(instances.first.size());
+
+        for(int i=0; i<instances.first.size(); i++) {
+            
+            size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+            Pointf<3> start_ptf = pose_to_ptf_func_(*start_pose);//PoseIntToPtf(start_pose, grid_to_ptf_func_);
+            all_agent_poses_[i] = start_ptf;
+
+            ADG_->setActionLeave(i, 0);
+        }
+
+        // RCLCPP_INFO(this->get_logger(), "flag 1");
+        // NOTICE: cache queue size must be large enough to cache all agent's pose or goal
+        // otherwise some msg will be ignored
+
+        for(int i=0; i<instances.first.size(); i++) {
+            std::stringstream ss3;
+            ss3 << "/robot" << i << "/local_goal";
+            goal_publishers_.push_back(
+                this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>(ss3.str().c_str(), 2*instances.first.size()));
+        }
+
+        pose_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>(
+            "PoseUpdate", 2*instances.first.size(),
+            [this](lamapf_and_gazebo_msgs::msg::UpdatePose::SharedPtr msg) {
+
+                all_agent_poses_[msg->agent_id][0] = msg->x;
+                all_agent_poses_[msg->agent_id][1] = msg->y;
+                all_agent_poses_[msg->agent_id][2] = msg->yaw;
+
+                std::stringstream ss;
+                ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
+                ss << " = " << all_agent_poses_[msg->agent_id];
+                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            });
+
+        error_state_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::ErrorState>(
+                "AgentErrorState", 2*instances.first.size(),
+                [this](lamapf_and_gazebo_msgs::msg::ErrorState::SharedPtr msg) {
+                    std::stringstream ss;
+                    ss << "receive error state from agent_" << msg->agent_id << 
+                    ", error state = " << msg->error_state << ", all action paused";
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+                    need_replan_ = true;
+                    // tell all agent to wait
+                    for(int i=0; i<instances_.first.size(); i++) {
+                        lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                        msg.agent_id   = i;
+                        msg.wait       = true;
+                        
+                        goal_publishers_[i]->publish(msg); 
+                    }
+                });               
+        
+        agent_state_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::AgentState>(
+                "AgentState", 2*instances.first.size(),
+                [this](lamapf_and_gazebo_msgs::msg::AgentState::SharedPtr msg) {
+                    std::stringstream ss;
+                    ss << "receive agent state from agent_" << msg->agent_id << 
+                    ", agent state = " << msg->agent_state;
+                    if(msg->agent_state == 0) {
+                        agent_finishes_[msg->agent_id] = true;
+                    }
+                });        
+
+        //sleep(1);  // wait to ensure all local agent will receive initial goal      
+
+        // std::chrono::milliseconds(int(1000*time_interval))
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
+            //std::stringstream ss;
+            //ss << "during CentralController loop, paused = " << paused_;
+            //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            if(!paused_) {
+                updateADG(); 
+            }
+        });
+
+        // visualize all agent's unfinished path
+        if(enable_opencv_window) {
+            std::thread canvas_thread(PathVisualize, is_occupied);
+            canvas_thread.detach();
+        }
+
+    }
+
+    void pubInitialGoals() {
+        // pub all agent's first goal
+        for(int i=0; i<instances_.first.size(); i++) {
+            if(ADG_->paths_[i].size() < 2) {
+                continue;
+            }
+            std::stringstream ss;
+
+            size_t start_pose_id = ADG_->paths_[i][0];
+
+            ss.str("");ss.clear();
+            ss << "agent_" << i << ", start_pose_id = " << start_pose_id;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
+            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+            assert(start_pose != nullptr);
+            Pointf<3> start_ptf = pose_to_ptf_func_(*start_pose);//PoseIntToPtf(start_pose, grid_to_ptf_func_);
+
+            size_t target_pose_id = ADG_->paths_[i][1];
+            
+            ss.str("");ss.clear();
+            ss << "agent_" << i << ", target_pose_id = " << target_pose_id;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
+            PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
+            assert(target_pose != nullptr);
+            Pointf<3> target_ptf = pose_to_ptf_func_(*target_pose);//PoseIntToPtf(target_pose, grid_to_ptf_func_);
+
+            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+            msg.start_x   = start_ptf[0];
+            msg.start_y   = start_ptf[1];
+            msg.start_yaw = start_ptf[2];
+
+            msg.target_x   = target_ptf[0];
+            msg.target_y   = target_ptf[1];
+            msg.target_yaw = target_ptf[2];
+            
+            msg.agent_id   = i;
+            msg.wait       = false;
+            
+            goal_publishers_[i]->publish(msg);
+
+            ss.str("");ss.clear();
+            ss << "central controller pub agent_" << i << "'s initial goal " << start_ptf <<"->" << target_ptf;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
+        }
+    }
+
+
+    LAMAPF_Paths MAPF(DimensionLength* dim, const IS_OCCUPIED_FUNC<2>& is_occupied,
+                      const std::pair<AgentPtrs<2>, InstanceOrients<2> >&  instances) const {
+
+        std::vector<std::vector<int> > grid_visit_count_table;
+        auto start_t = clock();
+        MSTimer mst;
+
+        std::shared_ptr<PrecomputationOfLAMAPFDecomposition<2, HyperGraphNodeDataRaw<2>>> pre_dec =
+                std::make_shared<PrecomputationOfLAMAPFDecomposition<2, HyperGraphNodeDataRaw<2>>>(
+                        instances.second,
+                        instances.first,
+                        dim, is_occupied);
+
+        auto bl_decompose = std::make_shared<MAPFInstanceDecompositionBreakLoop<2, HyperGraphNodeDataRaw<2>, 
+                                             Pose<int, 2>>>(dim,
+                                                            pre_dec->connect_graphs_,
+                                                            pre_dec->agent_sub_graphs_,
+                                                            pre_dec->heuristic_tables_sat_,
+                                                            pre_dec->heuristic_tables_,
+                                                            60);
+    
+        bool detect_loss_solvability = false;        
+        LAMAPF_Paths layered_paths;
+        layered_paths = layeredLargeAgentMAPF<2, Pose<int, 2>>(bl_decompose->all_levels_,
+                                                            CBS::LargeAgentCBS_func<2, Pose<int, 2> >, //
+                                                            grid_visit_count_table,
+                                                            detect_loss_solvability,
+                                                            pre_dec,
+                                                            60 - mst.elapsed()/1e3,
+                                                            false);        
+
+        auto end_t = clock();
+    
+        double time_cost = ((double)end_t-start_t)/CLOCKS_PER_SEC;
+
+        std::stringstream ss2;
+        ss2 << (layered_paths.size() == instances.first.size() ? "success" : "failed")
+                << " layered large agent mapf in " << time_cost << "s " << std::endl;
+        RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
+        return layered_paths;
+    }
+
+    // update progress
+    void updateADG() {
+
+        if(pub_init_target_) {
+            pubInitialGoals();
+            pub_init_target_ = false;// only pub the first time
+        }
+        Pointf<3> start_ptf, target_ptf;
+        bool all_finished = true;
+        //RCLCPP_INFO(this->get_logger(), "update ADG");
+        for(int i=0; i<ADG_->agents_.size(); i++) {
+            //RCLCPP_INFO(this->get_logger(), "flag 0.1");
+            bool finished = false;
+            // update progress, considering agent may wait at current position multiple times
+            while(true) {
+                //RCLCPP_INFO(this->get_logger(), "flag 0.2");
+                if(progress_of_agents_[i] < ADG_->paths_[i].size()-1) {
+                    //RCLCPP_INFO(this->get_logger(), "flag 0.21");
+                    //std::cout << "progress_of_agents_.size() = " << progress_of_agents_.size() << std::endl;
+                    //std::cout << "progress_of_agents_[i] = " << progress_of_agents_[i] << std::endl;
+                    //std::cout << "ADG_->paths_[i].size() = " << ADG_->paths_[i].size() << std::endl;
+
+                    // check whether reach current target, if reach, update progress to next pose
+                    if(agent_finishes_[i]) {
+                        RCLCPP_INFO(this->get_logger(), "agent_%i reach temporal target state", i);
+                        // reach current target, move to next target
+                        ADG_->setActionLeave(i, progress_of_agents_[i]);
+                        // if next action is valid
+                        if(!ADG_->isActionValid(i, progress_of_agents_[i] + 1)) {
+                            RCLCPP_INFO(this->get_logger(), "agent_%i next action %i invalid", i, progress_of_agents_[i] + 1);
+                            // tell the agent to wait utill action are valid
+                            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                            msg.agent_id   = i;
+                            msg.wait       = true;
+                            
+                            goal_publishers_[i]->publish(msg); 
+                            break;
+                        }
+                        RCLCPP_INFO(this->get_logger(), "agent_%i's progress update from % i/%i to %i/%i",
+                                     i, progress_of_agents_[i], ADG_->paths_[i].size(),
+                                     progress_of_agents_[i]+1, ADG_->paths_[i].size());
+                        progress_of_agents_[i]++;
+                        agent_finishes_[i] = false;
+                        //RCLCPP_INFO(this->get_logger(), "flag 0.4");
+                        if(progress_of_agents_[i] + 1 <= ADG_->paths_[i].size() - 1) {
+                            //RCLCPP_INFO(this->get_logger(), "flag 0.5");
+                            //RCLCPP_INFO(this->get_logger(), ss.str());
+                            // update the agent's start and target state
+                            size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+                            PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
+                            start_ptf = pose_to_ptf_func_(*start_pose);//PoseIntToPtf(start_pose, grid_to_ptf_func_);
+
+                            size_t target_pose_id = ADG_->paths_[i][progress_of_agents_[i] + 1];
+                            PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
+                            target_ptf = pose_to_ptf_func_(*target_pose);//PoseIntToPtf(target_pose, grid_to_ptf_func_);
+
+                            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                            msg.start_x   = start_ptf[0];
+                            msg.start_y   = start_ptf[1];
+                            msg.start_yaw = start_ptf[2];
+
+                            msg.target_x   = target_ptf[0];
+                            msg.target_y   = target_ptf[1];
+                            msg.target_yaw = target_ptf[2];
+
+                            msg.agent_id   = i;
+                            msg.wait       = false;
+                            
+                            goal_publishers_[i]->publish(msg); 
+
+                            std::stringstream ss;
+                            ss << "central controller pub agent_" << i << "'s goal " << start_ptf <<"->" << target_ptf;
+                            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+
+                        }
+                    } else {
+                        //RCLCPP_INFO(this->get_logger(), "flag 1.1");
+                        break;
+                    }
+                } else {
+                    RCLCPP_INFO(this->get_logger(), "agent_%i 's task finish", i);
+                    // when finish tell it to wait at target
+                    lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                    msg.agent_id   = i;
+                    msg.wait       = true;
+                            
+                    goal_publishers_[i]->publish(msg); 
+                    finished = true;
+                    break;
+                }
+            }
+            if(finished) { 
+                continue;
+            } else {
+                all_finished = false;
+            }
+        }
+        if(all_finished) {
+            RCLCPP_INFO(this->get_logger(), "all agents reach target");
+        }
+        return;
+    }
+
+    void clearAllProgress() {
+        ADG_->clearAllProgress();
+        progress_of_agents_.resize(ADG_->agents_.size(), 0);
+    }
+ 
+    static int PathVisualize(IS_OCCUPIED_FUNC<2> is_occupied) {
+        float zoom_ratio = std::max(1., ceil(std::min(800./dim_[0], 800./dim_[1]))); 
+        Canvas canvas("LA-MAPF visualization", dim_[0], dim_[1], 1./reso, zoom_ratio);
+        std::cout << "canvas rows / cols = " << canvas.getCanvas().rows << " / " << canvas.getCanvas().cols << std::endl;
+        std::cout << "dim_[0] = " << dim_[0] << ", dim_[1] = " << dim_[1] << std::endl;
+        std::cout << "before zoom_ratio = " << zoom_ratio << ", canvas.resolution_ = " << canvas.resolution_ << std::endl;
+        canvas.resolution_ = 1./reso;
+        std::cout << "after zoom_ratio = " << zoom_ratio << ", canvas.resolution_ = " << canvas.resolution_ << std::endl;
+        while(rclcpp::ok()) {
+            canvas.resetCanvas();
+            canvas.drawEmptyGrid();
+            canvas.drawGridMap(dim_, is_occupied);
+            // draw all agent's unfinished path
+            for(int i=0; i<ADG_->paths_.size(); i++)
+            {
+                const auto& path = ADG_->paths_[i];
+                if(path.empty()) { continue; }
+                for(int t=progress_of_agents_[i]; t<path.size()-1; t++) {
+                    Pointi<2> pt1 = all_poses_[path[t]]->pt_;
+                    Pointi<2> pt2 = all_poses_[path[t+1]]->pt_;
+                    canvas.drawLineInt(pt1[0], pt1[1], pt2[0], pt2[1], true, std::max(1., zoom_ratio/10.), COLOR_TABLE[(i) % 30]);
+                }
+            }
+            // draw every agent's pose
+            for(int i=0; i<instances_.second.size(); i++)
+            {
+                //const auto &instance = instances[current_subgraph_id]; // zoom_ratio/10
+                const auto &instance = instances_.second[i]; // zoom_ratio/10
+                //std::cout << "Agent " << *instances.first[i] << "'s pose "  << allAgentPoses[i] << std::endl;
+                //std::cout << "canvas.reso = " << canvas.resolution_ << std::endl;
+                //std::cout << "canvas.zoom_ratio = " << canvas.zoom_ratio_ << std::endl;
+                double x = all_agent_poses_[i][0], y = all_agent_poses_[i][1], orient = all_agent_poses_[i][2];
+
+                
+                instances_.first[i]->drawOnCanvas(Pointf<3>{x, y, orient}, canvas, COLOR_TABLE[i%30], false);
+                
+                //canvas.drawArrowInt(allAgentPoses[i].pt_[0], allAgentPoses[i].pt_[1], -orientToPi_2D(allAgentPoses[i].orient_), 1, std::max(1, zoom_ratio/10));
+                //break;
+            }
+            char key = canvas.show();
+            if(key == 32) {
+                paused_ = !paused_;
+            }
+        }
+        return 0;
+    }
+
+
+    static DimensionLength* dim_;
+
+    IS_OCCUPIED_FUNC<2> isoc_;
+
+    static std::pair<AgentPtrs<2>, InstanceOrients<2> > instances_;
+
+    static std::vector<std::shared_ptr<Pose<int, 2>> > all_poses_;
+
+    static std::shared_ptr<ActionDependencyGraph<2> > ADG_;
+
+    static Pointfs<3> all_agent_poses_;
+
+    static std::vector<int> progress_of_agents_;
+
+    static std::vector<bool> agent_finishes_;
+
+    std::vector<rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr> goal_publishers_;
+
+    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
+
+    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_subscriber_;
+
+    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::AgentState>::SharedPtr agent_state_subscriber_;
 
     rclcpp::TimerBase::SharedPtr timer_;
 

@@ -50,6 +50,15 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
+#include "lamapf_and_gazebo_msgs/msg/update_pose.hpp"
+#include "lamapf_and_gazebo_msgs/msg/update_goal.hpp"
+#include "lamapf_and_gazebo_msgs/msg/error_state.hpp"
+#include "lamapf_and_gazebo_msgs/msg/agent_state.hpp"
+
+#include <Eigen/Dense>
+#include <Eigen/Cholesky>
+#include "sensor_msgs/msg/laser_scan.hpp"
+
 //#include "path_execution.hpp"
 using std::placeholders::_1;
 
@@ -1106,6 +1115,44 @@ double worldYawToPixelYaw(double yaw_world, double map_yaw)
 double pixelYawToWorldYaw(double yaw_pixel, double map_yaw)
 {
     return -yaw_pixel + map_yaw;
+}
+
+
+// m/s, rad/s
+struct MotionConfig {
+    float max_v_x = .1, min_v_x = 0;
+    float max_v_y = 0, min_v_y = 0;
+    float max_v_w = M_PI/9, min_v_w = -M_PI/9; // abs value, should considering sign when use
+
+    float max_a_x = 1.0, min_a_x = -1.;
+    float max_a_y = 0, min_a_y = 0;
+    float max_a_w = M_PI, min_a_w = -M_PI;
+
+    bool is_nonholonomic = true;
+};
+
+bool reachPosition(const float& x, const float& y, const float& target_x, const float& target_y) {
+    float dist_to_target_position = (Pointf<2>{x, y} - Pointf<2>{target_x, target_y}).Norm();
+    return fabs(dist_to_target_position) < 0.05;                                            
+}
+
+float shortestAngularDistance(float a, float b) {
+    double d = fmod(b - a + M_PI, 2.0 * M_PI);
+    if (d < 0)
+        d += 2.0 * M_PI;
+    return d - M_PI;
+    return d;
+}
+
+
+bool reachOrientation(const float& orientation, const float& target_orientation) {
+    float angle_to_target = shortestAngularDistance(orientation, target_orientation);
+    // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
+    return fabs(angle_to_target) < M_PI*6./180.;
+}
+
+bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
+    return reachPosition(cur_pose[0], cur_pose[1], target_ptf[0], target_ptf[1]) && reachOrientation(cur_pose[2], target_ptf[2]);
 }
 
 #endif //LAYEREDMAPF_COMMON_INTERFACES_H

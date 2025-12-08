@@ -1761,3 +1761,81 @@ Kobuki 底盘驱动系统内部带有加速度限制（acceleration limit），�
 
 准备测试中央控制器+单机器人人的路径规划与运动控制
 
+适当降低地图分辨率，可以提高运动控制效果
+
+12-05
+
+原中央控制器和局部控制器多个地方涉及到达目标判断(即对比当前位姿和目标位姿)
+
+仿真中可用
+
+但真实环境中，因为激光雷达数据在抖动，定位也在抖动
+
+容易出现某处认为已到达目标点，但其他地方还没到达的情况
+
+局部认为已经到了停下来，但高层认为还没到，不发新目标点
+
+导致机器人停在原地
+
+为了解决这个问题，改进中央控制器，即 CenteralControllerNew
+
+所有到达判断仅在最底层控制器做，再逐级上传给其他部分，其他部分均以此结果为准
+
+相关改动通过了仿真验证，但因为微型主机端无法git pull更新代码尚未测试，vpn hiddify添加配置超时失败不可用
+
+实在不行通过u盘复制代码到微型主机再实机测试
+
+考虑降低地图分辨率，换更好的局部运动控制器
+
+尝试dwa控制器
+安装依赖
+
+<!-- sudo apt install ros-jazzy-nav2-common \
+                 ros-jazzy-nav2-core \
+                 ros-jazzy-nav2-controller \
+                 ros-jazzy-nav2-dwb-controller \
+                 ros-jazzy-nav2-costmap-2d \
+                 ros-jazzy-nav2-util \
+                 ros-jazzy-dwb-core \
+                 ros-jazzy-dwb-plugins \
+                 ros-jazzy-nav2-msgs
+
+
+sudo apt install ros-jazzy-pluginlib \
+                 ros-jazzy-tf2-ros \
+                 ros-jazzy-tf2 \
+                 ros-jazzy-nav2-costmap-2d
+
+sudo apt install ros-jazzy-nav2-map-server \
+                 ros-jazzy-nav2-behavior-tree \
+                 ros-jazzy-nav2-planner \
+                 ros-jazzy-nav2-amcl
+
+
+sudo apt install ros-jazzy-navigation2 -->
+
+
+
+🔹 普通 rclcpp::Node VS rclcpp_lifecycle::LifecycleNode
+功能差异	Normal Node	Lifecycle Node
+节点是否一直运行	✔ 运行后永不变化	❌ 有明确状态机（configure、activate、deactivate、cleanup、shutdown）
+是否支持系统级状态管理	❌ 无	✔ 可以由生命周期管理器驱动
+插件依赖的资源是否能动态启停	❌ 不能	✔ 能（地图 / costmap / controller / planner 都能重配置）
+参数是否能控制性地加载	随启动加载	在 configure() 阶段加载
+是否适用于可热启动导航系统	❌ 不适合	✔ 适合
+
+尝试失败，配置太麻烦
+
+源代码开发dwa，规划阶段已经考虑避障，因此运动控制不必再考虑
+
+启动测试
+
+ros2 run lamapf_ang_gazebo test_dwa_local_planner
+
+dwa到达位置成功，但到达姿态仍不行
+
+考虑分成两步，先到位置，再通过旋转到达姿态
+
+启动中央控制器仿真
+
+ros2 run lamapf_and_gazebo test_central_controller

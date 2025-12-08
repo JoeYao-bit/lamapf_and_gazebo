@@ -2,50 +2,9 @@
 #define LOCAL_CONTROLLER
 
 #include "common_interfaces.h"
-#include "lamapf_and_gazebo_msgs/msg/update_pose.hpp"
-#include "lamapf_and_gazebo_msgs/msg/update_goal.hpp"
-#include "lamapf_and_gazebo_msgs/msg/error_state.hpp"
-
-#include <Eigen/Dense>
-#include <Eigen/Cholesky>
-#include "sensor_msgs/msg/laser_scan.hpp"
-
-// m/s, rad/s
-struct MotionConfig {
-    float max_v_x = .1, min_v_x = 0;
-    float max_v_y = 0, min_v_y = 0;
-    float max_v_w = M_PI/9, min_v_w = M_PI/20; // abs value, should considering sign when use
-
-    float max_a_x = 3.0, min_a_x = -3.;
-    float max_a_y = 0, min_a_y = 0;
-    float max_a_w = M_PI, min_a_w = -M_PI;
-
-    bool is_nonholonomic = true;
-};
-
-bool reachPosition(const float& x, const float& y, const float& target_x, const float& target_y) {
-    float dist_to_target_position = (Pointf<2>{x, y} - Pointf<2>{target_x, target_y}).Norm();
-    return fabs(dist_to_target_position) < 0.05;                                            
-}
-
-float shortestAngularDistance(float a, float b) {
-    double d = fmod(b - a + M_PI, 2.0 * M_PI);
-    if (d < 0)
-        d += 2.0 * M_PI;
-    return d - M_PI;
-    return d;
-}
+#include "dwa_local_controller.h"
 
 
-bool reachOrientation(const float& orientation, const float& target_orientation) {
-    float angle_to_target = shortestAngularDistance(orientation, target_orientation);
-    // return fabs(dist_to_target) < 0.001 && fabs(angle_to_target) < 0.001;
-    return fabs(angle_to_target) < M_PI*6./180.;
-}
-
-bool reachTarget(const Pointf<3>& cur_pose, const Pointf<3>& target_ptf) {
-    return reachPosition(cur_pose[0], cur_pose[1], target_ptf[0], target_ptf[1]) && reachOrientation(cur_pose[2], target_ptf[2]);
-}
 
 // there are two kinds of controller, follow a line and rotate
 class LineFollowController {
@@ -347,12 +306,15 @@ public:
     void reset() override {
         finish_rotate_ = false;
         finish_move_ = false;
+        finished_ = false;
         rot_ctl_->reset();
     }
 
     bool finish_rotate_ = false, finish_move_ = false;
 
     RotateControllerPtr rot_ctl_;
+
+    bool finished_ = false;
 
 };
 
@@ -366,9 +328,12 @@ public:
 
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
-
+        if(finished_) { 
+            std::cout << "have finish both rotate and move, now wait" << std::endl;
+            return retv; 
+        }
         if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
-            //finish_move_ = true;
+            finish_move_ = true;
             // rotate
             double ref_theta = std::fmod(pt2_[2], 2*M_PI);
             if(ref_theta < 0) { ref_theta += 2*M_PI; } 
@@ -395,6 +360,7 @@ public:
 
             } else {
                 std::cout << "finish both rotate and move" << std::endl;
+                finished_ = true;
             }
         } else {
             Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
@@ -438,6 +404,50 @@ public:
 
 };
 
+
+
+class TwoPhaseLineFollowControllerDWA : public TwoPhaseLineFollowController {
+public:
+
+    TwoPhaseLineFollowControllerDWA(const MotionConfig& cfg) : TwoPhaseLineFollowController(cfg) {
+        DWAParams params;
+        planner_.initialize(params, cfg);
+    }
+
+    Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
+        Pointf<3> retv = {0, 0, 0};
+        if(finished_) { 
+            std::cout << "have finish both rotate and move, now wait" << std::endl;
+            return retv; 
+        }
+        if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
+            finish_move_ = true;
+            // rotate
+            if(!reachOrientation(pose[0], pt2_[2])) {
+                rot_ctl_->ang_ = pt2_[2]; 
+
+                retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+
+                retv[2] = wFilter(retv[2]);
+
+                std::cout << "rotate positive = " << rot_ctl_->posi_rot_ << ", retv v = " << retv << std::endl;
+
+            } else {
+                std::cout << "finish both rotate and move" << std::endl;
+                finished_ = true;
+            }
+        } else {
+            retv = planner_.computeVelocity(pose, vel, pt2_);
+        }
+        return retv;
+
+    }
+
+    DWASimple planner_;
+
+};
+
+
 Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float time_interval) {
 
     double new_x = pose[0] + time_interval*velcmd[0]*cos(pose[2]) - time_interval*velcmd[1]*sin(pose[2]), 
@@ -480,8 +490,6 @@ Pointf<3> updateAgentPose(const Pointf<3>& pose, const Pointf<3>& velcmd, float 
 
 };
 
-
-
 // for single robot, receive goal state and target state from CentralController
 // run on single robot
 // compute vel cmd, no decision, except detect route is obstructed
@@ -507,6 +515,8 @@ public:
         // otherwise some msg will be ignored
 
         error_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::ErrorState>("AgentErrorState", 10);
+
+        agent_state_publisher_ = this->create_publisher<lamapf_and_gazebo_msgs::msg::AgentState>("AgentState", 10);
 
         pose_publisher_        = this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdatePose>("PoseUpdate", 2*all_agent_size);
 
@@ -535,6 +545,8 @@ public:
                         wait_          = msg->wait;
 
                         line_ctl_->reset();
+
+                        finished_ = false;
                         
                         line_ctl_->pt1_ = start_ptf_;
                         line_ctl_->pt2_ = target_ptf_;
@@ -712,6 +724,7 @@ public:
                 // }
 
                 velcmd_ = calculateCMD(cur_pose_, velcmd_, 1.0);
+
                 // pub vel cmd
                 cmd_vel.linear.x  = velcmd_[0];
                 cmd_vel.angular.z = velcmd_[2];
@@ -842,14 +855,23 @@ public:
             return cmd_vel;
         }
         if(reachTarget(pose, target_ptf_)) {
-            wait_ = true;
+            //wait_ = true;
             std::stringstream ss2;
-            ss2 << "reach target";
+            ss2 << "local controller detect reach target";
             RCLCPP_INFO(this->get_logger(), ss2.str().c_str()); 
-            return cmd_vel;
+            //return cmd_vel;
         }
 
-        cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval); ;
+        cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);
+        if(finished_ == false && line_ctl_->finished_ == true) {
+            finished_ = true;
+            // only pub finished once
+            lamapf_and_gazebo_msgs::msg::AgentState msg;
+            msg.agent_id    = agent_->id_;
+            msg.agent_state = 0;
+            std::cout << "agent " << agent_->id_ << ", local planner finish current task and tell center" << std::endl;
+            agent_state_publisher_->publish(msg); 
+        }
         return cmd_vel;
     }
 
@@ -857,6 +879,8 @@ public:
     // TODO: 
     // ros service: update pose in central controller
     // ros service: call replan in central controller when encounter exception
+
+    bool finished_ = false; // whether current agent finish current task
 
     bool wait_ = true;
  
@@ -879,6 +903,8 @@ public:
     Pointf<3> cur_pose_;
 
     rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_publisher_;
+
+    rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::AgentState>::SharedPtr agent_state_publisher_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_publisher_;
 

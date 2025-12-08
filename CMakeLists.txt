@@ -34,7 +34,19 @@ find_package(sensor_msgs REQUIRED)
 find_package(lamapf_and_gazebo_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 
+# dwa dependencies
+#find_package(pluginlib REQUIRED)
+#find_package(nav2_core REQUIRED)
+#find_package(nav2_costmap_2d REQUIRED)
+#find_package(dwb_core REQUIRED)
+#find_package(nav_msgs REQUIRED)
+#find_package(dwb_critics REQUIRED)
+#find_package(dwb_plugins REQUIRED)
+#find_package(nav2_controller REQUIRED)
+#find_package(nav2_util REQUIRED)
+#find_package(nav2_msgs REQUIRED)
 
 ament_export_dependencies(rosidl_default_runtime)
 
@@ -51,7 +63,9 @@ include_directories(include
                     ${EIGEN3_INCLUDE_DIRS}   # 把 Eigen 头文件路径加进来
                     )
 
-set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs)        
+set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs rclcpp_lifecycle
+#pluginlib nav2_core nav2_costmap_2d dwb_core dwb_critics dwb_plugins nav_msgs nav2_controller nav2_msgs nav2_util
+  )        
  
 add_executable(spawn_entity src/test_spawn_entity.cpp)
 ament_target_dependencies(spawn_entity ${dependencies})
@@ -93,6 +107,11 @@ add_executable(test_center_controller_in_read_world src/test_center_controller_i
 target_link_libraries(test_center_controller_in_read_world ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(test_center_controller_in_read_world ${dependencies})
 install(TARGETS test_center_controller_in_read_world DESTINATION lib/${PROJECT_NAME})
+
+add_executable(test_dwa_local_planner src/test_dwa_local_planner.cpp)
+target_link_libraries(test_dwa_local_planner ${EXTERNAL_LIBS} yaml-cpp)
+ament_target_dependencies(test_dwa_local_planner ${dependencies})
+install(TARGETS test_dwa_local_planner DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
