@@ -1126,7 +1126,7 @@ struct MotionConfig {
 
     float max_a_x = 1.0, min_a_x = -1.;
     float max_a_y = 0, min_a_y = 0;
-    float max_a_w = 0.5*M_PI, min_a_w = -0.5*M_PI;
+    float max_a_w = M_PI, min_a_w = -M_PI;
 
     bool is_nonholonomic = true;
 };
