@@ -240,14 +240,11 @@ public:
             if(!reachOrientation(cur_theta, ref_theta)) {
                                 // otherwise rotate to target direction
                 rot_ctl_->ang_ = ref_theta; // update target angle
+                
+                float angle_diff = shortestAngularDistance(cur_theta, ref_theta);
 
-                if(fabs(ref_theta - cur_theta) <= M_PI) {
-                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
-                    else { rot_ctl_->posi_rot_ = false; }
-                } else {
-                    if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
-                    else { rot_ctl_->posi_rot_ = true; }                    
-                }
+                if(angle_diff > 0) { rot_ctl_->posi_rot_ = true; }
+                else { rot_ctl_->posi_rot_ = false; }
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
