@@ -192,7 +192,7 @@ public:
         //assert(ang_ >= 0 && ang_ <= 2*M_PI);
         Pointf<3> retv = {0, 0, 0};
         float diff = shortestAngularDistance(pose[2], ang_);
-
+        
         retv[2] = std::min(cfg_.max_v_w, fabs(diff)/time_interval);
         retv[2] = std::max(cfg_.min_v_w, retv[2]);
 
@@ -422,6 +422,10 @@ public:
             // rotate
             if(!reachOrientation(pose[0], pt2_[2])) {
                 rot_ctl_->ang_ = pt2_[2]; 
+
+                float angle_diff = shortestAngularDistance(pose[2], pt2_[2]);
+                if(angle_diff > 0) { rot_ctl_->posi_rot_ = true; }
+                else { rot_ctl_->posi_rot_ = false; }
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
