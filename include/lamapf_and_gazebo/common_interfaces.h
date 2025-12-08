@@ -90,8 +90,8 @@ SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
 SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
 {
         {"map_name",     "IndustrialWarehouse"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
+        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
+        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
 };
 
 
