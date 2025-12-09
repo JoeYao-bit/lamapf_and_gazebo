@@ -155,6 +155,8 @@ bool CenteralControllerNew::need_replan_ = false;
 
 std::vector<bool> CenteralControllerNew::agent_finishes_ = {};
 
+POSE_TO_PTF_FUNC CenteralControllerNew::pose_to_ptf_func_;
+
 int main(int argc, char ** argv) {
     
     rclcpp::init(argc, argv);

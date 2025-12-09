@@ -748,14 +748,14 @@ public:
                        bool enable_opencv_window = true
                        //const GRID_TO_PTF_FUNC& grid_to_ptf_func = GridToPtfPicOnly
                     ): 
-                       rclcpp::Node("central_controller"),
-                       pose_to_ptf_func_(pose_to_ptf_func) {        
+                       rclcpp::Node("central_controller") {        
                         
         
         dim_ = dim;
         instances_ = instances;                
         paused_ = false;
         pub_init_target_ = true;
+        pose_to_ptf_func_ = pose_to_ptf_func;
         std::cout << "construct all possible poses" << std::endl;
 
         Id total_index = getTotalIndexOfSpace<2>(this->dim_);
@@ -1100,9 +1100,13 @@ public:
                 const auto& path = ADG_->paths_[i];
                 if(path.empty()) { continue; }
                 for(int t=progress_of_agents_[i]; t<path.size()-1; t++) {
-                    Pointi<2> pt1 = all_poses_[path[t]]->pt_;
-                    Pointi<2> pt2 = all_poses_[path[t+1]]->pt_;
-                    canvas.drawLineInt(pt1[0], pt1[1], pt2[0], pt2[1], true, std::max(1., zoom_ratio/10.), COLOR_TABLE[(i) % 30]);
+                    // Pointi<2> pt1 = all_poses_[path[t]]->pt_;
+                    // Pointi<2> pt2 = all_poses_[path[t+1]]->pt_;
+                    // canvas.drawLineInt(pt1[0], pt1[1], pt2[0], pt2[1], true, std::max(1., zoom_ratio/10.), COLOR_TABLE[(i) % 30]);
+
+                    Pointf<3> ptf3 = pose_to_ptf_func_(*all_poses_[path[t]]);
+                    Pointf<3> ptf4 = pose_to_ptf_func_(*all_poses_[path[t+1]]);
+                    canvas.drawLine(ptf3[0], ptf3[1], ptf4[0], ptf4[1], std::max(1., zoom_ratio/10.), true, COLOR_TABLE[(i) % 30]);
                 }
             }
             // draw every agent's pose
@@ -1164,7 +1168,7 @@ public:
 
     //GRID_TO_PTF_FUNC grid_to_ptf_func_;
 
-    POSE_TO_PTF_FUNC pose_to_ptf_func_;
+    static POSE_TO_PTF_FUNC pose_to_ptf_func_;
 
 };
 
