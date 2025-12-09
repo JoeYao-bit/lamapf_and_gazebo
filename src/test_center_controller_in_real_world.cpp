@@ -193,15 +193,17 @@ int main(int argc, char ** argv) {
     float ox,oy,otheta;
     getOriginFromYAMLFile(yaml_file_path, ox, oy, otheta);
 
-    float reso;
-    getResolutionFromYAMLFile(yaml_file_path, reso);
+    float reso_local;
+    getResolutionFromYAMLFile(yaml_file_path, reso_local);
+
+    std::cout << "resolution of map = " << reso_local << std::endl;
 
     // 转换到地图坐标系下，参考地图yaml文件中的原点和姿态
     Pose<int, 2> start_pose, target_pose;
 
-    worldToPixelYAML(node->start_[0], node->start_[1], ox, oy, otheta, reso, dim_local[1], start_pose.pt_[0],  start_pose.pt_[1]);
+    worldToPixelYAML(node->start_[0], node->start_[1], ox, oy, otheta, reso_local, dim_local[1], start_pose.pt_[0],  start_pose.pt_[1]);
 
-    worldToPixelYAML(node->goal_[0],  node->goal_[1],  ox, oy, otheta, reso, dim_local[1], target_pose.pt_[0], target_pose.pt_[1]);
+    worldToPixelYAML(node->goal_[0],  node->goal_[1],  ox, oy, otheta, reso_local, dim_local[1], target_pose.pt_[0], target_pose.pt_[1]);
 
     start_pose.orient_  = radiusToOrient(worldYawToPixelYaw(node->start_[2], otheta));
 
@@ -233,9 +235,9 @@ int main(int argc, char ** argv) {
 
 
 
-    POSE_TO_PTF_FUNC ptpfunc = [ox, oy, otheta, reso, dim_local](const Pose<int, 2>& pose) -> Pointf<3> {
+    POSE_TO_PTF_FUNC ptpfunc = [ox, oy, otheta, reso_local, dim_local](const Pose<int, 2>& pose) -> Pointf<3> {
         Pointf<3> retv;
-        pixelToWorldYAML(pose.pt_[0], pose.pt_[1], ox, oy, otheta, reso, dim_local[1], retv[0], retv[1]);
+        pixelToWorldYAML(pose.pt_[0], pose.pt_[1], ox, oy, otheta, reso_local, dim_local[1], retv[0], retv[1]);
         retv[2] = pixelYawToWorldYaw(orientToRadius(pose.orient_), otheta);
         return retv;
 
