@@ -420,7 +420,7 @@ public:
         if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
             finish_move_ = true;
             // rotate
-            if(!reachOrientation(pose[0], pt2_[2])) {
+            if(!reachOrientation(pose[2], pt2_[2])) {
                 rot_ctl_->ang_ = pt2_[2]; 
 
                 float angle_diff = shortestAngularDistance(pose[2], pt2_[2]);
@@ -864,6 +864,8 @@ public:
         }
 
         cmd_vel = line_ctl_->calculateCMD(pose, vel, time_interval);
+        std::cout << "finished_/line_ctl_->finished_" << finished_ << "/" << line_ctl_->finished_ << std::endl;
+          
         if(finished_ == false && line_ctl_->finished_ == true) {
             finished_ = true;
             // only pub finished once
