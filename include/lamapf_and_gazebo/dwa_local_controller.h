@@ -274,10 +274,11 @@ private:
 
     // heading cost: angle between robot's forward direction at sim pose and vector to goal
     static float calcHeadingCost(const Pointf<3> &sim, const Pointf<3> &goal) {
-        // float dx = goal[0] - sim[0];
-        // float dy = goal[1] - sim[1];
-        // float goal_yaw = std::atan2(dy, dx);
-        float d = shortestAngularDistance(sim[2], goal[2]);
+        // float d = shortestAngularDistance(sim[2], goal[2]);
+        float dx = goal[0] - sim[0];
+        float dy = goal[1] - sim[1];
+        float goal_yaw = std::atan2(dy, dx);
+        float d = shortestAngularDistance(sim[2], goal_yaw);
         return std::fabs(d); // 0..pi
     }
 };
