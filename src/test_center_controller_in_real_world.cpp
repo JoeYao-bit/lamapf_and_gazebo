@@ -182,7 +182,7 @@ int main(int argc, char ** argv) {
 
     // construct instance
     // create circle agent represent turtlebot
-    auto agent_ptr = std::make_shared<CircleAgent<2> >(0.2, 0, dim_local);
+    auto agent_ptr = std::make_shared<CircleAgent<2> >(4, 0, dim_local);
     double time_interval = 0.1;// s
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
