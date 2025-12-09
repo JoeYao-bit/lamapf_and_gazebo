@@ -119,6 +119,8 @@ bool CenteralController::pub_init_target_ = true;
 
 bool CenteralController::need_replan_ = false;
 
+
+
 // load map
 PictureLoader loader_local("/home/wangweilab/my_map.pgm", is_grid_occupied_pgm);
 std::string yaml_file_path = "/home/wangweilab/my_map.yaml";
@@ -131,6 +133,27 @@ auto is_occupied_local = [](const Pointi<2> & pt) -> bool { return loader_local.
 void StartAndTargetVisualize() {
     //
 }
+
+
+std::shared_ptr<ActionDependencyGraph<2> > CenteralControllerNew::ADG_ = nullptr;
+
+bool CenteralControllerNew::paused_ = true;
+
+Pointfs<3> CenteralControllerNew::all_agent_poses_ = {};
+
+std::vector<int> CenteralControllerNew::progress_of_agents_ = {};  
+
+std::vector<std::shared_ptr<Pose<int, 2>> > CenteralControllerNew::all_poses_ = {};
+
+std::pair<AgentPtrs<2>, InstanceOrients<2> > CenteralControllerNew::instances_ = {};
+
+DimensionLength* CenteralControllerNew::dim_ = nullptr;
+
+bool CenteralControllerNew::pub_init_target_ = true;
+
+bool CenteralControllerNew::need_replan_ = false;
+
+std::vector<bool> CenteralControllerNew::agent_finishes_ = {};
 
 int main(int argc, char ** argv) {
     
@@ -218,7 +241,7 @@ int main(int argc, char ** argv) {
     // need test
     // 启动中央控制器，路径可视化
     // start central controller
-    auto central_controller = std::make_shared<CenteralController>(dim_local, is_occupied_local, instances, 
+    auto central_controller = std::make_shared<CenteralControllerNew>(dim_local, is_occupied_local, instances, 
                                                                    ptpfunc,
                                                                    time_interval, 
                                                                    true); // enable opencv window
