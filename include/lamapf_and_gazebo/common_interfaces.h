@@ -919,7 +919,7 @@ Pose<int, 2> PtfToPoseInt(const Pointf<3>& ptf, PTF_TO_GRID_FUNC ptfToGrid) {
 // 实测发现turtlebot角速度低于某个值(约0.03)就不动了，因此必须大于这个值
 
 float wFilter(float w) {
-    if(fabs(w) < 0.1) {
+    if(fabs(w) < 0.08) {
         if(w>0) { return 0.08; }
         if(w<0) { return -0.08; }
     }
