@@ -329,6 +329,8 @@ public:
 
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
+        float cur_theta = pose[2]; 
+
         if(finished_) { 
             std::cout << "have finish both rotate and move, now wait" << std::endl;
             return retv; 
@@ -337,21 +339,9 @@ public:
             finish_move_ = true;
             // rotate
             double ref_theta = std::fmod(pt2_[2], 2*M_PI);
-            if(ref_theta < 0) { ref_theta += 2*M_PI; } 
-
-            double cur_theta = std::fmod(pose[2], 2*M_PI);
-            if(cur_theta < 0) { cur_theta += 2*M_PI; } 
 
             if(!reachOrientation(cur_theta, ref_theta)) {
                 rot_ctl_->ang_ = ref_theta; 
-
-                // if(fabs(ref_theta - cur_theta) <= M_PI) {
-                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
-                //     else { rot_ctl_->posi_rot_ = false; }
-                // } else {
-                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
-                //     else { rot_ctl_->posi_rot_ = true; }                    
-                // }
 
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
@@ -367,11 +357,7 @@ public:
             Eigen::Vector2d ref_vec(pt2_[0] - pose[0], pt2_[1] - pose[1]);
 
             // if head to target, move forward
-            double ref_theta = std::fmod(std::atan2(ref_vec.y(), ref_vec.x()), 2*M_PI);
-            if(ref_theta < 0) { ref_theta += 2*M_PI; } 
-
-            double cur_theta = std::fmod(pose[2], 2*M_PI);
-            if(cur_theta < 0) { cur_theta += 2*M_PI; } 
+            float ref_theta = std::fmod(std::atan2(ref_vec.y(), ref_vec.x()), 2*M_PI);
 
             if(reachOrientation(cur_theta, ref_theta)) {
                 double dist_to_end = ref_vec.norm();
@@ -384,14 +370,10 @@ public:
             } else {
                 rot_ctl_->ang_ = ref_theta; // update target angle
 
-                // if(fabs(ref_theta - cur_theta) <= M_PI) {
-                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = true; }
-                //     else { rot_ctl_->posi_rot_ = false; }
-                // } else {
-                //     if(ref_theta > cur_theta) { rot_ctl_->posi_rot_ = false; }
-                //     else { rot_ctl_->posi_rot_ = true; }                    
-                // }
-
+                float angle_diff = shortestAngularDistance(cur_theta, ref_theta);
+                if(angle_diff > 0) { rot_ctl_->posi_rot_ = true; }
+                else { rot_ctl_->posi_rot_ = false; }
+                
                 retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
 
                 retv[2] = wFilter(retv[2]);
@@ -417,6 +399,19 @@ public:
 
     Pointf<3> calculateCMD(Pointf<3> pose, Pointf<3> vel, float time_interval) override {
         Pointf<3> retv = {0, 0, 0};
+
+        // check whether is wait or just rotate
+        if(pt1_[0] == pt2_[0] && pt1_[1] == pt2_[1]) {
+            if(pt1_[2] == pt2_[2]) {
+                std::cout << "detect same start and target, do nothing" << std::endl;
+                finished_ = true;
+            } else {
+                finish_rotate1_ = true;
+                finish_move_ = true;
+                std::cout << "detect same start and target position but different orientation, just rotate" << std::endl;
+            }
+        }
+
         if(finished_) { 
             std::cout << "have finish both rotate and move, now wait" << std::endl;
             return retv; 
@@ -878,7 +873,7 @@ public:
         float angle_to_target = shortestAngularDistance(pose[2], target_ptf_[2]);
         std::stringstream ss;
         ss << "agent_" << agent_->id_ << " dist to target = " << dist_to_target_position 
-           << ", angle to tareget = " << angle_to_target;
+           << ", angle to target = " << angle_to_target;
         RCLCPP_INFO(this->get_logger(), ss.str().c_str()); 
 
 
