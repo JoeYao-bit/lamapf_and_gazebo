@@ -85,8 +85,8 @@ bool draw_visit_grid_table = false;
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
 {
         {"map_name",     "LargeOfficeEnv"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
+        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
+        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
 };
 
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
@@ -99,16 +99,16 @@ SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
 SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
 {
         {"map_name",     "IndustrialWarehouse"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
+        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
+        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
 };
 
 
 std::map<std::string, std::string> demoMapYaml = {
         {"map_name",       "demo"},
-        {"map_path",       "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/map/my_map.pgm"},
-        {"la_ins_path",    "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/map/my_map_ins.txt"},
-        {"yaml_file_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/map/my_map.yaml"}
+        {"map_path",       "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map.pgm"},
+        {"la_ins_path",    "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map_ins.txt"},
+        {"yaml_file_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map.yaml"}
 };
 
 //std::string map_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.png";
