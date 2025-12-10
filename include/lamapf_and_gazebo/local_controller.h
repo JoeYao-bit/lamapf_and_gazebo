@@ -302,6 +302,8 @@ public:
 
     void reset() override {
         finish_rotate_ = false;
+        finish_rotate1_ = false;
+        finish_rotate2_ = false;
         finish_move_ = false;
         finished_ = false;
         rot_ctl_->reset();
@@ -312,6 +314,8 @@ public:
     RotateControllerPtr rot_ctl_;
 
     bool finished_ = false;
+
+    bool finish_rotate1_ = false, finish_rotate2_ = false;
 
 };
 
@@ -417,28 +421,58 @@ public:
             std::cout << "have finish both rotate and move, now wait" << std::endl;
             return retv; 
         }
-        if(reachPosition(pose[0], pose[1], pt2_[0], pt2_[1]) || finish_move_) {
-            finish_move_ = true;
-            // rotate
-            if(!reachOrientation(pose[2], pt2_[2])) {
-                rot_ctl_->ang_ = pt2_[2]; 
+        while(true) {
+            if(finish_rotate1_ == false) {
+                // rotate 1
+                if(!reachOrientation(pose[2], pt1_[2])) {
+                    rot_ctl_->ang_ = pt1_[2]; 
 
-                float angle_diff = shortestAngularDistance(pose[2], pt2_[2]);
-                if(angle_diff > 0) { rot_ctl_->posi_rot_ = true; }
-                else { rot_ctl_->posi_rot_ = false; }
+                    float angle_diff = shortestAngularDistance(pose[2], pt1_[2]);
+                    if(angle_diff > 0) { rot_ctl_->posi_rot_ = true; }
+                    else { rot_ctl_->posi_rot_ = false; }
+                    retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+                    retv[2] = wFilter(retv[2]);
 
-                retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+                    std::cout << "rotate 1 positive = " << rot_ctl_->posi_rot_ << ", retv v = " << retv << std::endl;
+                    break;
+                } else {
+                    std::cout << "finish rotate 1" << std::endl;
+                    finish_rotate1_ = true;
+                }
+            } else if(finish_rotate1_ == true && finish_move_ == false) {
+                // move forward
+                if(!reachPosition(pose[0], pose[1], pt2_[0], pt2_[1])) {
+                    retv = planner_.computeVelocity(pose, vel, pt2_);
+                    std::cout << "move forward, retv v = " << retv << std::endl;
+                    break;
+                } else {
+                    finish_move_ = true;
+                    std::cout << "finish move" << std::endl;
+                }
+            } else if(finish_rotate1_ == true && finish_move_ == true && finish_rotate2_ == false) {
+                // rotate 2
+                if(!reachOrientation(pose[2], pt2_[2])) {
+                    rot_ctl_->ang_ = pt2_[2]; 
 
-                retv[2] = wFilter(retv[2]);
+                    float angle_diff = shortestAngularDistance(pose[2], pt2_[2]);
+                    if(angle_diff > 0) { rot_ctl_->posi_rot_ = true; }
+                    else { rot_ctl_->posi_rot_ = false; }
+                    retv = rot_ctl_->calculateCMD(pose, vel, time_interval);
+                    retv[2] = wFilter(retv[2]);
 
-                std::cout << "rotate positive = " << rot_ctl_->posi_rot_ << ", retv v = " << retv << std::endl;
-
-            } else {
+                    std::cout << "rotate 2 positive = " << rot_ctl_->posi_rot_ << ", retv v = " << retv << std::endl;
+                    break;
+                } else {
+                    std::cout << "finish rotate 2" << std::endl;
+                    finish_rotate2_ = true;
+                }
+            } else if(finish_rotate1_ == true && finish_move_ == true && finish_rotate2_ == true ) {
                 std::cout << "finish both rotate and move" << std::endl;
                 finished_ = true;
+                break;
             }
-        } else {
-            retv = planner_.computeVelocity(pose, vel, pt2_);
+            std::cout << "shouldn't reach here" << std::endl;
+            break;
         }
         return retv;
 
