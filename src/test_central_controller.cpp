@@ -156,7 +156,7 @@ int main(int argc, char ** argv) {
 
 
     for(int i=0; i<instances.first.size(); i++) {
-      line_ctls.push_back(std::make_shared<TwoPhaseLineFollowControllerDWA>(MotionConfig()));
+      line_ctls.push_back(std::make_shared<TwoPhaseLineFollowControllerReal>(MotionConfig()));
       rot_ctls.push_back(std::make_shared<ConstantRotateController>(MotionConfig()));
     }
 

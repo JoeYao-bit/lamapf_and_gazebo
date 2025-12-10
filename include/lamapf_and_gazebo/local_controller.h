@@ -331,6 +331,17 @@ public:
         Pointf<3> retv = {0, 0, 0};
         float cur_theta = pose[2]; 
 
+        // check whether is wait or just rotate
+        if(pt1_[0] == pt2_[0] && pt1_[1] == pt2_[1]) {
+            if(pt1_[2] == pt2_[2]) {
+                std::cout << "detect same start and target, do nothing" << std::endl;
+                finished_ = true;
+            } else {
+                finish_move_ = true;
+                std::cout << "detect same start and target position but different orientation, just rotate" << std::endl;
+            }
+        }
+
         if(finished_) { 
             std::cout << "have finish both rotate and move, now wait" << std::endl;
             return retv; 
