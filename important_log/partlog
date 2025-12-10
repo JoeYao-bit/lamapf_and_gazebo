@@ -1,0 +1,44 @@
+[test_center_controller_in_read_world-1] [INFO] [1765371622.006809997] [test_center_controller_in_read_world]: Received one-time goal: x=1.423, y=0.716, theta=1.464 rad
+[test_center_controller_in_read_world-1] [INFO] [1765371622.007106674] [test_center_controller_in_read_world]: Get start from current pose: x=1.361, y=0.026, theta=0.109 rad
+
+
+[test_center_controller_in_read_world-1] [INFO] [1765371622.438993003] [test_center_controller_in_read_world]: in LocalController, receive goal, agent_0 (1.414, -0.0359998, 0)->(1.414, -0.0359998, -1.5708), wait = 0
+[test_center_controller_in_read_world-1] [INFO] [1765371622.439127426] [test_center_controller_in_read_world]: central controller pub agent_0's initial goal (1.414, -0.0359998, 0)->(1.414, -0.0359998, -1.5708)
+
+
+[test_center_controller_in_read_world-1] rotate 2 positive = 57, retv v = (0, 0, -0.349066)
+
+[test_center_controller_in_read_world-1] agent 0, local planner finish current task and tell center
+
+----------------------------------
+[test_center_controller_in_read_world-1] [INFO] [1765371631.738055751] [test_center_controller_in_read_world]: central controller pub agent_0's goal (1.414, -0.0359998, -1.5708)->(1.414, 0.264, -1.5708)
+[test_center_controller_in_read_world-1] [INFO] [1765371631.738182375] [test_center_controller_in_read_world]: in LocalController, receive goal, agent_0 (1.414, -0.0359998, -1.5708)->(1.414, 0.264, -1.5708), wait = 0
+
+[test_center_controller_in_read_world-1] [INFO] [1765371631.807708939] [test_center_controller_in_read_world]: agent 0 receive pose (1.30965, 0.080845, -1.48994)
+[test_center_controller_in_read_world-1] [INFO] [1765371631.807861827] [test_center_controller_in_read_world]: during CentralController loop, receive pose of agent_0 = (1.30965, 0.080845, -1.48994)
+[test_center_controller_in_read_world-1] [INFO] [1765371631.822025999] [test_center_controller_in_read_world]: agent_0 dist to target = 0.210795, angle to target = -0.0808581
+[test_center_controller_in_read_world-1] rotate 1 positive = 1, retv = (0, 0, 0.349066)
+[test_center_controller_in_read_world-1] finished_/line_ctl_->finished_0/0
+
+
+
+[test_center_controller_in_read_world-1] [INFO] [1765371643.306005051] [test_center_controller_in_read_world]: during CentralController loop, receive pose of agent_0 = (1.31854, 0.0987671, 0.940943)
+[test_center_controller_in_read_world-1] [INFO] [1765371643.321964234] [test_center_controller_in_read_world]: agent_0 dist to target = 0.190828, angle to target = -2.51174
+[test_center_controller_in_read_world-1] [INFO] [1765371643.322141888] [test_center_controller_in_read_world]: agent_0 pub vel cmd vx = 0, w = 0.10595
+[test_center_controller_in_read_world-1] rotate 1 positive = 1, retv = (0, 0, 0.10595)
+
+[test_center_controller_in_read_world-1] [INFO] [1765371643.422002466] [test_center_controller_in_read_world]: agent_0 dist to target = 0.194045, angle to target = -2.52459
+[test_center_controller_in_read_world-1] [INFO] [1765371643.422364903] [test_center_controller_in_read_world]: agent_0 pub vel cmd vx = 0.1, w = 0
+[test_center_controller_in_read_world-1] move to target, retv = (0.1, 0, 0)
+
+----------------------------------
+
+[test_center_controller_in_read_world-1] [INFO] [1765371656.738023263] [test_center_controller_in_read_world]: in LocalController, receive goal, agent_0 (1.414, 0.264, -1.5708)->(1.414, 0.564, -1.5708), wait = 0
+
+
+[test_center_controller_in_read_world-1] [INFO] [1765371688.037969957] [test_center_controller_in_read_world]: in LocalController, receive goal, agent_0 (1.414, 0.564, -1.5708)->(1.414, 0.864, -1.5708), wait = 0
+
+[test_center_controller_in_read_world-1] [INFO] [1765371715.138101816] [test_center_controller_in_read_world]: in LocalController, receive goal, agent_0 (1.414, 0.864, -1.5708)->(1.414, 0.864, 0), wait = 0
+
+
+[test_center_controller_in_read_world-1] [INFO] [1765371715.138101816] [test_center_controller_in_read_world]: in LocalController, receive goal, agent_0 (1.414, 0.864, -1.5708)->(1.414, 0.864, 0), wait = 0
