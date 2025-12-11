@@ -242,6 +242,15 @@ int main(int argc, char ** argv) {
         return retv;
 
     };
+
+    std::cout << "otheta = " << otheta << std::endl;
+    
+    std::cout << "orientToRadius(3) = " << orientToRadius(3) << std::endl;
+
+    std::cout << "pixelYawToWorldYaw(orientToRadius(3), otheta) = " <<  pixelYawToWorldYaw(orientToRadius(3), otheta) << std::endl;
+
+
+    
     // need test
     // 启动中央控制器，路径可视化
     // start central controller
