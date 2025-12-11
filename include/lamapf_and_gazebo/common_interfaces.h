@@ -838,6 +838,7 @@ void InstanceVisualization(const std::vector<AgentPtr<2> >& agents,
 int radiusToOrient(const double& radius) {
     int retv = 0;
     double radius_fmod = std::fmod(radius, 2*M_PI);
+    if(radius_fmod <0) {radius_fmod = radius_fmod + 2*M_PI; }
     if(fabs(radius_fmod-0)<=M_PI/2) {
         return 0; // 0 degree
     } else if(fabs(radius_fmod-M_PI)<=M_PI/2) {
