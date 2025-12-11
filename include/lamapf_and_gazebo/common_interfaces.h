@@ -1108,13 +1108,13 @@ void getResolutionFromYAMLFile(std::string yaml_file_path, float& resolution) {
 // 世界角（rad） -> 像素角（rad）
 double worldYawToPixelYaw(double yaw_world, double map_yaw)
 {
-    return -yaw_world + map_yaw;
+    return yaw_world + map_yaw;
 }
 
 // 像素角（rad） -> 世界角（rad）
 double pixelYawToWorldYaw(double yaw_pixel, double map_yaw)
 {
-    return -yaw_pixel + map_yaw;
+    return yaw_pixel + map_yaw;
 }
 
 
