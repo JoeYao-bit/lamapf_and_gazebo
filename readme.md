@@ -842,14 +842,21 @@ MAPF计划执行的两种不确定性：
 1, 安装ubuntu 24.04
 2, 安装ros2
 sudo apt install software-properties-common
+
 sudo add-apt-repository universe
+
 sudo apt update
+
 sudo apt install curl gnupg lsb-release -y
+
 sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 sudo apt update  # 更新包管理器的本地软件包索引
+
 sudo apt upgrade -y # 根据 apt update 更新的软件包列表，查找当前安装包是否有新版本，并升级到最新版本
+
 sudo apt install ros-jazzy-desktop -y  # 安装 ROS 2 Jazzy 的桌面版本，包含可视化工具 RViz 等
 
 sudo apt install ros-jazzy-ros-base -y
@@ -1873,16 +1880,19 @@ DWA和mpc估计都不合适，回归原始分段旋转和走直线
 
 标签从1开始，预期找到至少10台机器人
 
+ubuntu统一密码：12345678
+anydesk远程桌面密码：wasd16807
+
 1号，我开发的机器人
-2号，卢思仪（阮老师学生）开发的机器人
-3号，未使用
-4号，未使用
-5号，未使用
-6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常
-7号，未使用
-8号，未使用
+2号，卢思仪（阮老师学生）开发的机器人,ubuntu 24.04已安装，anydesk 1993540146
+3号，未使用，ubuntu 24.04已安装，
+4号，未使用，ubuntu 24.04已安装，
+5号，未使用，ubuntu 24.04已安装，
+6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，
+7号，未使用，ubuntu 24.04已安装，
+8号，未使用，ubuntu 24.04已安装，
 9号，未使用，缺一根激光雷达到USB的信号线
-10号，未使用
+10号，未使用，ubuntu 24.04已安装，
 11号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常
 12号，激光雷达不工作, 缺一根底盘和机器人之间的信号线
 
@@ -1913,3 +1923,4 @@ ros2 run demo_nodes_cpp listener
 
 接下来，在远端启动中央控制器，输入目标位置，并规划路径；然后局部控制器执行
 
+威嵌沃微型主机 点按delete进入bios，以进行U盘启动

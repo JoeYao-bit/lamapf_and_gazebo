@@ -51,6 +51,21 @@ ls -l /dev/kobuki /dev/rplidar
 
 # 全部安装指令
 
+安装gedit
+
+sudo apt install gedit
+
+0, 安装anydesk, 配置远程桌面无人值守访问
+
+禁用Wayland，anydesk不支持wayland
+
+sudo edit /etc/gdm3/custom.conf
+
+取消注释 WaylandEnable=False
+
+sudo systemctl restart gdm3
+
+
 1, 安装kobuki相关的包
 ecl_core,ecl_lite,kobuki_core,kobuki_ros,kobuki_ros_interfaces
 
