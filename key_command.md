@@ -59,11 +59,14 @@ sudo apt install gedit
 
 禁用Wayland，anydesk不支持wayland
 
-sudo edit /etc/gdm3/custom.conf
+sudo gedit /etc/gdm3/custom.conf
 
 取消注释 WaylandEnable=False
 
 sudo systemctl restart gdm3
+
+安装colcon，ros2编译工具
+sudo apt install colcon
 
 
 1, 安装kobuki相关的包
@@ -211,4 +214,174 @@ ros2 launch lamapf_and_gazebo center_controller_test.launch.py >  my_node.log 2>
 新的键盘控制指令
 
 ros2 run kobuki_keyop kobuki_keyop_node --ros-args -r cmd_vel:=/robot0/commands/velocity
+
+# 大规模安装
+
+## 1, 通过upan安装ubuntu 24.04
+
+安装anydesk, 配置远程桌面无人值守访问
+
+禁用Wayland，anydesk不支持wayland
+
+sudo gedit /etc/gdm3/custom.conf
+
+取消注释 WaylandEnable=False
+
+## 2, 安装ros2
+sudo apt install software-properties-common
+
+sudo add-apt-repository universe
+
+sudo apt update
+
+sudo apt install curl gnupg lsb-release -y
+
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+sudo apt update  # 更新包管理器的本地软件包索引
+
+sudo apt upgrade -y # 根据 apt update 更新的软件包列表，查找当前安装包是否有新版本，并升级到最新版本
+
+sudo apt install ros-jazzy-desktop -y  # 安装 ROS 2 Jazzy 的桌面版本，包含可视化工具 RViz 等
+
+sudo apt install ros-jazzy-ros-base -y
+
+最常见版本：
+
+    ros-jazzy-desktop-full：完整安装，包括所有开发工具和图形界面。
+    ros-jazzy-desktop：较为简化的桌面版本，适合大多数桌面开发。
+    ros-jazzy-ros-base：基本的安装版本，只包含核心功能，适合基础开发。
+
+
+. 配置环境变量
+
+每次打开终端时，必须设置 ROS2 的环境变量。可以通过以下命令手动设置：
+
+source /opt/ros/jazzy/setup.bash
+
+为了避免每次都要手动设置，可以将此命令添加到 ~/.bashrc 文件中：
+
+echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+
+
+## 3，安装opencv
+sudo apt update
+sudo apt install libopencv-dev
+
+## 4, 安装ros_gz_interfaces
+sudo apt-get install ros-jazzy-ros-gz-interfaces
+
+## 5, 安装tf2
+sudo apt-get install ros-jazzy-tf2
+
+## 6, 安装std-msgs, sensor msgs
+sudo apt-get install ros-jazzy-std-msgs
+sudo apt-get install ros-jazzy-sensor-msgs
+
+
+## 7, 安装eigen
+sudo apt-get install libeigen3-dev
+
+## SuiteSparse
+sudo apt-get install libsuitesparse-dev
+
+## 8, 安装libxml2
+sudo apt-get install libxml2-dev
+
+
+## * 安装科学上网
+
+https://hiddify.zip/ 下载hiddify
+
+chmod +x hiddify-linux-x64.AppImage
+
+## 安装fuse2
+sudo apt install libfuse2
+
+
+## 安装tinyxml
+
+sudo apt-get install libtinyxml-dev
+
+## 安装CLI11库
+
+sudo apt-get install libcli11-dev
+
+## 安装git
+
+sudo apt install git
+
+## ssh初始化
+
+ssh-keygen -t rsa -C "1521232476@qq.com"
+
+然后复制pub key添加的到github的ssh中，使得可以clone代码
+
+
+## 安装 python3
+sudo apt install python3-pip
+
+sudo apt install python3-wheel
+
+## 安装 glut
+sudo apt-get install freeglut3-dev
+
+## 安装 g2o 
+
+sudo apt-get install libg2o-dev
+
+// 如果需要额外的依赖
+sudo apt-get install libqglviewer-dev-qt5
+sudo apt-get install libsuitesparse-dev
+
+sudo apt-get install qt5-qmake qt5-default libqglviewer-dev-qt5 libsuitesparse-dev libcxsparse3 libcholmod3
+
+git clone git@github.com:RainerKuemmerle/g2o.git
+cd g2o
+mkdir build
+cd build
+cmake ..
+make -j4
+sudo make install
+
+
+## 安装 Qt5 Charts
+sudo apt-get install libqt5charts5-dev
+
+## 9, 安装LayeredMAPF
+git clone git@github.com:JoeYao-bit/LayeredMAPF.git
+
+git clone --depth=1 git@github.com:JoeYao-bit/LayeredMAPF.git
+(只要最新版本，节约时间)
+
+freeNav-base的cmakelist中注释libkahypar
+
+
+
+build通过并make install
+
+## 更新子仓库
+git submodule update --init
+
+参考LayeredMAPF的readme安装依赖
+
+## 安装epoxy
+sudo apt install -y libepoxy-dev
+
+## 安装diagnostic-updater
+sudo apt install ros-jazzy-diagnostic-updater
+
+
+将ecl等依赖包解压到ros2_ws/src目录下
+
+安装lamapf_and_gazebo
+
+git clone git@github.com:JoeYao-bit/lamapf_and_gazebo.git
+
+安装lamapf_and_gazebo_msgs
+
+git clone git@github.com:JoeYao-bit/lamapf_and_gazebo_msgs.git
 

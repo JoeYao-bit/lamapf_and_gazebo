@@ -916,6 +916,16 @@ chmod +x hiddify-linux-x64.AppImage
 安装fuse2
 sudo apt install libfuse2
 
+安装git
+
+sudo apt install git
+
+ssh初始化
+
+ssh-keygen -t rsa -C "1521232476@qq.com"
+
+然后复制pub key添加的到github的ssh中，使得可以clone代码
+
 9, 安装LayeredMAPF
 git clone git@github.com:JoeYao-bit/LayeredMAPF.git
 
@@ -959,12 +969,10 @@ export ROS_DOMAIN_ID=0
 
 在每台电脑的 ~/.bashrc 中添加：
 
-export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export ROS_LOCALHOST_ONLY=0
-
 ROS_LOCALHOST_ONLY=0：允许通过局域网通信（否则只在本机上）
 
-rmw_fastrtps_cpp 是默认的 DDS 实现，也可以换成 rmw_cyclonedds_cpp（通信效果更稳定）
+即可实现跨平台同一wifi下通信
 
 4️⃣ 测试 listener/talker
 
@@ -1015,6 +1023,11 @@ sudo apt install ros-jazzy-ecl-build
 sudo apt install ros-jazzy-sophus
 
 编译
+
+安装colcon
+
+sudo apt install colcon
+
 
 colcon build --cmake-args -DCMAKE_CXX_FLAGS="-Wno-error=overloaded-virtual"
 
@@ -1884,9 +1897,9 @@ ubuntu统一密码：12345678
 anydesk远程桌面密码：wasd16807
 
 1号，我开发的机器人
-2号，卢思仪（阮老师学生）开发的机器人,ubuntu 24.04已安装，anydesk 1993540146
+2号，卢思仪（阮老师学生）开发的机器人,ubuntu 24.04已安装，anydesk 1 993 540 146，代码编译通过
 3号，未使用，ubuntu 24.04已安装，
-4号，未使用，ubuntu 24.04已安装，
+4号，未使用，ubuntu 24.04已安装，anydesk 1 740 904 283
 5号，未使用，ubuntu 24.04已安装，
 6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，
 7号，未使用，ubuntu 24.04已安装，
