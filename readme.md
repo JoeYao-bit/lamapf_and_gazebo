@@ -913,6 +913,11 @@ https://hiddify.zip/ 下载hiddify
 
 chmod +x hiddify-linux-x64.AppImage
 
+解决“指定的像素格式没有可用的设置”
+./Hiddify-Linux-x64.AppImage --appimage-extract
+
+
+
 安装fuse2
 sudo apt install libfuse2
 
@@ -1021,6 +1026,15 @@ sudo apt install ros-jazzy-ecl-build
 安装 sophus
 
 sudo apt install ros-jazzy-sophus
+
+或者
+
+git clone https://github.com/strasdat/Sophus.git
+cd Sophus
+mkdir build && cd build
+cmake ..
+make -j
+sudo make install
 
 编译
 
@@ -1896,16 +1910,16 @@ DWA和mpc估计都不合适，回归原始分段旋转和走直线
 ubuntu统一密码：12345678
 anydesk远程桌面密码：wasd16807
 
-1号，我开发的机器人
+1号，我开发的机器人, anydesk 1368646866, 代码编译通过，测试通过
 2号，卢思仪（阮老师学生）开发的机器人,ubuntu 24.04已安装，anydesk 1 993 540 146，代码编译通过
-3号，未使用，ubuntu 24.04已安装，
-4号，未使用，ubuntu 24.04已安装，anydesk 1 740 904 283
-5号，未使用，ubuntu 24.04已安装，
-6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，
-7号，未使用，ubuntu 24.04已安装，
-8号，未使用，ubuntu 24.04已安装，
+3号，未使用，ubuntu 24.04已安装，anydesk 256161678,
+4号，未使用，ubuntu 24.04已安装，anydesk 1740904283，代码编译通过
+5号，未使用，ubuntu 24.04已安装，anydesk 1938673472, 
+6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，anydesk 1290869105, 
+7号，未使用，ubuntu 24.04已安装，anydesk 1751341772, 
+8号，未使用，ubuntu 24.04已安装，anydesk 1211647490,
 9号，未使用，缺一根激光雷达到USB的信号线
-10号，未使用，ubuntu 24.04已安装，
+10号，未使用，ubuntu 24.04已安装，anydesk 1411331609, 
 11号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常
 12号，激光雷达不工作, 缺一根底盘和机器人之间的信号线
 

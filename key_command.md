@@ -65,6 +65,43 @@ sudo gedit /etc/gdm3/custom.conf
 
 sudo systemctl restart gdm3
 
+安装 ecl_build
+
+sudo apt install ros-jazzy-ecl-build
+
+安装 sophus
+
+sudo apt install ros-jazzy-sophus
+
+或者
+
+git clone https://github.com/strasdat/Sophus.git
+cd Sophus
+mkdir build && cd build
+cmake ..
+make -j
+sudo make install
+
+这样的话，ecl_build，ecl_core/ecl_linear_algebra(下面三个cmakelist都要加)，ecl_geometry, ecl_statistics
+
+cmakelist添加以下代码使用C++ 17
+## 使用 C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
+* 安装科学上网
+
+https://hiddify.zip/ 下载hiddify
+
+chmod +x hiddify-linux-x64.AppImage
+
+解决“指定的像素格式没有可用的设置”
+./Hiddify-Linux-x64.AppImage --appimage-extract
+
+
+
 安装colcon，ros2编译工具
 sudo apt install colcon
 
@@ -227,6 +264,9 @@ sudo gedit /etc/gdm3/custom.conf
 
 取消注释 WaylandEnable=False
 
+然后重启gdm3
+sudo systemctl restart gdm3
+
 ## 2, 安装ros2
 sudo apt install software-properties-common
 
@@ -347,6 +387,18 @@ cmake ..
 make -j4
 sudo make install
 
+## 安装Pangolin
+
+git clone git@github.com:stevenlovegrove/Pangolin.git
+
+sudo apt-get install libglew-dev
+sudo apt-get install libboost-dev libboost-thread-dev libboost-filesystem-dev
+cd Pangolin
+mkdir build
+cd build
+cmake ..
+make -j2
+sudo make install
 
 ## 安装 Qt5 Charts
 sudo apt-get install libqt5charts5-dev
@@ -374,6 +426,11 @@ sudo apt install -y libepoxy-dev
 ## 安装diagnostic-updater
 sudo apt install ros-jazzy-diagnostic-updater
 
+代码安装 
+
+git clone git@github.com:ros/diagnostics.git
+
+放到ros2_ws/src目录下
 
 将ecl等依赖包解压到ros2_ws/src目录下
 
