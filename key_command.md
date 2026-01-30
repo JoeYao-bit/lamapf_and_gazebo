@@ -387,6 +387,10 @@ cmake ..
 make -j4
 sudo make install
 
+
+安装epoxy
+sudo apt install -y libepoxy-dev
+
 ## 安装Pangolin
 
 git clone git@github.com:stevenlovegrove/Pangolin.git
@@ -419,6 +423,18 @@ build通过并make install
 git submodule update --init
 
 参考LayeredMAPF的readme安装依赖
+
+## 安装 argparse
+
+git clone git@github.com:p-ranav/argparse.git
+cd argparse
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+sudo make install
+
+更新头文件缓存（如果需要）
+sudo ldconfig
 
 ## 安装epoxy
 sudo apt install -y libepoxy-dev
