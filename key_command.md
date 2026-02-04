@@ -306,6 +306,40 @@ source /opt/ros/jazzy/setup.bash
 echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 
+(找不到ros-jazzy试试下面的方法)
+
+# 方案1：清华源+跳过SSL验证（最可能成功）
+sudo rm -f /etc/apt/sources.list.d/ros2.list
+sudo rm -f /etc/apt/apt.conf.d/99-* 2>/dev/null
+
+echo 'Acquire::https::Verify-Peer "false";' | sudo tee /etc/apt/apt.conf.d/99-no-ssl
+echo 'Acquire::https::Verify-Host "false";' | sudo tee -a /etc/apt/apt.conf.d/99-no-ssl
+
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/ros2.list
+
+sudo apt update
+
+# 查看是否成功
+apt-cache search ros-jazzy 2>/dev/null | head -5
+
+# 方案1：清华源+跳过SSL验证（最可能成功）
+sudo rm -f /etc/apt/sources.list.d/ros2.list
+sudo rm -f /etc/apt/apt.conf.d/99-* 2>/dev/null
+
+echo 'Acquire::https::Verify-Peer "false";' | sudo tee /etc/apt/apt.conf.d/99-no-ssl
+echo 'Acquire::https::Verify-Host "false";' | sudo tee -a /etc/apt/apt.conf.d/99-no-ssl
+
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/ros2.list
+
+sudo apt update
+
+## bashrc
+
+source /opt/ros/jazzy/setup.bash
+source /home/wangweilab/ros2_ws/install/setup.bash
+
+# 查看是否成功
+apt-cache search ros-jazzy 2>/dev/null | head -5
 
 ## 3，安装opencv
 sudo apt update
@@ -388,7 +422,7 @@ make -j4
 sudo make install
 
 
-安装epoxy
+## 安装epoxy
 sudo apt install -y libepoxy-dev
 
 ## 安装Pangolin
@@ -422,9 +456,27 @@ build通过并make install
 ## 更新子仓库
 git submodule update --init
 
+## 安装octomap
+
+sudo apt-get install liboctomap-dev
+
+或
+
+git clone git@github.com:OctoMap/octomap.git
+cd octomap/octomap
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+
 参考LayeredMAPF的readme安装依赖
 
 ## 安装 argparse
+
+sudo apt install libargparse-dev
+
+或
 
 git clone git@github.com:p-ranav/argparse.git
 cd argparse
