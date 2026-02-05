@@ -842,14 +842,21 @@ MAPF计划执行的两种不确定性：
 1, 安装ubuntu 24.04
 2, 安装ros2
 sudo apt install software-properties-common
+
 sudo add-apt-repository universe
+
 sudo apt update
+
 sudo apt install curl gnupg lsb-release -y
+
 sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 sudo apt update  # 更新包管理器的本地软件包索引
+
 sudo apt upgrade -y # 根据 apt update 更新的软件包列表，查找当前安装包是否有新版本，并升级到最新版本
+
 sudo apt install ros-jazzy-desktop -y  # 安装 ROS 2 Jazzy 的桌面版本，包含可视化工具 RViz 等
 
 sudo apt install ros-jazzy-ros-base -y
@@ -906,8 +913,23 @@ https://hiddify.zip/ 下载hiddify
 
 chmod +x hiddify-linux-x64.AppImage
 
+解决“指定的像素格式没有可用的设置”
+./Hiddify-Linux-x64.AppImage --appimage-extract
+
+
+
 安装fuse2
 sudo apt install libfuse2
+
+安装git
+
+sudo apt install git
+
+ssh初始化
+
+ssh-keygen -t rsa -C "1521232476@qq.com"
+
+然后复制pub key添加的到github的ssh中，使得可以clone代码
 
 9, 安装LayeredMAPF
 git clone git@github.com:JoeYao-bit/LayeredMAPF.git
@@ -952,12 +974,10 @@ export ROS_DOMAIN_ID=0
 
 在每台电脑的 ~/.bashrc 中添加：
 
-export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export ROS_LOCALHOST_ONLY=0
-
 ROS_LOCALHOST_ONLY=0：允许通过局域网通信（否则只在本机上）
 
-rmw_fastrtps_cpp 是默认的 DDS 实现，也可以换成 rmw_cyclonedds_cpp（通信效果更稳定）
+即可实现跨平台同一wifi下通信
 
 4️⃣ 测试 listener/talker
 
@@ -1007,7 +1027,21 @@ sudo apt install ros-jazzy-ecl-build
 
 sudo apt install ros-jazzy-sophus
 
+或者
+
+git clone https://github.com/strasdat/Sophus.git
+cd Sophus
+mkdir build && cd build
+cmake ..
+make -j
+sudo make install
+
 编译
+
+安装colcon
+
+sudo apt install colcon
+
 
 colcon build --cmake-args -DCMAKE_CXX_FLAGS="-Wno-error=overloaded-virtual"
 
@@ -1859,3 +1893,70 @@ DWA和mpc估计都不合适，回归原始分段旋转和走直线
 换成分段控制器后，虽然走得不够顺，但单机器人跑完了简单任务
 
 但途中还是有无意义原地旋转，需要排查原因
+
+12-11 21-11
+解决了坐标系转换引入了错误角度后
+
+单机器人在mapf框架下完成了一点到另一点的行走，但效果不是特别好，伴随可能的卡壳（完成一个栅格后停下等待通信）
+
+
+12-29 
+测试到底有多少机器人是好的，可用微型主机连接调试
+
+每个机器人贴上数字标签，便于区分好坏
+
+标签从1开始，预期找到至少10台机器人
+
+ubuntu统一密码：12345678
+anydesk远程桌面密码：wasd16807
+
+1号，我开发的机器人, anydesk 1368646866, 代码编译通过，测试通过，传感器数据、运动控制正常
+2号，卢思仪（阮老师学生）开发的机器人,ubuntu 24.04已安装，anydesk 1 993 540 146，代码编译通过
+3号，未使用，ubuntu 24.04已安装，anydesk 256161678,代码编译通过
+4号，未使用，ubuntu 24.04已安装，anydesk 1740904283，代码编译通过
+5号，未使用，ubuntu 24.04已安装，anydesk 1938673472, 代码编译通过
+6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，anydesk 1290869105, 代码编译通过
+7号，未使用，ubuntu 24.04已安装，anydesk 1751341772,代码编译通过，传感器数据、运动控制正常
+8号，未使用，ubuntu 24.04已安装，anydesk 1211647490,代码编译通过，传感器数据、运动控制正常
+9号，未使用，缺一根激光雷达到USB的信号线
+10号，未使用，ubuntu 24.04已安装，anydesk 1411331609, 代码编译通过
+11号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常
+12号，激光雷达不工作, 缺一根底盘和机器人之间的信号线
+
+各个机器人的硬件ID似乎完全相同，因此不需要手动再配置USB接口，复制即可
+
+b112新加wifi
+名称：TP-LINK_C9C9
+密码：无
+管理员密码：12345678 
+
+取消勾选802加速什么的（？）这一条导致wifi不可用！！！
+
+wifi路由器连通下跨平台通信测试通过
+
+# 260122 
+单机器人本地运行中央控制器测试通过
+
+尝试测试远端中央控制，本地局部控制。
+
+测试通信
+
+4️⃣ 测试 listener/talker
+
+A 机：
+
+ros2 run demo_nodes_cpp talker
+
+B 机：
+
+ros2 run demo_nodes_cpp listener
+
+一端发送另一端能收到，说明跨平台通信成功
+
+远端中央控制，测试通过
+
+但需要远端启动rviz，并导入地图
+
+接下来，在远端启动中央控制器，输入目标位置，并规划路径；然后局部控制器执行
+
+威嵌沃微型主机 点按delete进入bios，以进行U盘启动
