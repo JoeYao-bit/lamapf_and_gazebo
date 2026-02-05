@@ -27,7 +27,7 @@ def generate_launch_description():
 
     declare_map_cmd = DeclareLaunchArgument(
         'map',
-        default_value='/home/wangweilab/my_map.yaml',
+        default_value='/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map_2602052038.yaml',
         description='Full path to map file')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
