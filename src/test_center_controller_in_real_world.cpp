@@ -13,13 +13,15 @@
 
 // control single agent move to its target
 
+
+
 class OneShotGoalListener : public rclcpp::Node
 {
 public:
     OneShotGoalListener(std::string node_name) : Node(node_name)
     {
         sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/robot0/goal_pose", 10,
+            "goal_pose", 10,
             std::bind(&OneShotGoalListener::goalCallback, this, std::placeholders::_1));
 
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -58,7 +60,7 @@ private:
         try {
             // 获取最新 transform，阻塞最多2秒
             auto transformStamped = tf_buffer_->lookupTransform(
-                "map", "robot0/base_footprint", tf2::TimePointZero,
+                "map", "base_footprint", tf2::TimePointZero,
                 std::chrono::seconds(2));
 
             start_[0] = transformStamped.transform.translation.x;
@@ -161,6 +163,11 @@ POSE_TO_PTF_FUNC CenteralControllerNew::pose_to_ptf_func_;
 int main(int argc, char ** argv) {
     
     rclcpp::init(argc, argv);
+
+    int agent_id = 0;
+    if (argc > 1) {
+        agent_id = std::stoi(argv[1]);
+    }
 
     // set config for using of PtfToGridPicOnly
     dim[0] = dim_local[0];
@@ -272,10 +279,12 @@ int main(int argc, char ** argv) {
     // create local control node
 
     auto agent_control_node = std::make_shared<LocalController>(agent_ptr, line_ctl, 1, time_interval,
-                                                                "/robot0/amcl_pose",
-                                                                "/robot0/local_goal",
-                                                                "/robot0/scan",
-                                                                "/robot0/commands/velocity");  
+                                                                "amcl_pose",
+                                                                "local_goal",
+                                                                "scan",
+                                                                "commands/velocity",
+                                                                "",
+                                                                agent_id);  
                                                         
 
     executor.add_node(agent_control_node);

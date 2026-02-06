@@ -11,7 +11,7 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
-    robot_ns = 'robot0'
+    robot_ns = 'robot7'
     
     # LIDAR, remap ok
     lidar_node = IncludeLaunchDescription(
@@ -51,7 +51,7 @@ def generate_launch_description():
     static_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
-        arguments=['0','0','0','0','0','1','0',f'{robot_ns}/base_footprint',f'{robot_ns}/laser']
+        arguments=['0','0','0','0','0','0','1',f'{robot_ns}/base_footprint',f'{robot_ns}/laser']
     )
 
     # AMCL

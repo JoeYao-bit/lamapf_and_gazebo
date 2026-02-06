@@ -545,7 +545,8 @@ public:
                     std::string goal_topic = "",
                     std::string laser_topic = "",
                     std::string cmdvel_topic = "",
-                    std::string base_frame_id = ""):
+                    std::string base_frame_id = "",
+                    int agent_id = -1):
                      agent_(agent),
                      line_ctl_(line_ctl),
                      velcmd_(Pointf<3>{0,0,0}),
@@ -566,10 +567,18 @@ public:
         tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
         std::stringstream ss3;
-        if(goal_topic == "") {
-            ss3 << "/robot" << agent_->id_ << "/local_goal"; 
+        if(agent_id == -1) {
+            if(goal_topic == "") {
+                ss3 << "/robot" << agent_->id_ << "/local_goal"; 
+            } else {
+                ss3 << goal_topic;
+            }
         } else {
-            ss3 << goal_topic;
+            if(goal_topic == "") {
+                ss3 << "/robot" << agent_id << "/local_goal"; 
+            } else {
+                ss3 << goal_topic;
+            }
         }
         RCLCPP_INFO(this->get_logger(), "Agent %i's pose sub goal topic name %s", agent_->id_, ss3.str().c_str());
 
@@ -676,13 +685,23 @@ public:
 
         cmd_vel_publisher_ =  this->create_publisher<geometry_msgs::msg::Twist>(ss6.str(), 10);
 
-        if(base_frame_id == "") {
-            int agent_id = agent_->id_;
-            std::stringstream base_ss;
-            base_ss << "robot" << agent_id << "/base_footprint";
-            base_frame_id_ = base_ss.str();
+        if(agent_id == -1) {
+            if(base_frame_id == "") {
+                int local_agent_id = agent_->id_;
+                std::stringstream base_ss;
+                base_ss << "robot" << local_agent_id << "/base_footprint";
+                base_frame_id_ = base_ss.str();
+            } else {
+                base_frame_id_ = base_frame_id;
+            }
         } else {
-            base_frame_id_ = base_frame_id;
+            if(base_frame_id == "") {
+                std::stringstream base_ss;
+                base_ss << "robot" << agent_id << "/base_footprint";
+                base_frame_id_ = base_ss.str();
+            } else {
+                base_frame_id_ = base_frame_id;
+            }
         }
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this,time_interval,agent]() {
