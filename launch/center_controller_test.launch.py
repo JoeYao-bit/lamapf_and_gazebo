@@ -10,12 +10,12 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot_ns',
-            default_value='robot7'
+            default_value='robot0'
         ),
 
         DeclareLaunchArgument(
             'agent_id',
-            default_value='7'   # 👈 数字参数
+            default_value='0'   # 👈 数字参数
         ),
 
         Node(
