@@ -122,8 +122,9 @@ bool CenteralController::need_replan_ = false;
 
 
 // load map
-PictureLoader loader_local("/home/yaozhuo/my_map.pgm", is_grid_occupied_pgm);
-std::string yaml_file_path = "/home/yaozhuo/my_map.yaml";
+std::string map_name = "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map_2602052038_plan";
+PictureLoader loader_local(map_name+".pgm", is_grid_occupied_pgm);
+std::string yaml_file_path = map_name+".yaml";
 
 DimensionLength* dim_local = loader_local.getDimensionInfo();
 
