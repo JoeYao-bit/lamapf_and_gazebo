@@ -209,7 +209,14 @@ ros2 run tf2_tools view_frames
 
 安装地图服务器
 
-sudo apt install ros-jazzy-nav2-map-server
+
+sudo apt install ros-jazzy-nav2-map-server \
+                 ros-jazzy-nav2-behavior-tree \
+                 ros-jazzy-nav2-planner \
+                 ros-jazzy-nav2-amcl \
+                 ros-jazzy-nav2-lifecycle-manager \
+                 ros-jazzy-nav2-map-server 
+
 
 ros2 run nav2_map_server map_saver_cli -f ~/my_map
 

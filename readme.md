@@ -1916,14 +1916,19 @@ anydesk远程桌面密码：wasd16807
 4号，未使用，ubuntu 24.04已安装，anydesk 1740904283，代码编译通过
 5号，未使用，ubuntu 24.04已安装，anydesk 1938673472, 代码编译通过
 6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，anydesk 1290869105, 代码编译通过
-7号，未使用，ubuntu 24.04已安装，anydesk 1751341772,代码编译通过，传感器数据、运动控制正常
-8号，未使用，ubuntu 24.04已安装，anydesk 1211647490,代码编译通过，传感器数据、运动控制正常
+7号，未使用，ubuntu 24.04已安装，anydesk 1751341772,代码编译通过，传感器数据、运动控制正常，相机反向
+8号，未使用，ubuntu 24.04已安装，anydesk 1211647490,代码编译通过，传感器数据、运动控制正常，相机反向
 9号，未使用，缺一根激光雷达到USB的信号线g
 10号，未使用，ubuntu 24.04已安装，anydesk 1411331609, 代码编译通过
 11号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常
 12号，激光雷达不工作, 缺一根底盘和机器人之间的信号线
 
 各个机器人的硬件ID似乎完全相同，因此不需要手动再配置USB接口，复制即可
+
+相机反向时需要调整ros2 launch lamapf_and_gazebo localization_full.launch.py
+中关于相机到本体transform的参数
+
+        arguments=['0','0','0','0','0','0','1',f'{robot_ns}/base_footprint',f'{robot_ns}/laser']
 
 b112新加wifi
 名称：TP-LINK_C9C9
@@ -1961,8 +1966,40 @@ ros2 run demo_nodes_cpp listener
 
 威嵌沃微型主机 点按delete进入bios，以进行U盘启动
 
+安装 vscode
+
+sudo apt update
+
+sudo apt install -y wget gpg
+
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
+| gpg --dearmor \
+| sudo tee /usr/share/keyrings/packages.microsoft.gpg > /dev/null
+
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] \
+https://packages.microsoft.com/repos/code stable main" \
+| sudo tee /etc/apt/sources.list.d/vscode.list
+
+sudo apt update
+
+sudo apt install -y code
 
 
 # 260205
 
 全机器人代码编译通过，一号机b112地图创建，定位测试成功
+
+准备单个机器人逐一测试规划与运动控制功能
+
+1号机b112地图，中央控制器导航测试通过
+
+8号机b112地图，中央控制器导航测试通过
+
+7号机b112地图，中央控制器导航测试通过
+
+改内置robot id，包括rviz订阅话题(rviz界面内修改)，localization_full.launch.py, center_controller_test.launch.py中参数也要改动，改机器人的id
+
+
+拍摄几个机器人一起运动视频
+记录rviz上几个机器人一起运动的录像
+实验数据，不同起点终点

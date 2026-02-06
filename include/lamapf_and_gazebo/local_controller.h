@@ -545,11 +545,10 @@ public:
                     std::string goal_topic = "",
                     std::string laser_topic = "",
                     std::string cmdvel_topic = "",
-                    std::string base_frame_id = "",
-                    int agent_id = -1):
+                    std::string base_frame_id = ""):
                      agent_(agent),
                      line_ctl_(line_ctl),
-                     velcmd_(Pointf<3>{0,0,0}),agent_id_(agent_id),
+                     velcmd_(Pointf<3>{0,0,0}),
                      Node((std::string("agent_")+std::to_string(agent->id_)).c_str()) {
 
 
@@ -568,14 +567,14 @@ public:
 
         std::stringstream ss3;
 
-        ss3 << "/robot" << agent_id << goal_topic;
+        ss3 << goal_topic;
 
         RCLCPP_INFO(this->get_logger(), "Agent %i's pose sub goal topic name %s", agent_->id_, ss3.str().c_str());
 
         goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
                 ss3.str().c_str(), 2*all_agent_size,
                 [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
-                    if(msg->agent_id == agent_id_) {    
+                    if(msg->agent_id == agent_->id_) {    
                         start_ptf_[0]  = msg->start_x;    
                         start_ptf_[1]  = msg->start_y;    
                         start_ptf_[2]  = msg->start_yaw;    
@@ -675,24 +674,14 @@ public:
 
         cmd_vel_publisher_ =  this->create_publisher<geometry_msgs::msg::Twist>(ss6.str(), 10);
 
-        if(agent_id == -1) {
-            if(base_frame_id == "") {
-                int local_agent_id = agent_->id_;
-                std::stringstream base_ss;
-                base_ss << "robot" << local_agent_id << "/base_footprint";
-                base_frame_id_ = base_ss.str();
-            } else {
-                base_frame_id_ = base_frame_id;
-            }
+        if(base_frame_id == "") {
+            std::stringstream base_ss;
+            base_ss << "robot" << agent_->id_ << "/base_footprint";
+            base_frame_id_ = base_ss.str();
         } else {
-            if(base_frame_id == "") {
-                std::stringstream base_ss;
-                base_ss << "robot" << agent_id << "/base_footprint";
-                base_frame_id_ = base_ss.str();
-            } else {
-                base_frame_id_ = base_frame_id;
-            }
+            base_frame_id_ = base_frame_id;
         }
+        
         RCLCPP_INFO(this->get_logger(), "Agent %i's base_frame_id_ %s", agent_->id_, base_frame_id_.c_str());
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this,time_interval,agent]() {
@@ -975,8 +964,6 @@ public:
 
     int count_of_iter_ = 0;
     
-    int agent_id_ = 0;
-
 };
 
 

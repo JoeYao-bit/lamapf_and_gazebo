@@ -282,9 +282,7 @@ int main(int argc, char ** argv) {
                                                                 "amcl_pose",
                                                                 "local_goal",
                                                                 "scan",
-                                                                "commands/velocity",
-                                                                "",
-                                                                agent_id);  
+                                                                "commands/velocity");  
                                                         
 
     executor.add_node(agent_control_node);
