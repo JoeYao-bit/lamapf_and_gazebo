@@ -11,7 +11,7 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
-    robot_ns = 'robot7'
+    robot_ns = 'robot0'
     
     # LIDAR, remap ok
     lidar_node = IncludeLaunchDescription(
