@@ -118,6 +118,11 @@ target_link_libraries(test_center_controller_multiple_agent ${EXTERNAL_LIBS} yam
 ament_target_dependencies(test_center_controller_multiple_agent ${dependencies})
 install(TARGETS test_center_controller_multiple_agent DESTINATION lib/${PROJECT_NAME})
 
+add_executable(test_raise_local_controller src/test_raise_local_controller.cpp)
+target_link_libraries(test_raise_local_controller ${EXTERNAL_LIBS} yaml-cpp)
+ament_target_dependencies(test_raise_local_controller ${dependencies})
+install(TARGETS test_raise_local_controller DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

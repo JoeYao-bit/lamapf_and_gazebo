@@ -2012,3 +2012,12 @@ ros2 run lamapf_and_gazebo test_center_controller_multiple_agent
 发布静态transform测试
 
  ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 1 0 map robot0/base_footprint
+
+启动单个机器人局部控制器
+ros2 run lamapf_and_gazebo test_raise_local_controller
+
+从launch启动
+
+ros2 launch lamapf_and_gazebo load_local_controller.launch.py >  my_node.log 2>&1
+
+ros2 launch lamapf_and_gazebo load_local_controller.launch.py 
