@@ -113,6 +113,11 @@ target_link_libraries(test_dwa_local_planner ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(test_dwa_local_planner ${dependencies})
 install(TARGETS test_dwa_local_planner DESTINATION lib/${PROJECT_NAME})
 
+add_executable(test_center_controller_multiple_agent src/test_center_controller_multiple_agent.cpp)
+target_link_libraries(test_center_controller_multiple_agent ${EXTERNAL_LIBS} yaml-cpp)
+ament_target_dependencies(test_center_controller_multiple_agent ${dependencies})
+install(TARGETS test_center_controller_multiple_agent DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

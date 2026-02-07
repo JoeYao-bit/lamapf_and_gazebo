@@ -2003,3 +2003,12 @@ sudo apt install -y code
 拍摄几个机器人一起运动视频
 记录rviz上几个机器人一起运动的录像
 实验数据，不同起点终点
+
+
+测试中央控制器，从加载文本多个机器人终点，实时获取各个机器人起点
+
+ros2 run lamapf_and_gazebo test_center_controller_multiple_agent
+
+发布静态transform测试
+
+ ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 1 0 map robot0/base_footprint
