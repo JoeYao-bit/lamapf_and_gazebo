@@ -15,7 +15,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             'agent_id',
-            default_value='7'   # 👈 数字参数
+            default_value='0'   # 👈 数字参数
         ),
 
         Node(
