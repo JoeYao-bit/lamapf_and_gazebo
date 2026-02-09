@@ -240,7 +240,7 @@ int main(int argc, char ** argv) {
 
 
     // TODO: load start from text file
-    std::vector<Pointf<3> > targets = loadTargets(std::string("/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/config/target_config.txt"));
+    std::vector<Pointf<3> > targets = loadTargets(std::string(pkg_path+"/config/target_config.txt"));
 
     //return 0;
 

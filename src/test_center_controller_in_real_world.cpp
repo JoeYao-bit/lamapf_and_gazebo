@@ -124,7 +124,7 @@ bool CenteralController::need_replan_ = false;
 
 
 // load map
-std::string map_name = "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map_2602052038_plan";
+std::string map_name = pkg_path+"/map/my_map_2602052038_plan";
 PictureLoader loader_local(map_name+".pgm", is_grid_occupied_pgm);
 std::string yaml_file_path = map_name+".yaml";
 
