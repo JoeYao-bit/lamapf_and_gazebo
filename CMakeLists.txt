@@ -12,11 +12,22 @@ launch
 DESTINATION share/${PROJECT_NAME}/
 )
 
+install(DIRECTORY
+world
+DESTINATION share/${PROJECT_NAME}/
+)
+
+install(DIRECTORY
+map
+DESTINATION share/${PROJECT_NAME}/
+)
+
 message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 message(STATUS "AMENT_PREFIX_PATH: $ENV{AMENT_PREFIX_PATH}")
 install(
   DIRECTORY config/
   DESTINATION share/${PROJECT_NAME}/config
+
 )
 
 

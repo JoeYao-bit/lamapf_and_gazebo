@@ -18,7 +18,7 @@
 
 
 // load map
-std::string map_name = pkg_path+"map/my_map_2602052038_plan";
+std::string map_name = pkg_path+"/map/my_map_2602052038_plan";
 
 PictureLoader loader_local(map_name+".pgm", is_grid_occupied_pgm);
 
