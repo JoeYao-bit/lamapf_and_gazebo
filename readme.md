@@ -2009,6 +2009,9 @@ sudo apt install -y code
 
 ros2 run lamapf_and_gazebo test_center_controller_multiple_agent
 
+
+参数文件中有几组终点点，则中央控制器会尝试获取几个机器人的当前位置作为起点并进行控制
+
 发布静态transform测试
 
  ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 1 0 map robot0/base_footprint
@@ -2039,3 +2042,14 @@ ros2 run demo_nodes_cpp talker
 B 机：
 
 ros2 run demo_nodes_cpp listener
+
+
+local planner接收起末点采用消息机制会丢消息，参考chatgpt换成服务
+
+🚫 和 topic 的本质区别（非常重要）
+特性	Topic	Service
+会不会丢	    ✅ 会	  ❌ 不会悄悄丢
+是否等待	    ❌ 不等	✅ 等
+是否有回复	  ❌ 没有	✅ 必须有
+适合起点终点	❌	      ✅
+适合触发规划	❌	      ✅
