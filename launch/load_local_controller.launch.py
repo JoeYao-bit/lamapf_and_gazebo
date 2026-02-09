@@ -10,7 +10,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot_ns',
-            default_value='robot7'
+            default_value='robot0'
         ),
 
         DeclareLaunchArgument(
