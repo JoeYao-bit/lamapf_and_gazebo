@@ -2027,3 +2027,15 @@ ros2 launch lamapf_and_gazebo load_local_controller.launch.py
 
 ros2 launch lamapf_and_gazebo localization_full.launch.py
 
+
+本地能接收到发布的局部目标，但机器人端接收不到
+ros2 topic echo /robot0/local_goal
+
+但下面这个能正常接收
+A 机：
+
+ros2 run demo_nodes_cpp talker
+
+B 机：
+
+ros2 run demo_nodes_cpp listener
