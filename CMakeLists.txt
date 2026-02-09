@@ -35,7 +35,7 @@ find_package(lamapf_and_gazebo_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
-
+find_package(ament_index_cpp REQUIRED)
 # dwa dependencies
 #find_package(pluginlib REQUIRED)
 #find_package(nav2_core REQUIRED)
@@ -63,7 +63,7 @@ include_directories(include
                     ${EIGEN3_INCLUDE_DIRS}   # 把 Eigen 头文件路径加进来
                     )
 
-set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs rclcpp_lifecycle
+set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs geometry_msgs lamapf_and_gazebo_msgs sensor_msgs rclcpp_lifecycle ament_index_cpp
 #pluginlib nav2_core nav2_costmap_2d dwb_core dwb_critics dwb_plugins nav_msgs nav2_controller nav2_msgs nav2_util
   )        
  

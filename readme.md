@@ -2021,3 +2021,9 @@ ros2 run lamapf_and_gazebo test_raise_local_controller
 ros2 launch lamapf_and_gazebo load_local_controller.launch.py >  my_node.log 2>&1
 
 ros2 launch lamapf_and_gazebo load_local_controller.launch.py 
+
+
+加载激光雷达，连接turtlebot，发布静态transform，启动定位，启动rviz
+
+ros2 launch lamapf_and_gazebo localization_full.launch.py
+
