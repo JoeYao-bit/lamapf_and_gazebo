@@ -30,7 +30,13 @@ int main(int argc, char ** argv) {
 
     rclcpp::init(argc, argv);
 
-    auto agent_ptr = std::make_shared<CircleAgent<2> >(0.2, 0, dim_local);
+    int agent_id = 0;
+
+    if (argc > 1) {
+        agent_id = std::stoi(argv[1]);
+    }
+
+    auto agent_ptr = std::make_shared<CircleAgent<2> >(0.2, agent_id, dim_local);
 
     double time_interval = 0.1;// s
 
@@ -43,11 +49,15 @@ int main(int argc, char ** argv) {
 
     // create local control node
 
+    std::stringstream ss;
+
+    ss << "/robot" << agent_id << "/";
+
     auto agent_control_node = std::make_shared<LocalController>(agent_ptr, line_ctl, 1, time_interval,
-                                                                "amcl_pose",
-                                                                "local_goal",
-                                                                "scan",
-                                                                "commands/velocity");  
+                                                                ss.str()+"amcl_pose",
+                                                                ss.str()+"local_goal",
+                                                                ss.str()+"scan",
+                                                                ss.str()+"commands/velocity");  
                                                         
 
     executor.add_node(agent_control_node);
