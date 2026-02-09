@@ -296,7 +296,7 @@ int main(int argc, char ** argv) {
 
     }
 
-    return 0; // AC till here
+    //return 0; // AC till here
 
     POSE_TO_PTF_FUNC ptpfunc = [ox, oy, otheta, reso_local, dim_local](const Pose<int, 2>& pose) -> Pointf<3> {
         Pointf<3> retv;
