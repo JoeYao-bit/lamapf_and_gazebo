@@ -51,7 +51,7 @@ def generate_launch_description():
     static_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
-        arguments=['0','0','0','0','0','0','1',f'{robot_ns}/base_footprint',f'{robot_ns}/laser']
+        arguments=['0','0','0','0','0','1','0',f'{robot_ns}/base_footprint',f'{robot_ns}/laser']
     )
 
     # AMCL

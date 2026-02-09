@@ -59,6 +59,7 @@
 #include <Eigen/Cholesky>
 #include "sensor_msgs/msg/laser_scan.hpp"
 
+
 //#include "path_execution.hpp"
 using std::placeholders::_1;
 
@@ -82,19 +83,19 @@ bool draw_path = true;
 bool draw_full_path = true;
 bool draw_visit_grid_table = false;
 
-SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
-{
-        {"map_name",     "LargeOfficeEnv"},
-        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
-        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
-};
+// SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
+// {
+//         {"map_name",     "LargeOfficeEnv"},
+//         {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white.png"},
+//         {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office.txt"},
+// };
 
-SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
-{
-        {"map_name",     "LargeOfficeEnvSeccond"},
-        {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white_second.png"},
-        {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_second.txt"},
-};
+// SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
+// {
+//         {"map_name",     "LargeOfficeEnvSeccond"},
+//         {"map_path",     "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_white_second.png"},
+//         {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/map_large_office_second.txt"},
+// };
 
 // SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
 // {
@@ -103,19 +104,22 @@ SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
 //         {"la_ins_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
 // };
 
+std::string pkg_path =
+    ament_index_cpp::get_package_share_directory("lamapf_and_gazebo");
+
 SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
 {
         {"map_name",     "IndustrialWarehouse"},
-        {"map_path",     "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.png"},
-        {"la_ins_path", "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/map/industrial_warehouse_white.txt"},
+        {"map_path",     pkg_path+"/world/map/industrial_warehouse_white.png"},
+        {"la_ins_path",  pkg_path+"/world/map/industrial_warehouse_white.txt"},
 };
 
-std::map<std::string, std::string> demoMapYaml = {
-        {"map_name",       "demo"},
-        {"map_path",       "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map.pgm"},
-        {"la_ins_path",    "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map_ins.txt"},
-        {"yaml_file_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map.yaml"}
-};
+// std::map<std::string, std::string> demoMapYaml = {
+//         {"map_name",       "demo"},
+//         {"map_path",       "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map.pgm"},
+//         {"la_ins_path",    "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map_ins.txt"},
+//         {"yaml_file_path", "/home/wangweilab/ros2_ws/src/lamapf_and_gazebo/map/my_map.yaml"}
+// };
 
 //std::string map_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.png";
 //std::string ins_path_pic = "/home/yaozhuo/code/ros2_ws/src/large_agent_mapf/world/map/map_large_office.scen";
