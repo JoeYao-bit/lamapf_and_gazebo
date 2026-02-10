@@ -4,7 +4,8 @@
 #include "common_interfaces.h"
 #include "dwa_local_controller.h"
 
-
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 // there are two kinds of controller, follow a line and rotate
 class LineFollowController {
@@ -571,31 +572,38 @@ public:
 
         RCLCPP_INFO(this->get_logger(), "Agent %i's pose sub goal topic name %s", agent_->id_, ss3.str().c_str());
 
-        goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
-                ss3.str().c_str(), 2*all_agent_size,
-                [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
-                    if(msg->agent_id == agent_->id_) {    
-                        start_ptf_[0]  = msg->start_x;    
-                        start_ptf_[1]  = msg->start_y;    
-                        start_ptf_[2]  = msg->start_yaw;    
-                        target_ptf_[0] = msg->target_x;    
-                        target_ptf_[1] = msg->target_y;    
-                        target_ptf_[2] = msg->target_yaw;  
-                        wait_          = msg->wait;
 
-                        line_ctl_->reset();
+        // 创建 service
+        receive_goal_service_ = this->create_service<lamapf_and_gazebo_msgs::srv::LocalGoal>(
+            goal_topic,   // service 名字
+            std::bind(&LocalController::handleRequest, this, _1, _2)
+        );
 
-                        finished_ = false;
+        // goal_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>(
+        //         ss3.str().c_str(), 2*all_agent_size,
+        //         [this](lamapf_and_gazebo_msgs::msg::UpdateGoal::SharedPtr msg) {
+        //             if(msg->agent_id == agent_->id_) {    
+        //                 start_ptf_[0]  = msg->start_x;    
+        //                 start_ptf_[1]  = msg->start_y;    
+        //                 start_ptf_[2]  = msg->start_yaw;    
+        //                 target_ptf_[0] = msg->target_x;    
+        //                 target_ptf_[1] = msg->target_y;    
+        //                 target_ptf_[2] = msg->target_yaw;  
+        //                 wait_          = msg->wait;
+
+        //                 line_ctl_->reset();
+
+        //                 finished_ = false;
                         
-                        line_ctl_->pt1_ = start_ptf_;
-                        line_ctl_->pt2_ = target_ptf_;
+        //                 line_ctl_->pt1_ = start_ptf_;
+        //                 line_ctl_->pt2_ = target_ptf_;
 
-                        std::stringstream ss2;
-                        ss2 << "in LocalController, receive goal, agent_" << agent_->id_ << " ";
-                        ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
-                        RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
-                    }
-                });
+        //                 std::stringstream ss2;
+        //                 ss2 << "in LocalController, receive goal, agent_" << agent_->id_ << " ";
+        //                 ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
+        //                 RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
+        //             }
+        //         });
 
 
         std::stringstream ss4;
@@ -784,6 +792,36 @@ public:
         
     }
 
+
+    void handleRequest(
+        const std::shared_ptr<lamapf_and_gazebo_msgs::srv::LocalGoal::Request> request,
+        std::shared_ptr<lamapf_and_gazebo_msgs::srv::LocalGoal::Response> response)
+    {
+ 
+        start_ptf_[0]  = request->start_x;    
+        start_ptf_[1]  = request->start_y;    
+        start_ptf_[2]  = request->start_yaw;    
+        target_ptf_[0] = request->goal_x;    
+        target_ptf_[1] = request->goal_y;    
+        target_ptf_[2] = request->goal_yaw;  
+        wait_          = request->wait;
+
+        line_ctl_->reset();
+
+        finished_ = false;
+        
+        line_ctl_->pt1_ = start_ptf_;
+        line_ctl_->pt2_ = target_ptf_;
+
+        std::stringstream ss2;
+        ss2 << "in LocalController, receive goal, agent_" << agent_->id_ << " ";
+        ss2 << start_ptf_ << "->" << target_ptf_ << ", wait = " << wait_;
+        RCLCPP_INFO(this->get_logger(), ss2.str().c_str());
+
+        response->success = true;
+        
+    }
+
     // whether the agent will collide with obstacle if rotate
     // check via laserscan
     // std_msgs/Header header
@@ -934,7 +972,9 @@ public:
 
     TwoPhaseLineFollowControllerPtr line_ctl_;
 
-    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_subscriber_;
+    //rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr goal_subscriber_;
+
+    rclcpp::Service<lamapf_and_gazebo_msgs::srv::LocalGoal>::SharedPtr receive_goal_service_;
 
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_subscriber_;
 

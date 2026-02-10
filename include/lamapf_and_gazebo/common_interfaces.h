@@ -59,7 +59,11 @@
 #include <Eigen/Cholesky>
 #include "sensor_msgs/msg/laser_scan.hpp"
 
+#include "lamapf_and_gazebo_msgs/srv/local_goal.hpp"
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
+
+
 //#include "path_execution.hpp"
 using std::placeholders::_1;
 

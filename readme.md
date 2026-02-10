@@ -2019,6 +2019,8 @@ ros2 run lamapf_and_gazebo test_center_controller_multiple_agent
 启动单个机器人局部控制器
 ros2 run lamapf_and_gazebo test_raise_local_controller
 
+机器人id固定从0开始，0,1,2,3,4...
+
 从launch启动
 
 ros2 launch lamapf_and_gazebo load_local_controller.launch.py >  my_node.log 2>&1

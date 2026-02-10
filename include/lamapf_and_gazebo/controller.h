@@ -812,11 +812,26 @@ public:
         // NOTICE: cache queue size must be large enough to cache all agent's pose or goal
         // otherwise some msg will be ignored
 
+
         for(int i=0; i<instances.first.size(); i++) {
             std::stringstream ss3;
             ss3 << "/robot" << i << "/local_goal";
-            goal_publishers_.push_back(
-                this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>(ss3.str().c_str(), 2*instances.first.size()));
+
+            // goal_publishers_.push_back(
+            //     this->create_publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>(ss3.str().c_str(), 2*instances.first.size()));
+
+            auto client = this->create_client<lamapf_and_gazebo_msgs::srv::LocalGoal>(ss3.str());
+
+            RCLCPP_INFO(this->get_logger(), "Waiting for local_goal service...");
+            while (!client->wait_for_service(std::chrono::seconds(1))) {
+                if (!rclcpp::ok()) {
+                    RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for service.");
+                    return;
+                }
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting...");
+            }
+
+            goal_pub_clients_.push_back(client);
         }
 
         pose_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>(
@@ -843,11 +858,21 @@ public:
                     need_replan_ = true;
                     // tell all agent to wait
                     for(int i=0; i<instances_.first.size(); i++) {
-                        lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
-                        msg.agent_id   = i;
-                        msg.wait       = true;
+
+                        // lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                        // msg.agent_id   = i;
+                        // msg.wait       = true;
                         
-                        goal_publishers_[i]->publish(msg); 
+                        // goal_publishers_[i]->publish(msg); 
+
+                        auto request = std::make_shared<lamapf_and_gazebo_msgs::srv::LocalGoal::Request>();
+
+                        request->wait = true;
+
+                        auto future = goal_pub_clients_[i]->async_send_request(
+                            request,
+                            std::bind(&CenteralControllerNew::responseCallback, this, std::placeholders::_1)
+                        );
                     }
                 });               
         
@@ -882,6 +907,20 @@ public:
 
     }
 
+
+    void responseCallback(rclcpp::Client<lamapf_and_gazebo_msgs::srv::LocalGoal>::SharedFuture future)
+    {
+        auto response = future.get();
+
+        if (response->success) {
+            RCLCPP_INFO(this->get_logger(),
+                        "Service success");
+        } else {
+            RCLCPP_WARN(this->get_logger(),
+                        "Service failed");
+        }
+    }
+
     void pubInitialGoals() {
         // pub all agent's first goal
         for(int i=0; i<instances_.first.size(); i++) {
@@ -910,19 +949,38 @@ public:
             assert(target_pose != nullptr);
             Pointf<3> target_ptf = pose_to_ptf_func_(*target_pose);//PoseIntToPtf(target_pose, grid_to_ptf_func_);
 
-            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
-            msg.start_x   = start_ptf[0];
-            msg.start_y   = start_ptf[1];
-            msg.start_yaw = start_ptf[2];
+            // lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+            // msg.start_x   = start_ptf[0];
+            // msg.start_y   = start_ptf[1];
+            // msg.start_yaw = start_ptf[2];
 
-            msg.target_x   = target_ptf[0];
-            msg.target_y   = target_ptf[1];
-            msg.target_yaw = target_ptf[2];
+            // msg.target_x   = target_ptf[0];
+            // msg.target_y   = target_ptf[1];
+            // msg.target_yaw = target_ptf[2];
             
-            msg.agent_id   = i;
-            msg.wait       = false;
+            // msg.agent_id   = i;
+            // msg.wait       = false;
             
-            goal_publishers_[i]->publish(msg);
+            // goal_publishers_[i]->publish(msg);
+
+
+            auto request = std::make_shared<lamapf_and_gazebo_msgs::srv::LocalGoal::Request>();
+
+
+            request->start_x   = start_ptf[0];
+            request->start_y   = start_ptf[1];
+            request->start_yaw = start_ptf[2];
+
+            request->goal_x    = target_ptf[0];
+            request->goal_y    = target_ptf[1];
+            request->goal_yaw  = target_ptf[2];
+
+            request->wait = false;
+
+            auto future = goal_pub_clients_[i]->async_send_request(
+                request,
+                std::bind(&CenteralControllerNew::responseCallback, this, std::placeholders::_1)
+            );
 
             ss.str("");ss.clear();
             ss << "central controller pub agent_" << i << "'s initial goal " << start_ptf <<"->" << target_ptf;
@@ -1005,11 +1063,21 @@ public:
                         if(!ADG_->isActionValid(i, progress_of_agents_[i] + 1)) {
                             RCLCPP_INFO(this->get_logger(), "agent_%i next action %i invalid", i, progress_of_agents_[i] + 1);
                             // tell the agent to wait utill action are valid
-                            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
-                            msg.agent_id   = i;
-                            msg.wait       = true;
+                            // lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                            // msg.agent_id   = i;
+                            // msg.wait       = true;
                             
-                            goal_publishers_[i]->publish(msg); 
+                            // goal_publishers_[i]->publish(msg); 
+
+                            auto request = std::make_shared<lamapf_and_gazebo_msgs::srv::LocalGoal::Request>();
+
+                            request->wait = true;
+
+                            auto future = goal_pub_clients_[i]->async_send_request(
+                                request,
+                                std::bind(&CenteralControllerNew::responseCallback, this, std::placeholders::_1)
+                            );
+
                             break;
                         }
                         RCLCPP_INFO(this->get_logger(), "agent_%i's progress update from % i/%i to %i/%i",
@@ -1030,19 +1098,36 @@ public:
                             PosePtr<int, 2> target_pose = ADG_->all_poses_[target_pose_id];
                             target_ptf = pose_to_ptf_func_(*target_pose);//PoseIntToPtf(target_pose, grid_to_ptf_func_);
 
-                            lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
-                            msg.start_x   = start_ptf[0];
-                            msg.start_y   = start_ptf[1];
-                            msg.start_yaw = start_ptf[2];
+                            // lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                            // msg.start_x   = start_ptf[0];
+                            // msg.start_y   = start_ptf[1];
+                            // msg.start_yaw = start_ptf[2];
 
-                            msg.target_x   = target_ptf[0];
-                            msg.target_y   = target_ptf[1];
-                            msg.target_yaw = target_ptf[2];
+                            // msg.target_x   = target_ptf[0];
+                            // msg.target_y   = target_ptf[1];
+                            // msg.target_yaw = target_ptf[2];
 
-                            msg.agent_id   = i;
-                            msg.wait       = false;
+                            // msg.agent_id   = i;
+                            // msg.wait       = false;
                             
-                            goal_publishers_[i]->publish(msg); 
+                            // goal_publishers_[i]->publish(msg); 
+
+                            auto request = std::make_shared<lamapf_and_gazebo_msgs::srv::LocalGoal::Request>();
+
+                            request->start_x   = start_ptf[0];
+                            request->start_y   = start_ptf[1];
+                            request->start_yaw = start_ptf[2];
+
+                            request->goal_x    = target_ptf[0];
+                            request->goal_y    = target_ptf[1];
+                            request->goal_yaw  = target_ptf[2];
+
+                            request->wait = false;
+
+                            auto future = goal_pub_clients_[i]->async_send_request(
+                                request,
+                                std::bind(&CenteralControllerNew::responseCallback, this, std::placeholders::_1)
+                            );
 
                             std::stringstream ss;
                             ss << "central controller pub agent_" << i << "'s goal " << start_ptf <<"->" << target_ptf;
@@ -1056,12 +1141,24 @@ public:
                 } else {
                     RCLCPP_INFO(this->get_logger(), "agent_%i 's task finish", i);
                     // when finish tell it to wait at target
-                    lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
-                    msg.agent_id   = i;
-                    msg.wait       = true;
+                    
+                    // lamapf_and_gazebo_msgs::msg::UpdateGoal msg;
+                    // msg.agent_id   = i;
+                    // msg.wait       = true;
                             
-                    goal_publishers_[i]->publish(msg); 
+                    // goal_publishers_[i]->publish(msg); 
+
+                    auto request = std::make_shared<lamapf_and_gazebo_msgs::srv::LocalGoal::Request>();
+
+                    request->wait = true;
+
+                    auto future = goal_pub_clients_[i]->async_send_request(
+                        request,
+                        std::bind(&CenteralControllerNew::responseCallback, this, std::placeholders::_1)
+                    );
+
                     finished = true;
+
                     break;
                 }
             }
@@ -1150,7 +1247,9 @@ public:
 
     static std::vector<bool> agent_finishes_;
 
-    std::vector<rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr> goal_publishers_;
+    //std::vector<rclcpp::Publisher<lamapf_and_gazebo_msgs::msg::UpdateGoal>::SharedPtr> goal_publishers_;
+
+    std::vector<rclcpp::Client<lamapf_and_gazebo_msgs::srv::LocalGoal>::SharedPtr> goal_pub_clients_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
 
