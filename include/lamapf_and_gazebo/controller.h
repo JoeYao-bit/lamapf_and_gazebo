@@ -830,7 +830,7 @@ public:
                 }
                 RCLCPP_INFO(this->get_logger(), "Service not available, waiting...");
             }
-
+            RCLCPP_INFO(this->get_logger(), "Service %s is available", ss3.str());
             goal_pub_clients_.push_back(client);
         }
 
