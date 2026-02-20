@@ -29,7 +29,7 @@ public:
 
         // ★ CHANGED: 创建 timer，在 timer 里查 TF
         timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(200),
+            std::chrono::milliseconds(100),
             std::bind(&OneShotStartListener::tryLookupTF, this)
         );
 
