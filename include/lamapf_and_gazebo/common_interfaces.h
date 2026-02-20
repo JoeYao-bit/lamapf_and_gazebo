@@ -126,7 +126,12 @@ std::map<std::string, std::string> demoMapYaml = {
 double reso = 0.1; // how long a grid occupied in real world ?
 
 // following file path related to .world file office_env_large.world
-auto map_test_config = MAPFTestConfig_IndustrialWarehouse;//MAPFTestConfig_LargeOfficeEnv
+
+// MAPFTestConfig_IndustrialWarehouse
+// MAPFTestConfig_LargeOfficeEnv
+// MAPFTestConfig_LargeOfficeEnvSecond
+
+auto map_test_config = MAPFTestConfig_LargeOfficeEnv;//MAPFTestConfig_LargeOfficeEnv
 
 auto is_grid_occupied = [](const cv::Vec3b& color) -> bool {
     if (color == cv::Vec3b::all(255)) { return false; }

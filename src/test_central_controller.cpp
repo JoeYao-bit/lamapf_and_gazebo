@@ -145,7 +145,7 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({5}, 1).front(); // get all instances
+        deserializer.getTestInstance({18}, 1).front(); // get all instances
 
     std::vector<TwoPhaseLineFollowControllerPtr> line_ctls;
 
@@ -175,21 +175,31 @@ int main(int argc, char ** argv) {
 
     double time_interval = 0.1;//.1; // second
 
-    std::vector<std::shared_ptr<FakeRobot> > fake_robot_nodes;
-    for(int i=0; i<agents.size(); i++) {
-        std::cout << "i = " << i << ", " << instances.second[i].first << std::endl;
-        PosePtr<int, 2> start_pose = std::make_shared<Pose<int, 2> >(instances.second[i].first);
-        Pointf<3> init_pose = PoseIntToPtf(start_pose, GridToPtfPicOnly);  
-        std::cout << "init_pose = " << init_pose << std::endl;
+    // std::vector<std::shared_ptr<FakeRobot> > fake_robot_nodes;
+    // for(int i=0; i<agents.size(); i++) {
+    //     std::cout << "i = " << i << ", " << instances.second[i].first << std::endl;
+    //     PosePtr<int, 2> start_pose = std::make_shared<Pose<int, 2> >(instances.second[i].first);
+    //     Pointf<3> init_pose = PoseIntToPtf(start_pose, GridToPtfPicOnly);  
+    //     std::cout << "init_pose = " << init_pose << std::endl;
 
-        auto fake_robot_node = std::make_shared<FakeRobot>(agents[i]->id_, init_pose, agents.size(), time_interval);
-        executor.add_node(fake_robot_node);
-        fake_robot_nodes.push_back(fake_robot_node); 
-    }
+    //     auto fake_robot_node = std::make_shared<FakeRobot>(agents[i]->id_, init_pose, agents.size(), time_interval);
+    //     executor.add_node(fake_robot_node);
+    //     fake_robot_nodes.push_back(fake_robot_node); 
+    // }
 
     std::vector<std::shared_ptr<LocalController> > local_control_nodes;
     for(int i=0; i<agents.size(); i++) {
-        auto agent_control_node = std::make_shared<LocalController>(agents[i], line_ctls[i], instances.second.size(), time_interval);
+        std::stringstream ss;
+        ss << "/robot" << i << "/";
+        
+        auto agent_control_node = std::make_shared<LocalController>(agents[i], 
+                                                                    line_ctls[i],
+                                                                    instances.second.size(),
+                                                                    time_interval,
+                                                                    ss.str()+"amcl_pose",
+                                                                    ss.str()+"local_goal",
+                                                                    ss.str()+"scan",
+                                                                    ss.str()+"commands/velocity");
         executor.add_node(agent_control_node);
         local_control_nodes.push_back(agent_control_node); 
 
