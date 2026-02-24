@@ -27,11 +27,15 @@
 #include "LA-MAPF/algorithm/break_loop_decomposition/break_loop_decomposition.h"
 
 #include "freeNav-base/dependencies/2d_grid/text_map_loader.h"
+#include "freeNav-base/dependencies/2d_grid/picture_loader.h"
+
 #include "test_data.h"
 #include "LA-MAPF/algorithm/LA-MAPF/CBS/layered_large_agent_CBS.h"
+#include "LA-MAPF/algorithm/LA-MAPF/LaCAM/layered_large_agent_LaCAM.h"
 
 #include "LA-MAPF/algorithm/LA-MAPF/laryered_large_agent_mapf.h"
 #include "freeNav-base/dependencies/memory_analysis.h"
+#include "freeNav-base/visualization/canvas/canvas.h"
 
 #include <tf2/LinearMath/Quaternion.h>
 // #include "large_agent_mapf/srv/path_execution.hpp" // 存在于install目录但找不到,cmakelist中自己包括自己就找到了
@@ -131,7 +135,7 @@ double reso = 0.1; // how long a grid occupied in real world ?
 // MAPFTestConfig_LargeOfficeEnv
 // MAPFTestConfig_LargeOfficeEnvSecond
 
-auto map_test_config = MAPFTestConfig_LargeOfficeEnv;//MAPFTestConfig_LargeOfficeEnv
+auto map_test_config = MAPFTestConfig_LargeOfficeEnvSecond;//MAPFTestConfig_LargeOfficeEnv
 
 auto is_grid_occupied = [](const cv::Vec3b& color) -> bool {
     if (color == cv::Vec3b::all(255)) { return false; }
@@ -954,11 +958,12 @@ std::vector<std::string> ROBOT_SDFS = {
 // std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0
 //                                 };
 
-std::vector<int> REAL_ROBOTS = {0,0,0,0,0,
-                                1,1,1,1,1,
+std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0,0,0,0,
+                                1,1,1,1,1,1,1,1,1,
                                 //2,2,2,
-                                3,3,3,3,
-                                4,4,4,4};
+                                //3,3,
+                                //4,4,4
+                                };
 
 
 

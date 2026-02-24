@@ -70,7 +70,7 @@ int main() {
     }
 
     // generate instances
-    InstanceOrients<2> instances =  generateLargeAgentInstanceForMap(agents, is_occupied_func, dim, 100);
+    InstanceOrients<2> instances = generateLargeAgentInstanceForMap(agents, is_occupied_func, dim, 100);
 
     InstanceSerializer<2> serializer(agents, instances);
     if(serializer.saveToFile(map_test_config.at("la_ins_path"))) {

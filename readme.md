@@ -2271,3 +2271,9 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ✔ 机器人之间不需要互通
 ✔ 需要限制 topic
 ✔ 想做可扩展架构
+
+
+2026.2.24
+
+实验室拍摄照片作为场景介绍使用
+尝试录制0.1、0.05地图、做规划示例用
