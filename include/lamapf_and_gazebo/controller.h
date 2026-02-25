@@ -830,7 +830,7 @@ public:
                 }
                 RCLCPP_INFO(this->get_logger(), "Service not available, waiting...");
             }
-            RCLCPP_INFO(this->get_logger(), "Service %s is available", ss3.str());
+            RCLCPP_INFO(this->get_logger(), "Service %s is available", ss3.str().c_str());
             goal_pub_clients_.push_back(client);
         }
 
@@ -1014,7 +1014,8 @@ public:
         bool detect_loss_solvability = false;        
         LAMAPF_Paths layered_paths;
         layered_paths = layeredLargeAgentMAPF<2, Pose<int, 2>>(bl_decompose->all_levels_,
-                                                            CBS::LargeAgentCBS_func<2, Pose<int, 2> >, //
+                                                            LargeAgentLaCAMPose_func<2>,
+                                                            //CBS::LargeAgentCBS_func<2, Pose<int, 2> >, //
                                                             grid_visit_count_table,
                                                             detect_loss_solvability,
                                                             pre_dec,
@@ -1189,7 +1190,7 @@ public:
         std::cout << "after zoom_ratio = " << zoom_ratio << ", canvas.resolution_ = " << canvas.resolution_ << std::endl;
         while(rclcpp::ok()) {
             canvas.resetCanvas();
-            canvas.drawEmptyGrid();
+            //canvas.drawEmptyGrid();
             canvas.drawGridMap(dim_, is_occupied);
             // draw all agent's unfinished path
             for(int i=0; i<ADG_->paths_.size(); i++)

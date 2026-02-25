@@ -1436,6 +1436,8 @@ git clone -b ros2 git@github.com:Slamtec/rplidar_ros.git
 单独编译某个包
 colcon build --packages-select rplidar_ros
 
+colcon build --packages-select lamapf_and_gazebo
+
 安装ros2建图工具包
 
 sudo apt install ros-jazzy-slam-toolbox
@@ -1910,14 +1912,14 @@ DWA和mpc估计都不合适，回归原始分段旋转和走直线
 ubuntu统一密码：12345678
 anydesk远程桌面密码：wasd16807
 
-1号，我开发的机器人, anydesk 1368646866, 代码编译通过，测试通过，传感器数据、运动控制正常
+1号，我开发的机器人, anydesk 1368646866, 代码编译通过，测试通过，传感器数据、运动控制正常（总控id 0）
 2号，卢思仪（阮老师学生）开发的机器人,ubuntu 24.04已安装，anydesk 1 993 540 146，代码编译通过
 3号，未使用，ubuntu 24.04已安装，anydesk 256161678,代码编译通过
 4号，未使用，ubuntu 24.04已安装，anydesk 1740904283，代码编译通过
 5号，未使用，ubuntu 24.04已安装，anydesk 1938673472, 代码编译通过
 6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，anydesk 1290869105, 代码编译通过
-7号，未使用，ubuntu 24.04已安装，anydesk 1751341772,代码编译通过，传感器数据、运动控制正常，相机反向
-8号，未使用，ubuntu 24.04已安装，anydesk 1211647490,代码编译通过，传感器数据、运动控制正常，相机反向
+7号，未使用，ubuntu 24.04已安装，anydesk 1751341772,代码编译通过，传感器数据、运动控制正常，相机反向(总控id 1)
+8号，未使用，ubuntu 24.04已安装，anydesk 1211647490,代码编译通过，传感器数据、运动控制正常，相机反向(总控id 2)
 9号，未使用，缺一根激光雷达到USB的信号线g
 10号，未使用，ubuntu 24.04已安装，anydesk 1411331609, 代码编译通过
 11号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常
@@ -1929,6 +1931,11 @@ anydesk远程桌面密码：wasd16807
 中关于相机到本体transform的参数
 
         arguments=['0','0','0','0','0','0','1',f'{robot_ns}/base_footprint',f'{robot_ns}/laser']
+
+一号机
+
+        arguments=['0','0','0','0','0','1','0',f'{robot_ns}/base_footprint',f'{robot_ns}/laser']
+
 
 b112新加wifi
 名称：TP-LINK_C9C9
@@ -1991,11 +1998,11 @@ sudo apt install -y code
 
 准备单个机器人逐一测试规划与运动控制功能
 
-1号机b112地图，中央控制器导航测试通过
+1号机b112地图，中央控制器导航测试通过（总控id 0）
 
-8号机b112地图，中央控制器导航测试通过
+8号机b112地图，中央控制器导航测试通过 (总控id 1)
 
-7号机b112地图，中央控制器导航测试通过
+7号机b112地图，中央控制器导航测试通过 (总控id 2)
 
 改内置robot id，包括rviz订阅话题(rviz界面内修改)，localization_full.launch.py, center_controller_test.launch.py中参数也要改动，改机器人的id
 
@@ -2055,3 +2062,218 @@ local planner接收起末点采用消息机制会丢消息，参考chatgpt换成
 是否有回复	  ❌ 没有	✅ 必须有
 适合起点终点	❌	      ✅
 适合触发规划	❌	      ✅
+
+两台设备关于跨平台通信的部分均统一成
+
+# 260211
+
+.bashrc添加如下代码
+
+export ROS_DOMAIN_ID=0
+export ROS_LOCALHOST_ONLY=0
+
+即可跨平台调用服务
+
+编号 /（系统id）/ anydesk / id / 在地图中的运动方向
+
+1(0) 1368646866 向下，                  1
+7(1) 1751341772 向右                    1
+8(2) 1211647490 向左，                  1
+3(3) 256161678  由右向左                 1
+4(4) 1740904283                        1
+5(5) 1938673472 向下                   1
+
+三机器人联调，id=1和id=2没有收到运动控制指令
+或由于target_config.txt设置后没更新所致
+
+现在多机器人通信，全部互相发现，导致通信效率随机器人规模快速下降
+
+如果不配置，DDS 默认是 全网互相发现（O(N²))，这就是你 6 台变慢的根本原因。
+
+配置 cyclonedds.xml
+
+通过配置cyclonedds.xml
+
+或者通过DDS router
+
+它本质上是一个 DDS 层的“流量网关/转发器”，可以：
+
+控制谁能和谁通信
+
+过滤 topic
+
+不用 multicast
+
+避免 O(N²) 全连接
+
+🧠 你要实现的拓扑
+
+目标结构：
+
+机器人1   \
+机器人2 ----> DDS Router ----> 中央控制器
+机器人3   /
+
+
+✔ 机器人之间不可见
+✔ 所有通信必须经过 Router
+✔ 单播
+✔ 可限制 topic
+
+🚀 整体思路
+Step 1️⃣ 网络结构
+
+所有机器人 → 只连接 Router
+
+中央控制器 → 只连接 Router
+
+Router 运行在中央机器（或单独一台）
+
+Step 2️⃣ 安装 DDS Router
+
+官方项目：
+
+👉 DDS Router
+
+Ubuntu 24.04 + ROS Jazzy 推荐用 docker 或 deb 安装。
+
+Debian 安装
+sudo apt install ddsrouter
+
+
+或：
+
+sudo apt install eprosima-ddsrouter
+
+Step 3️⃣ 写 Router 配置文件
+
+例如：ddsrouter.yaml
+
+假设：
+
+设备	IP
+Router	192.168.1.100
+机器人	自动发现
+中央控制	本地
+⭐ 示例配置（核心）
+version: v4.0
+
+participants:
+
+  - name: robot_side
+    kind: simple
+    domain: 0
+    allowlist:
+      - name: "*"
+
+  - name: central_side
+    kind: simple
+    domain: 1
+    allowlist:
+      - name: "*"
+
+routes:
+  - src: robot_side
+    dst: central_side
+
+  - src: central_side
+    dst: robot_side
+
+🧠 这是什么意思？
+部分	作用
+domain 0	机器人所在域
+domain 1	中央控制所在域
+routes	指定双向转发
+Step 4️⃣ 机器人配置
+
+机器人上：
+
+export ROS_DOMAIN_ID=0
+
+
+中央控制器上：
+
+export ROS_DOMAIN_ID=1
+
+Step 5️⃣ 启动 Router
+ddsrouter -c ddsrouter.yaml
+
+🎯 现在会发生什么？
+
+机器人之间 ❌ 不可见（同 domain 但不同机器不会互联，因为只连 Router）
+
+中央可以看到所有机器人
+
+所有流量经过 Router
+
+没有 mesh 发现风暴
+
+🔥 更高级用法（推荐）
+
+你可以限制只转发特定 topic，例如只转发：
+
+/cmd_vel
+
+/tf
+
+/robot_state
+
+例如：
+
+allowlist:
+  - name: "/tf"
+  - name: "/cmd_vel"
+
+
+这样可以：
+
+降低带宽
+
+防止 debug topic 泛滥
+
+减少 WiFi 压力
+
+🚨 非常关键的优化
+禁用机器人 multicast
+
+在机器人上：
+
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+
+并关闭 multicast：
+
+<AllowMulticast>false</AllowMulticast>
+
+
+否则 Router 效果会打折扣。
+
+📊 和你现在的区别
+当前（默认 DDS）
+6 台机器
+= 15 条 P2P 连接
+= 大量 multicast
+= O(N²)
+
+使用 DDS Router
+6 台机器
+= 每台只连 Router
+= 6 条连接
+= O(N)
+
+
+差距非常大。
+
+🚀 什么时候必须用 DDS Router？
+
+✔ 超过 5 台机器人
+✔ WiFi 环境
+✔ 机器人之间不需要互通
+✔ 需要限制 topic
+✔ 想做可扩展架构
+
+
+2026.2.24
+
+实验室拍摄照片作为场景介绍使用
+尝试录制0.1、0.05地图、做规划示例用

@@ -145,7 +145,7 @@ int main(int argc, char ** argv) {
     std::cout << ss.str() << std::endl;
 
     std::pair<AgentPtrs<2>, InstanceOrients<2> > instances = 
-        deserializer.getTestInstance({5}, 1).front(); // get all instances
+        deserializer.getTestInstance({14}, 1).front(); // get all instances
 
     std::vector<TwoPhaseLineFollowControllerPtr> line_ctls;
 
@@ -189,7 +189,17 @@ int main(int argc, char ** argv) {
 
     std::vector<std::shared_ptr<LocalController> > local_control_nodes;
     for(int i=0; i<agents.size(); i++) {
-        auto agent_control_node = std::make_shared<LocalController>(agents[i], line_ctls[i], instances.second.size(), time_interval);
+        std::stringstream ss;
+        ss << "/robot" << i << "/";
+        
+        auto agent_control_node = std::make_shared<LocalController>(agents[i], 
+                                                                    line_ctls[i],
+                                                                    instances.second.size(),
+                                                                    time_interval,
+                                                                    ss.str()+"amcl_pose",
+                                                                    ss.str()+"local_goal",
+                                                                    ss.str()+"scan",
+                                                                    ss.str()+"commands/velocity");
         executor.add_node(agent_control_node);
         local_control_nodes.push_back(agent_control_node); 
 

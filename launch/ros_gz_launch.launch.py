@@ -71,7 +71,7 @@ def generate_launch_description():
     # office_env_large （not ok）
     # simple_world (ok)
 
-    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/industrial-warehouse.sdf'
+    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/tugbot_warehouse.sdf'
 
     print("world path = ", world)
 
