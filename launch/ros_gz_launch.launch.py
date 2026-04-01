@@ -63,15 +63,19 @@ from ros_gz_bridge.actions import RosGzBridge
 
 def generate_launch_description():
 
-    # empty  （ok）
     # industrial-warehouse （ok）
     # tugbot_warehouse （ok）
+
     # tugbot_depot (not ok）
     # living_room （not ok）
     # office_env_large （not ok）
     # simple_world (ok)
+    # warehouse.world (not ok)
+    # office_small.world (not ok)
+    # simple_env_1.world （ok） 
 
-    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/tugbot_warehouse.sdf'
+
+    world = '/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/world/simple_env_1.world'
 
     print("world path = ", world)
 

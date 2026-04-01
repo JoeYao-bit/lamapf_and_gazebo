@@ -92,8 +92,8 @@ bool draw_full_path = true;
 bool draw_visit_grid_table = false;
 
 
-std::string pkg_path =
-    ament_index_cpp::get_package_share_directory("lamapf_and_gazebo");
+std::string pkg_path = "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/";
+    //ament_index_cpp::get_package_share_directory("lamapf_and_gazebo");
 
 
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
@@ -105,9 +105,19 @@ SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =
 
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnvSecond =
 {
-        {"map_name",     "LargeOfficeEnvSeccond"},
+        {"map_name",     "LargeOfficeEnvSecond"},
         {"map_path",     pkg_path+"/world/map/map_large_office_white_second.png"},
         {"la_ins_path",  pkg_path+"/world/map/map_large_office_second.txt"},
+};
+
+
+// my_map_260225
+
+SingleMapTestConfig<2> MAPFTestConfig_B112 =
+{
+        {"map_name",     "B112"},
+        {"map_path",     pkg_path+"/world/map/my_map_260225.pgm"},
+        {"la_ins_path",  pkg_path+"/world/map/my_map_260225.txt"},
 };
 
 SingleMapTestConfig<2> MAPFTestConfig_IndustrialWarehouse =
@@ -131,11 +141,12 @@ double reso = 0.1; // how long a grid occupied in real world ?
 
 // following file path related to .world file office_env_large.world
 
-// MAPFTestConfig_IndustrialWarehouse
+// MAPFTestConfig_IndustrialWarehouse (ok)
 // MAPFTestConfig_LargeOfficeEnv
 // MAPFTestConfig_LargeOfficeEnvSecond
+// MAPFTestConfig_B112
 
-auto map_test_config = MAPFTestConfig_LargeOfficeEnvSecond;//MAPFTestConfig_LargeOfficeEnv
+auto map_test_config = MAPFTestConfig_IndustrialWarehouse;//MAPFTestConfig_LargeOfficeEnv
 
 auto is_grid_occupied = [](const cv::Vec3b& color) -> bool {
     if (color == cv::Vec3b::all(255)) { return false; }
@@ -958,9 +969,15 @@ std::vector<std::string> ROBOT_SDFS = {
 // std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0
 //                                 };
 
-std::vector<int> REAL_ROBOTS = {0,0,0,0,0,0,0,0,0,
-                                1,1,1,1,1,1,1,1,1,
-                                //2,2,2,
+// MAPFTestConfig_IndustrialWarehouse
+// std::vector<int> REAL_ROBOTS = {0,0,0,0,
+//                                 1,1,1,1,
+//                                 2,2,2,
+//                                 };
+
+std::vector<int> REAL_ROBOTS = {0,0,0,0,
+                                1,1,1,1,
+                                2,2,2,
                                 //3,3,
                                 //4,4,4
                                 };

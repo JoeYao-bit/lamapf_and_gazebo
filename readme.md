@@ -2277,3 +2277,47 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 实验室拍摄照片作为场景介绍使用
 尝试录制0.1、0.05地图、做规划示例用
+
+编译包
+
+colcon build --packages-select lamapf_and_gazebo
+
+
+启动中央控制器
+
+ros2 run lamapf_and_gazebo test_center_controller_multiple_agent
+
+启动turtlebot以及定位
+
+ros2 launch lamapf_and_gazebo localization_full.launch.py
+
+
+启动局部控制器
+
+ros2 launch lamapf_and_gazebo load_local_controller.launch.py >  my_node.log 2>&1
+
+
+
+1号(id=0)向下
+
+7号(id=1)向右
+
+8号(id=2)向左
+
+构造虚拟instance,单独运行以下代码即可
+
+```
+ros2 run lamapf_and_gazebo generate_instance_node
+```
+
+启动gazebo，以及添加实体、删除实体、设置实体位姿的服务
+
+```
+ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
+```
+
+启动MAPF，并在gazebo中可视化
+
+```
+ros2 run lamapf_and_gazebo test_lamapf_planner_node
+```

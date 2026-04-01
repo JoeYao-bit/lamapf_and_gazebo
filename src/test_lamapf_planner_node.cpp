@@ -28,7 +28,7 @@ EntityPoseSetterPtr set_pose_clinet = nullptr;
 EntitySpawnerPtr entity_pawner_clinet = nullptr;
 
 bool paused = true;
-bool gazebo_gui = false;
+bool gazebo_gui = true;
 // class InitExecutionSubscriber : public rclcpp::Node
 // {
 // public:
@@ -95,7 +95,7 @@ void updateAllAgentPoseInGazebo(const EntityPoseSetterPtr& set_pose_clinet_ptr,
 }
 
 int PathVisualize() {
-    Canvas canvas("LA-MAPF visualization", dim[0], dim[1], 1./reso, 5);
+    Canvas canvas("LA-MAPF visualization", dim[0], dim[1], 1./reso, std::min(800./dim[0], 800./dim[1]));
     canvas.resolution_ = 1./reso;
     assert(pre_dec != nullptr);
     const auto& all_poses = pre_dec->all_poses_;
@@ -121,7 +121,8 @@ int PathVisualize() {
             //std::cout << "Agent " << *instances.first[i] << "'s pose "  << allAgentPoses[i] << std::endl;
             //std::cout << "canvas.reso = " << canvas.resolution_ << std::endl;
             //std::cout << "canvas.zoom_ratio = " << canvas.zoom_ratio_ << std::endl;
-            double x = allAgentPoses[i][0]/reso, y = allAgentPoses[i][1]/reso, orient = allAgentPoses[i][2];
+            double x = allAgentPoses[i][0], y = allAgentPoses[i][1], orient = allAgentPoses[i][2];
+            //std::cout << "x, y, orient = " << x << ", " << y << ", " << orient << std::endl; // ok
             instances.first[i]->drawOnCanvas(Pointf<3>{x, y, orient}, canvas, COLOR_TABLE[i%30], false);
             
             //canvas.drawArrowInt(allAgentPoses[i].pt_[0], allAgentPoses[i].pt_[1], -orientToPi_2D(allAgentPoses[i].orient_), 1, std::max(1, zoom_ratio/10));
@@ -340,10 +341,10 @@ void layeredLargeAgentMAPFTest(const std::string& file_path,
 
     rclcpp::WallRate loop_rate(control_frequency);
 
-    // std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
+    std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<ConstantLineFollowController>(MotionConfig()));
 
     // MPCLineFollowController
-    std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<MPCLineFollowController>(MotionConfig()));
+    // std::vector<LineFollowControllerPtr> line_ctls(instances.first.size(), std::make_shared<MPCLineFollowController>(MotionConfig()));
 
     std::vector<RotateControllerPtr> rot_ctls(instances.first.size(), std::make_shared<ConstantRotateController>(MotionConfig()));
 
