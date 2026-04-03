@@ -2321,3 +2321,22 @@ ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
 ```
 ros2 run lamapf_and_gazebo test_lamapf_planner_node
 ```
+
+为避免多机器人通信带宽随机器人规模二阶增长为了避免通信失效
+
+配置星型通信机制
+安装fastdds
+sudo apt install fastdds-tools  
+
+每个机器人配置.bashrc
+添加下述命令
+
+export ROS_DISCOVERY_SERVER=192.168.1.100:11811
+unset ROS_DISCOVERY_SERVER  # 不使用中心 Discovery Server
+
+在中央控制器终端运行以下命令，启动中央控制器
+
+fastdds discovery --server-id 0
+
+单独机器人bashrc加入以下代码
+unset ROS_DISCOVERY_SERVER  # 不使用中心 Discovery Server
