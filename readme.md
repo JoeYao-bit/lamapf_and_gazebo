@@ -2322,7 +2322,7 @@ ros2 launch lamapf_and_gazebo ros_gz_launch.launch.py
 ros2 run lamapf_and_gazebo test_lamapf_planner_node
 ```
 
-为避免多机器人通信带宽随机器人规模二阶增长为了避免通信失效
+为避免多机器人通信负载随机器人规模二阶增长，导致通信失效
 
 配置星型通信机制
 安装fastdds
@@ -2340,3 +2340,5 @@ fastdds discovery --server-id 0
 
 单独机器人bashrc加入以下代码
 unset ROS_DISCOVERY_SERVER  # 不使用中心 Discovery Server
+
+这个代码会让星型隔离失效
