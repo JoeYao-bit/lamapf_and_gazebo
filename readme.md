@@ -1915,7 +1915,7 @@ anydesk远程桌面密码：wasd16807
 1号，我开发的机器人, anydesk 1368646866, 代码编译通过，测试通过，传感器数据、运动控制正常（总控id 0）
 2号，卢思仪（阮老师学生）开发的机器人,ubuntu 24.04已安装，anydesk 1 993 540 146，代码编译通过
 3号，未使用，ubuntu 24.04已安装，anydesk 256161678,代码编译通过
-4号，未使用，ubuntu 24.04已安装，anydesk 1740904283，代码编译通过
+4号，未使用，ubuntu 24.04已安装，anydesk 1740904283,代码编译通过
 5号，未使用，ubuntu 24.04已安装，anydesk 1938673472, 代码编译通过
 6号，缺一根激光雷达到USB的信号线,激光雷达不工作, 底盘正常，ubuntu 24.04已安装，anydesk 1290869105, 代码编译通过
 7号，未使用，ubuntu 24.04已安装，anydesk 1751341772,代码编译通过，传感器数据、运动控制正常，相机反向(总控id 1)
@@ -2342,3 +2342,20 @@ fastdds discovery --server-id 0
 unset ROS_DISCOVERY_SERVER  # 不使用中心 Discovery Server
 
 这个代码会让星型隔离失效
+
+2026.04.11
+
+本机ros node list看不到本机发布的话题，星型配置失败
+
+尝试降低发布频率降低带宽
+
+✅步骤1：看真实网络带宽占用（最关键）
+
+sudo apt-get install iftop
+
+sudo iftop -i wlan0
+
+
+sudo iftop -i wlp3s0 #（wifi）
+
+尝试定位完成启动后关闭rviz，看看能不能减少带宽依赖
