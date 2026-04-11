@@ -96,33 +96,16 @@ def generate_launch_description():
     )
 
     # 生命周期管理器节点（自动激活 map_server 和 amcl）
-    # lifecycle_manager_node = Node(
-    #     package='nav2_lifecycle_manager',
-    #     executable='lifecycle_manager',
-    #     name='lifecycle_manager_localization',
-    #     output='screen',
-    #     parameters=[{'use_sim_time': use_sim_time,
-    #                  'autostart': True,
-    #                  'node_names': ['map_server', 'amcl']}]
-    # )
-    lifecycle_manager_node = TimerAction(
-        period=5.0,   # ⭐ 延迟5秒（建议 5~8 秒）
-        actions=[
-            Node(
-                package='nav2_lifecycle_manager',
-                executable='lifecycle_manager',
-                name='lifecycle_manager_localization',
-                output='screen',
-                parameters=[{
-                    'use_sim_time': use_sim_time,
-                    'autostart': True,
-                    'node_names': ['map_server', 'amcl'],
-                    'bond_timeout': 10.0,      # ⭐ 可选（更稳）
-                    'service_timeout': 10.0    # ⭐ 可选（更稳）
-                }]
-            )
-        ]
+    lifecycle_manager_node = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time,
+                     'autostart': True,
+                     'node_names': ['map_server', 'amcl']}]
     )
+
 
     # # 在 launch 中
     # x, y, qz, qw = load_origin_from_yaml('/home/yaozhuo/my_map.yaml')
