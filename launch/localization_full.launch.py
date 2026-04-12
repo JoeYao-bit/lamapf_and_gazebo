@@ -75,19 +75,19 @@ def generate_launch_description():
     )
 
     # RVIZ
-    rviz = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        remappings=[
-            ('/initialpose', f'/{robot_ns}/initialpose'),
-            ('/goal_pose', f'/{robot_ns}/goal_pose'),
-        ],
-    )
+    # rviz = Node(
+    #     package='rviz2',
+    #     executable='rviz2',
+    #     name='rviz2',
+    #     remappings=[
+    #         ('/initialpose', f'/{robot_ns}/initialpose'),
+    #         ('/goal_pose', f'/{robot_ns}/goal_pose'),
+    #     ],
+    # )
 
     # 顺序控制：延迟 2 秒启动 AMCL，延迟 3 秒启动 RVIZ
     delayed_amcl = TimerAction(period=2.0, actions=[amcl_node])
-    delayed_rviz = TimerAction(period=3.0, actions=[rviz])
+    #delayed_rviz = TimerAction(period=3.0, actions=[rviz])
 
     # ⭐⭐ 关键部分：把所有节点放入 GroupAction + PushRosNamespace
     ns_group = GroupAction([
@@ -97,7 +97,7 @@ def generate_launch_description():
         kobuki_node,
         static_tf,
         delayed_amcl,
-        delayed_rviz,
+        #delayed_rviz,
     ])
 
     return LaunchDescription([

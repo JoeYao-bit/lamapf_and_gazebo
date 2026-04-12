@@ -2359,3 +2359,6 @@ sudo iftop -i wlan0
 sudo iftop -i wlp3s0 #（wifi）
 
 尝试定位完成启动后关闭rviz，看看能不能减少带宽依赖
+或者降低tf等消息的频率
+✔ RViz 不会“跨机器人增加带宽”
+❗ 但 RViz 会放大“你系统已有的 TF / scan / DDS 流量问题”
