@@ -92,8 +92,8 @@ bool draw_full_path = true;
 bool draw_visit_grid_table = false;
 
 
-std::string pkg_path = "/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/";
-    //ament_index_cpp::get_package_share_directory("lamapf_and_gazebo");
+std::string pkg_path = //"/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/";
+    ament_index_cpp::get_package_share_directory("lamapf_and_gazebo");
 
 
 SingleMapTestConfig<2> MAPFTestConfig_LargeOfficeEnv =

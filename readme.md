@@ -1998,11 +1998,11 @@ sudo apt install -y code
 
 准备单个机器人逐一测试规划与运动控制功能
 
-1号机b112地图，中央控制器导航测试通过（总控id 0）
+1368646866 1号机b112地图，中央控制器导航测试通过（总控id 0）
 
-8号机b112地图，中央控制器导航测试通过 (总控id 1)
+1211647490 8号机b112地图，中央控制器导航测试通过 (总控id 1)
 
-7号机b112地图，中央控制器导航测试通过 (总控id 2)
+1751341772 7号机b112地图，中央控制器导航测试通过 (总控id 2)
 
 改内置robot id，包括rviz订阅话题(rviz界面内修改)，localization_full.launch.py, center_controller_test.launch.py中参数也要改动，改机器人的id
 
@@ -2291,6 +2291,9 @@ ros2 run lamapf_and_gazebo test_center_controller_multiple_agent
 
 ros2 launch lamapf_and_gazebo localization_full.launch.py
 
+启动rviz
+ros2 launch lamapf_and_gazebo rviz_only.launch.py
+
 
 启动局部控制器
 
@@ -2362,3 +2365,6 @@ sudo iftop -i wlp3s0 #（wifi）
 或者降低tf等消息的频率
 ✔ RViz 不会“跨机器人增加带宽”
 ❗ 但 RViz 会放大“你系统已有的 TF / scan / DDS 流量问题”
+
+2026.4.12
+关闭rviz后，通信负担减少，中央控制器可以收到各个机器人的pose
