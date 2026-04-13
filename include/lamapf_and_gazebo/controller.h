@@ -61,7 +61,7 @@ public:
                     float dist_to_target = (Pointf<2>{target_ptf[0], target_ptf[1]} - Pointf<2>{cur_pose[0], cur_pose[1]}).Norm();
                     float angle_to_target = fmod(target_ptf[2]-cur_pose[2], 2*M_PI);
                     // std::cout << "dist_to_target = " << dist_to_target << " / angle_to_target " << angle_to_target << std::endl;
-                    size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];;
+                    size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];
                     //RCLCPP_INFO(node_ptr_->get_logger(), "start_pose_id / target_pose_id = %i / %i", start_pose_id, target_pose_id);
                     //std::stringstream ss;
                     //ss << "flag 0.4" << ", dist_to_target = " << dist_to_target << " / angle_to_target " << angle_to_target;
@@ -106,7 +106,7 @@ public:
                 }
 
                 // if not finish all pose, get cmd move to next pose, otherwise stop 
-                size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];;
+                size_t start_pose_id = ADG_.paths_[i][progress_of_agents_[i]];
                 PosePtr<int, 2> start_pose = ADG_.all_poses_[start_pose_id];
                 start_ptf = PoseIntToPtf(start_pose, GridToPtfPicOnly);
 
@@ -753,7 +753,7 @@ public:
         
         dim_ = dim;
         instances_ = instances;                
-        paused_ = false;
+        paused_ = true;//false;
         pub_init_target_ = true;
         pose_to_ptf_func_ = pose_to_ptf_func;
         std::cout << "construct all possible poses" << std::endl;
@@ -891,9 +891,9 @@ public:
 
         // std::chrono::milliseconds(int(1000*time_interval))
         timer_ = this->create_wall_timer(std::chrono::milliseconds(int(1000*time_interval)), [this]() {
-            //std::stringstream ss;
-            //ss << "during CentralController loop, paused = " << paused_;
-            //RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+            std::stringstream ss;
+            ss << "during CentralController loop, paused = " << paused_;
+            RCLCPP_INFO(this->get_logger(), ss.str().c_str());
             if(!paused_) {
                 updateADG(); 
             }
@@ -1216,11 +1216,14 @@ public:
                 //std::cout << "canvas.reso = " << canvas.resolution_ << std::endl;
                 //std::cout << "canvas.zoom_ratio = " << canvas.zoom_ratio_ << std::endl;
                 double x = all_agent_poses_[i][0], y = all_agent_poses_[i][1], orient = all_agent_poses_[i][2];
+                
+                size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
+                PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
 
-                
-                instances_.first[i]->drawOnCanvas(Pointf<3>{x, y, orient}, canvas, COLOR_TABLE[i%30], false);
-                
-                //canvas.drawArrowInt(allAgentPoses[i].pt_[0], allAgentPoses[i].pt_[1], -orientToPi_2D(allAgentPoses[i].orient_), 1, std::max(1, zoom_ratio/10));
+                instances_.first[i]->drawOnCanvas(*start_pose, canvas, cv::Vec3b::all(0), true);
+
+                //canvas.drawArrowInt(start_pose.pt_[0], start_pose.pt_[1], , 1, std::max(1., zoom_ratio/10));
+
                 //break;
             }
             char key = canvas.show();

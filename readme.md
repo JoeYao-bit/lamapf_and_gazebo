@@ -2294,6 +2294,9 @@ ros2 launch lamapf_and_gazebo localization_full.launch.py
 启动rviz
 ros2 launch lamapf_and_gazebo rviz_only.launch.py
 
+启动中央控制rviz
+ros2 launch lamapf_and_gazebo rviz_center.launch.py
+
 
 启动局部控制器
 
