@@ -834,19 +834,19 @@ public:
             goal_pub_clients_.push_back(client);
         }
 
-        pose_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>(
-            "PoseUpdate", 2*instances.first.size(),
-            [this](lamapf_and_gazebo_msgs::msg::UpdatePose::SharedPtr msg) {
+        // pose_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>(
+        //     "PoseUpdate", 2*instances.first.size(),
+        //     [this](lamapf_and_gazebo_msgs::msg::UpdatePose::SharedPtr msg) {
 
-                all_agent_poses_[msg->agent_id][0] = msg->x;
-                all_agent_poses_[msg->agent_id][1] = msg->y;
-                all_agent_poses_[msg->agent_id][2] = msg->yaw;
+        //         all_agent_poses_[msg->agent_id][0] = msg->x;
+        //         all_agent_poses_[msg->agent_id][1] = msg->y;
+        //         all_agent_poses_[msg->agent_id][2] = msg->yaw;
 
-                std::stringstream ss;
-                ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
-                ss << " = " << all_agent_poses_[msg->agent_id];
-                RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-            });
+        //         std::stringstream ss;
+        //         ss << "during CentralController loop, receive pose of agent_" << msg->agent_id;
+        //         ss << " = " << all_agent_poses_[msg->agent_id];
+        //         RCLCPP_INFO(this->get_logger(), ss.str().c_str());
+        //     });
 
         error_state_subscriber_ = this->create_subscription<lamapf_and_gazebo_msgs::msg::ErrorState>(
                 "AgentErrorState", 2*instances.first.size(),
@@ -882,6 +882,7 @@ public:
                     std::stringstream ss;
                     ss << "receive agent state from agent_" << msg->agent_id << 
                     ", agent state = " << msg->agent_state;
+                    RCLCPP_INFO(this->get_logger(), ss.str().c_str());
                     if(msg->agent_state == 0) {
                         agent_finishes_[msg->agent_id] = true;
                     }
@@ -1215,7 +1216,7 @@ public:
                 //std::cout << "Agent " << *instances.first[i] << "'s pose "  << allAgentPoses[i] << std::endl;
                 //std::cout << "canvas.reso = " << canvas.resolution_ << std::endl;
                 //std::cout << "canvas.zoom_ratio = " << canvas.zoom_ratio_ << std::endl;
-                double x = all_agent_poses_[i][0], y = all_agent_poses_[i][1], orient = all_agent_poses_[i][2];
+                //double x = all_agent_poses_[i][0], y = all_agent_poses_[i][1], orient = all_agent_poses_[i][2];
                 
                 size_t start_pose_id = ADG_->paths_[i][progress_of_agents_[i]];
                 PosePtr<int, 2> start_pose = ADG_->all_poses_[start_pose_id];
@@ -1255,7 +1256,7 @@ public:
 
     std::vector<rclcpp::Client<lamapf_and_gazebo_msgs::srv::LocalGoal>::SharedPtr> goal_pub_clients_;
 
-    rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
+    // rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::UpdatePose>::SharedPtr pose_subscriber_;
 
     rclcpp::Subscription<lamapf_and_gazebo_msgs::msg::ErrorState>::SharedPtr error_state_subscriber_;
 
