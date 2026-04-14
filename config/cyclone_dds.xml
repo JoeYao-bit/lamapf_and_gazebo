@@ -10,6 +10,9 @@
         <Peer address="192.168.1.104"/>  
         <Peer address="192.168.1.105"/>  
         <Peer address="192.168.1.106"/>  
+        <Peer address="192.168.1.107"/>  
+        <Peer address="192.168.1.101"/>  
+        <Peer address="192.168.1.103"/>  
       </Peers>
     </Discovery>
 

@@ -753,7 +753,7 @@ public:
         
         dim_ = dim;
         instances_ = instances;                
-        paused_ = true;//false;
+        paused_ = false;//false;
         pub_init_target_ = true;
         pose_to_ptf_func_ = pose_to_ptf_func;
         std::cout << "construct all possible poses" << std::endl;

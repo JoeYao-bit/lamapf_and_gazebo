@@ -1967,6 +1967,14 @@ wifi路由器连通下跨平台通信测试通过
 1211647490 id=2 8号 固定ip 192.168.1.105 
 1751341772 id=1 7号 固定ip 192.168.1.104
 
+1740904283 id=4 4号 固定ip 192.168.1.107
+1211647490 id=2 8号 固定ip 192.168.1.101 
+1751341772 id=1 7号 固定ip 192.168.1.103
+
+安装cyclonedds
+
+sudo apt install ros-jazzy-rmw-cyclonedds-cpp
+
 查看用的哪种DDS
 echo $RMW_IMPLEMENTATION
 
@@ -2390,3 +2398,12 @@ sudo iftop -i wlp3s0 #（wifi）
 
 2026.4.12
 关闭rviz后，通信负担减少，中央控制器可以收到各个机器人的pose
+
+采用cyclonedds避免multicast带来的通信负担，局限通信范围为指定ip
+需要wifi路由器进行DHCP设置，为硬件地址（MAC地址）绑定指定ip
+搜索MAC，前文可见细节
+
+使用cyclonedds需要bashrc添加以下配置
+
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=file://$HOME/.ros/cyclone_dds.xml
