@@ -1968,8 +1968,8 @@ wifi路由器连通下跨平台通信测试通过
 1751341772 id=1 7号 固定ip 192.168.1.104
 
 1740904283 id=4 4号 固定ip 192.168.1.107
-1211647490 id=2 8号 固定ip 192.168.1.101 
-1751341772 id=1 7号 固定ip 192.168.1.103
+256161678  id=3 3号 固定ip 192.168.1.101 
+1938673472 id=5 5号 固定ip 192.168.1.103
 
 安装cyclonedds
 
@@ -2407,3 +2407,7 @@ sudo iftop -i wlp3s0 #（wifi）
 
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export CYCLONEDDS_URI=file://$HOME/.ros/cyclone_dds.xml
+
+✔ 不同 peer 列表可以“基本隔离机器人通信”
+✔ 实际效果接近“只和中心通信”
+❗ 本质是“限制发现”，不是协议级硬隔离
