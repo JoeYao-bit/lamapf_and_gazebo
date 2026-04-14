@@ -2411,3 +2411,5 @@ export CYCLONEDDS_URI=file://$HOME/.ros/cyclone_dds.xml
 ✔ 不同 peer 列表可以“基本隔离机器人通信”
 ✔ 实际效果接近“只和中心通信”
 ❗ 本质是“限制发现”，不是协议级硬隔离
+
+这么改了之后通信变好了一些，但还是跑不动六个机器人
