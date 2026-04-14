@@ -1,0 +1,17 @@
+<CycloneDDS>
+  <Domain>
+    <General>
+      <AllowMulticast>false</AllowMulticast>
+    </General>
+
+    <Discovery>
+      <Peers>
+        <Peer address="192.168.1.102"/>  <!-- 中心控制器 -->
+        <Peer address="192.168.1.104"/>  
+        <Peer address="192.168.1.105"/>  
+        <Peer address="192.168.1.106"/>  
+      </Peers>
+    </Discovery>
+
+  </Domain>
+</CycloneDDS>
