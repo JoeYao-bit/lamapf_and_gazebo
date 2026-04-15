@@ -2415,3 +2415,15 @@ export CYCLONEDDS_URI=file://$HOME/.ros/cyclone_dds.xml
 
 这么改了之后六个机器人可以跑起来了
 明天拍视频
+
+2026.4.15
+晚上十二点后通信变好，疑似人都走了导致的
+
+视频3合1命令
+
+ffmpeg -i 4e05ddf28e6768fe78c262c2566eb39e.mp4 \
+-i a0d7ac883611105f5ebdece8622f93cc.mp4 \
+-i B112-2026-04-16_01.51.43.mp4 \
+-filter_complex "[2:v]scale=744:960[right];[0:v][1:v][right]hstack=inputs=3" \
+-c:v libx264 -crf 18 -preset fast \
+output.mp4
