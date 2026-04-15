@@ -2396,9 +2396,10 @@ sudo iftop -i wlp3s0 #（wifi）
 ✔ RViz 不会“跨机器人增加带宽”
 ❗ 但 RViz 会放大“你系统已有的 TF / scan / DDS 流量问题”
 
-2026.4.12
+# 2026.4.12
 关闭rviz后，通信负担减少，中央控制器可以收到各个机器人的pose
 
+# 2026.4.14
 采用cyclonedds避免multicast带来的通信负担，局限通信范围为指定ip
 需要wifi路由器进行DHCP设置，为硬件地址（MAC地址）绑定指定ip
 搜索MAC，前文可见细节
@@ -2412,4 +2413,5 @@ export CYCLONEDDS_URI=file://$HOME/.ros/cyclone_dds.xml
 ✔ 实际效果接近“只和中心通信”
 ❗ 本质是“限制发现”，不是协议级硬隔离
 
-这么改了之后通信变好了一些，但还是跑不动六个机器人
+这么改了之后六个机器人可以跑起来了
+明天拍视频
