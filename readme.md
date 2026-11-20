@@ -4,7 +4,7 @@
 
 # 编译
 
-### 基础依赖包下载、编译与安装,包括数据结构，可视化组件等等
+### 基础包下载、编译与安装,包括数据结构，可视化组件等等
 ```
 git clone git@github.com:JoeYao-bit/freeNav-base.git
 ```
@@ -26,7 +26,30 @@ make
 ```
 sudo make install
 ```
-### 下载源代码至工作空间源代码目录
+
+### 下载、编译、安装核心多机规划算法
+```
+git clone git@github.com:JoeYao-bit/LayeredMAPF.git
+```
+```
+cd LayeredMAPF
+```
+```
+mkdir build
+```
+```
+cd build
+```
+```
+cmake ..
+```
+```
+make 
+```
+```
+sudo make install
+```
+### 下载ros2包至工作空间源代码目录
 
 例如
 ```
@@ -51,10 +74,6 @@ git checkout xiaozhi261120
 ```
 colcon build
 ```
-
-更新launch后需要重新运行 colcon build 以更新可执行文件
-
-
 
 # 测试
 启动可视化单元测试
