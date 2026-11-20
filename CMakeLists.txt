@@ -57,17 +57,6 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rosidl_default_generators)
 
-# dwa dependencies
-#find_package(pluginlib REQUIRED)
-#find_package(nav2_core REQUIRED)
-#find_package(nav2_costmap_2d REQUIRED)
-#find_package(dwb_core REQUIRED)
-#find_package(nav_msgs REQUIRED)
-#find_package(dwb_critics REQUIRED)
-#find_package(dwb_plugins REQUIRED)
-#find_package(nav2_controller REQUIRED)
-#find_package(nav2_util REQUIRED)
-#find_package(nav2_msgs REQUIRED)
 
 ament_export_dependencies(rosidl_default_runtime)
 
@@ -90,61 +79,12 @@ set(dependencies rclcpp ros_gz_interfaces tf2 tf2_ros tf2_geometry_msgs std_msgs
 #pluginlib nav2_core nav2_costmap_2d dwb_core dwb_critics dwb_plugins nav_msgs nav2_controller nav2_msgs nav2_util
   )        
  
-add_executable(spawn_entity src/test_spawn_entity.cpp)
-ament_target_dependencies(spawn_entity ${dependencies})
-install(TARGETS spawn_entity DESTINATION lib/${PROJECT_NAME})
-target_link_libraries(spawn_entity ${EXTERNAL_LIBS} yaml-cpp)
-
 
 add_executable(test_lamapf_planner_node src/test_lamapf_planner_node.cpp)
 target_link_libraries(test_lamapf_planner_node ${EXTERNAL_LIBS} yaml-cpp)
 ament_target_dependencies(test_lamapf_planner_node ${dependencies})
 install(TARGETS test_lamapf_planner_node DESTINATION lib/${PROJECT_NAME})
 
-add_executable(generate_instance_node src/generate_instance.cpp)
-target_link_libraries(generate_instance_node ${EXTERNAL_LIBS} yaml-cpp)
-ament_target_dependencies(generate_instance_node ${dependencies})
-install(TARGETS generate_instance_node DESTINATION lib/${PROJECT_NAME})
-
-add_executable(test_central_controller src/test_central_controller.cpp)
-target_link_libraries(test_central_controller ${EXTERNAL_LIBS} yaml-cpp)
-ament_target_dependencies(test_central_controller ${dependencies})
-install(TARGETS test_central_controller DESTINATION lib/${PROJECT_NAME})
-
-#add_executable(test_mpc_controller src/test_mpc_controller.cpp)
-#target_link_libraries(test_mpc_controller ${EXTERNAL_LIBS} yaml-cpp)
-#ament_target_dependencies(test_mpc_controller ${dependencies})
-#install(TARGETS test_mpc_controller DESTINATION lib/${PROJECT_NAME})
-
-#add_executable(test_yaml_converter src/test_yaml_converter.cpp)
-#target_link_libraries(test_yaml_converter ${EXTERNAL_LIBS} yaml-cpp )
-#ament_target_dependencies(test_yaml_converter ${dependencies})
-#install(TARGETS test_yaml_converter DESTINATION lib/${PROJECT_NAME})
-
-#add_executable(test_local_controller src/test_local_controller.cpp)
-#target_link_libraries(test_local_controller ${EXTERNAL_LIBS} yaml-cpp )
-#ament_target_dependencies(test_local_controller ${dependencies})
-#install(TARGETS test_local_controller DESTINATION lib/${PROJECT_NAME})
-
-add_executable(test_center_controller_in_read_world src/test_center_controller_in_real_world.cpp)
-target_link_libraries(test_center_controller_in_read_world ${EXTERNAL_LIBS} yaml-cpp)
-ament_target_dependencies(test_center_controller_in_read_world ${dependencies})
-install(TARGETS test_center_controller_in_read_world DESTINATION lib/${PROJECT_NAME})
-
-#add_executable(test_dwa_local_planner src/test_dwa_local_planner.cpp)
-#target_link_libraries(test_dwa_local_planner ${EXTERNAL_LIBS} yaml-cpp)
-#ament_target_dependencies(test_dwa_local_planner ${dependencies})
-#install(TARGETS test_dwa_local_planner DESTINATION lib/${PROJECT_NAME})
-
-add_executable(test_center_controller_multiple_agent src/test_center_controller_multiple_agent.cpp)
-target_link_libraries(test_center_controller_multiple_agent ${EXTERNAL_LIBS} yaml-cpp)
-ament_target_dependencies(test_center_controller_multiple_agent ${dependencies})
-install(TARGETS test_center_controller_multiple_agent DESTINATION lib/${PROJECT_NAME})
-
-add_executable(test_raise_local_controller src/test_raise_local_controller.cpp)
-target_link_libraries(test_raise_local_controller ${EXTERNAL_LIBS} yaml-cpp)
-ament_target_dependencies(test_raise_local_controller ${dependencies})
-install(TARGETS test_raise_local_controller DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
