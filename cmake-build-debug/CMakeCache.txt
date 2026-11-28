@@ -273,7 +273,7 @@ boost_thread_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_thread-1.83.0
 freeNav-base_BINARY_DIR:STATIC=/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/cmake-build-debug/freeNav-base
 
 //Dependencies for the target
-freeNav-base_LIB_DEPENDS:STATIC=general;opencv_calib3d;general;opencv_core;general;opencv_dnn;general;opencv_features2d;general;opencv_flann;general;opencv_gapi;general;opencv_highgui;general;opencv_imgcodecs;general;opencv_imgproc;general;opencv_ml;general;opencv_objdetect;general;opencv_photo;general;opencv_stitching;general;opencv_video;general;opencv_videoio;general;Boost::program_options;general;Boost::system;general;Boost::filesystem;general;Boost::thread;general;Boost::graph;
+freeNav-base_LIB_DEPENDS:STATIC=general;opencv_calib3d;general;opencv_core;general;opencv_dnn;general;opencv_features2d;general;opencv_flann;general;opencv_gapi;general;opencv_highgui;general;opencv_imgcodecs;general;opencv_imgproc;general;opencv_ml;general;opencv_objdetect;general;opencv_photo;general;opencv_stitching;general;opencv_video;general;opencv_videoio;general;opencv_calib3d;general;opencv_core;general;opencv_dnn;general;opencv_features2d;general;opencv_flann;general;opencv_gapi;general;opencv_highgui;general;opencv_imgcodecs;general;opencv_imgproc;general;opencv_ml;general;opencv_objdetect;general;opencv_photo;general;opencv_stitching;general;opencv_video;general;opencv_videoio;general;Boost::program_options;general;Boost::system;general;Boost::filesystem;general;Boost::thread;general;Boost::graph;
 
 //Value Computed by CMake
 freeNav-base_SOURCE_DIR:STATIC=/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/freeNav-base

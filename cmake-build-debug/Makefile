@@ -215,6 +215,222 @@ freeNav-base/fast:
 	$(MAKE) $(MAKESILENT) -f freeNav-base/CMakeFiles/freeNav-base.dir/build.make freeNav-base/CMakeFiles/freeNav-base.dir/build
 .PHONY : freeNav-base/fast
 
+LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.o: LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.o
+
+# target to build an object file
+LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.o
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.o
+
+LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.i: LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.i
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.i
+
+LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.s: LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.s
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp.s
+
+LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.o: LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.o
+
+# target to build an object file
+LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.o
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.o
+
+LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.i: LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.i
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.i
+
+LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.s: LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.s
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp.s
+
+LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.o: LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.o
+
+# target to build an object file
+LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.o
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.o
+
+LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.i: LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.i
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.i
+
+LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.s: LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.s
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp.s
+
+LayeredMAPF/algorithm/LA-MAPF/common.o: LayeredMAPF/algorithm/LA-MAPF/common.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/common.o
+
+# target to build an object file
+LayeredMAPF/algorithm/LA-MAPF/common.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/common.cpp.o
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/common.cpp.o
+
+LayeredMAPF/algorithm/LA-MAPF/common.i: LayeredMAPF/algorithm/LA-MAPF/common.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/common.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/LA-MAPF/common.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/common.cpp.i
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/common.cpp.i
+
+LayeredMAPF/algorithm/LA-MAPF/common.s: LayeredMAPF/algorithm/LA-MAPF/common.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/common.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/LA-MAPF/common.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/LA-MAPF/common.cpp.s
+.PHONY : LayeredMAPF/algorithm/LA-MAPF/common.cpp.s
+
+LayeredMAPF/algorithm/basic.o: LayeredMAPF/algorithm/basic.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/basic.o
+
+# target to build an object file
+LayeredMAPF/algorithm/basic.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/basic.cpp.o
+.PHONY : LayeredMAPF/algorithm/basic.cpp.o
+
+LayeredMAPF/algorithm/basic.i: LayeredMAPF/algorithm/basic.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/basic.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/basic.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/basic.cpp.i
+.PHONY : LayeredMAPF/algorithm/basic.cpp.i
+
+LayeredMAPF/algorithm/basic.s: LayeredMAPF/algorithm/basic.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/basic.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/basic.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/basic.cpp.s
+.PHONY : LayeredMAPF/algorithm/basic.cpp.s
+
+LayeredMAPF/algorithm/constraint_table_CBS/Conflict.o: LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/Conflict.o
+
+# target to build an object file
+LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.o
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.o
+
+LayeredMAPF/algorithm/constraint_table_CBS/Conflict.i: LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/Conflict.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.i
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.i
+
+LayeredMAPF/algorithm/constraint_table_CBS/Conflict.s: LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/Conflict.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.s
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp.s
+
+LayeredMAPF/algorithm/constraint_table_CBS/common.o: LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/common.o
+
+# target to build an object file
+LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.o
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.o
+
+LayeredMAPF/algorithm/constraint_table_CBS/common.i: LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/common.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.i
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.i
+
+LayeredMAPF/algorithm/constraint_table_CBS/common.s: LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/common.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.s
+.PHONY : LayeredMAPF/algorithm/constraint_table_CBS/common.cpp.s
+
+LayeredMAPF/algorithm/instance_decomposition.o: LayeredMAPF/algorithm/instance_decomposition.cpp.o
+
+.PHONY : LayeredMAPF/algorithm/instance_decomposition.o
+
+# target to build an object file
+LayeredMAPF/algorithm/instance_decomposition.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/instance_decomposition.cpp.o
+.PHONY : LayeredMAPF/algorithm/instance_decomposition.cpp.o
+
+LayeredMAPF/algorithm/instance_decomposition.i: LayeredMAPF/algorithm/instance_decomposition.cpp.i
+
+.PHONY : LayeredMAPF/algorithm/instance_decomposition.i
+
+# target to preprocess a source file
+LayeredMAPF/algorithm/instance_decomposition.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/instance_decomposition.cpp.i
+.PHONY : LayeredMAPF/algorithm/instance_decomposition.cpp.i
+
+LayeredMAPF/algorithm/instance_decomposition.s: LayeredMAPF/algorithm/instance_decomposition.cpp.s
+
+.PHONY : LayeredMAPF/algorithm/instance_decomposition.s
+
+# target to generate assembly for a file
+LayeredMAPF/algorithm/instance_decomposition.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/LayeredMAPF/algorithm/instance_decomposition.cpp.s
+.PHONY : LayeredMAPF/algorithm/instance_decomposition.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -257,6 +473,30 @@ help:
 	@echo "... canvas_ex"
 	@echo "... freeNav-base"
 	@echo "... lamapf_and_center_controller"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.o"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.i"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.s"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.o"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.i"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.s"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.o"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.i"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.s"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/common.o"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/common.i"
+	@echo "... LayeredMAPF/algorithm/LA-MAPF/common.s"
+	@echo "... LayeredMAPF/algorithm/basic.o"
+	@echo "... LayeredMAPF/algorithm/basic.i"
+	@echo "... LayeredMAPF/algorithm/basic.s"
+	@echo "... LayeredMAPF/algorithm/constraint_table_CBS/Conflict.o"
+	@echo "... LayeredMAPF/algorithm/constraint_table_CBS/Conflict.i"
+	@echo "... LayeredMAPF/algorithm/constraint_table_CBS/Conflict.s"
+	@echo "... LayeredMAPF/algorithm/constraint_table_CBS/common.o"
+	@echo "... LayeredMAPF/algorithm/constraint_table_CBS/common.i"
+	@echo "... LayeredMAPF/algorithm/constraint_table_CBS/common.s"
+	@echo "... LayeredMAPF/algorithm/instance_decomposition.o"
+	@echo "... LayeredMAPF/algorithm/instance_decomposition.i"
+	@echo "... LayeredMAPF/algorithm/instance_decomposition.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

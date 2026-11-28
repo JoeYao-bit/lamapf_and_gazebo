@@ -113,15 +113,15 @@ freeNav-base/clean: freeNav-base/CMakeFiles/freeNav-base.dir/clean
 # Target rules for target CMakeFiles/lamapf_and_center_controller.dir
 
 # All Build rule for target.
-CMakeFiles/lamapf_and_center_controller.dir/all: freeNav-base/CMakeFiles/freeNav-base.dir/all
+CMakeFiles/lamapf_and_center_controller.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lamapf_and_center_controller.dir/build.make CMakeFiles/lamapf_and_center_controller.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/cmake-build-debug/CMakeFiles --progress-num=25,26 "Built target lamapf_and_center_controller"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/cmake-build-debug/CMakeFiles --progress-num=25,26,27,28,29,30,31,32,33,34 "Built target lamapf_and_center_controller"
 .PHONY : CMakeFiles/lamapf_and_center_controller.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/lamapf_and_center_controller.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/cmake-build-debug/CMakeFiles 18
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/cmake-build-debug/CMakeFiles 10
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/lamapf_and_center_controller.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/lamapf_and_center_controller.dir/rule

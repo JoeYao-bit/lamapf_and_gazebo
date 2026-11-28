@@ -44,20 +44,6 @@
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add option="-DBOOST_PROGRAM_OPTIONS_NO_LIB"/>
-					<Add option="-DBOOST_PROGRAM_OPTIONS_DYN_LINK"/>
-					<Add option="-DBOOST_SYSTEM_NO_LIB"/>
-					<Add option="-DBOOST_SYSTEM_DYN_LINK"/>
-					<Add option="-DBOOST_FILESYSTEM_NO_LIB"/>
-					<Add option="-DBOOST_FILESYSTEM_DYN_LINK"/>
-					<Add option="-DBOOST_ATOMIC_NO_LIB"/>
-					<Add option="-DBOOST_ATOMIC_DYN_LINK"/>
-					<Add option="-DBOOST_THREAD_NO_LIB"/>
-					<Add option="-DBOOST_THREAD_DYN_LINK"/>
-					<Add option="-DBOOST_GRAPH_NO_LIB"/>
-					<Add option="-DBOOST_GRAPH_DYN_LINK"/>
-					<Add option="-DBOOST_REGEX_NO_LIB"/>
-					<Add option="-DBOOST_REGEX_DYN_LINK"/>
 					<Add directory="/usr/include/opencv4"/>
 					<Add directory="/usr/local/include/opencv4"/>
 					<Add directory="/usr/include/c++/13"/>
@@ -82,20 +68,6 @@
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add option="-DBOOST_PROGRAM_OPTIONS_NO_LIB"/>
-					<Add option="-DBOOST_PROGRAM_OPTIONS_DYN_LINK"/>
-					<Add option="-DBOOST_SYSTEM_NO_LIB"/>
-					<Add option="-DBOOST_SYSTEM_DYN_LINK"/>
-					<Add option="-DBOOST_FILESYSTEM_NO_LIB"/>
-					<Add option="-DBOOST_FILESYSTEM_DYN_LINK"/>
-					<Add option="-DBOOST_ATOMIC_NO_LIB"/>
-					<Add option="-DBOOST_ATOMIC_DYN_LINK"/>
-					<Add option="-DBOOST_THREAD_NO_LIB"/>
-					<Add option="-DBOOST_THREAD_DYN_LINK"/>
-					<Add option="-DBOOST_GRAPH_NO_LIB"/>
-					<Add option="-DBOOST_GRAPH_DYN_LINK"/>
-					<Add option="-DBOOST_REGEX_NO_LIB"/>
-					<Add option="-DBOOST_REGEX_DYN_LINK"/>
 					<Add directory="/usr/include/opencv4"/>
 					<Add directory="/usr/local/include/opencv4"/>
 					<Add directory="/usr/include/c++/13"/>
@@ -286,6 +258,54 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/IndependenceDetection/independence_detection.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/common.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/LA-MAPF/common.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/basic.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/basic.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/constraint_table_CBS/Conflict.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/constraint_table_CBS/Conflict.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/constraint_table_CBS/common.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/constraint_table_CBS/common.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/instance_decomposition.cpp">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
+		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/LayeredMAPF/algorithm/instance_decomposition.h">
+			<Option target="lamapf_and_center_controller"/>
+		</Unit>
 		<Unit filename="/home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/freeNav-base/basic_elements/fraction_imported.cpp">
 			<Option target="canvas_ex"/>
 			<Option target="freeNav-base"/>
