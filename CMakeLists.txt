@@ -11,6 +11,7 @@ add_subdirectory(freeNav-base)
 
 set(EXTERNAL_LIBS
         libcanvas_ex.a
+        pthread
         )
 
 set(SRC_FILES
