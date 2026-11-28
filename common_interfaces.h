@@ -13,29 +13,29 @@
 #include <string>
 #include <vector>
 
-#include "LA-MAPF/algorithm/LA-MAPF/circle_shaped_agent.h"
-#include "LA-MAPF/algorithm/LA-MAPF/block_shaped_agent.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/circle_shaped_agent.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/block_shaped_agent.h"
 
-#include "LA-MAPF/algorithm/LA-MAPF/CBS/large_agent_CBS.h"
-#include "LA-MAPF/algorithm/LA-MAPF/LaCAM/large_agent_lacam.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/CBS/large_agent_CBS.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/LaCAM/large_agent_lacam.h"
 
-#include "LA-MAPF/algorithm/LA-MAPF/large_agent_instance_generator.h"
-#include "LA-MAPF/algorithm/LA-MAPF/instance_serialize_and_deserialize.h"
-#include "LA-MAPF/algorithm/precomputation_for_decomposition.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/large_agent_instance_generator.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/instance_serialize_and_deserialize.h"
+#include "LayeredMAPF/algorithm/precomputation_for_decomposition.h"
 
-#include "LA-MAPF/algorithm/break_loop_decomposition/biparition_decomposition.h"
-#include "LA-MAPF/algorithm/break_loop_decomposition/break_loop_decomposition.h"
+#include "LayeredMAPF/algorithm/break_loop_decomposition/biparition_decomposition.h"
+#include "LayeredMAPF/algorithm/break_loop_decomposition/break_loop_decomposition.h"
 
-#include "freeNav-base/dependencies/2d_grid/text_map_loader.h"
-#include "freeNav-base/dependencies/2d_grid/picture_loader.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/CBS/layered_large_agent_CBS.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/LaCAM/layered_large_agent_LaCAM.h"
+#include "LayeredMAPF/algorithm/LA-MAPF/laryered_large_agent_mapf.h"
 
 #include "test_data.h"
-#include "LA-MAPF/algorithm/LA-MAPF/CBS/layered_large_agent_CBS.h"
-#include "LA-MAPF/algorithm/LA-MAPF/LaCAM/layered_large_agent_LaCAM.h"
 
-#include "LA-MAPF/algorithm/LA-MAPF/laryered_large_agent_mapf.h"
 #include "freeNav-base/dependencies/memory_analysis.h"
 #include "freeNav-base/visualization/canvas/canvas.h"
+#include "freeNav-base/dependencies/2d_grid/text_map_loader.h"
+#include "freeNav-base/dependencies/2d_grid/picture_loader.h"
 
 
 #include <yaml-cpp/yaml.h>
@@ -106,26 +106,6 @@ double reso = 0.1; // how long a grid occupied in real world ?
 // MAPFTestConfig_LargeOfficeEnvSecond
 // MAPFTestConfig_B112
 
-auto map_test_config = MAPFTestConfig_IndustrialWarehouse;//MAPFTestConfig_LargeOfficeEnv
-
-auto is_grid_occupied = [](const cv::Vec3b& color) -> bool {
-    if (color == cv::Vec3b::all(255)) { return false; }
-    return true;
-};
-
-
-// ros2 generated pgm map
-auto is_grid_occupied_pgm = [](const cv::Vec3b& color) -> bool {
-    if (color[0]<240 || color[1]<240 || color[2] < 240) { return true; }
-    return false;
-};
-
-// load map
-PictureLoader loader(map_test_config.at("map_path"), is_grid_occupied);
-
-DimensionLength* dim = loader.getDimensionInfo();
-
-auto is_occupied = [](const Pointi<2> & pt) -> bool { return loader.isOccupied(pt); };
 
 // test_count: the total count of start and target pair in the scenario file
 // required_count: required

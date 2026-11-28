@@ -317,48 +317,8 @@ namespace freeNav {
         drawCircle(pathd.back()[0], pathd.back()[1], radius, line_width, true, color);
     }
 
-    void Canvas::drawPointfs(const std::vector<PoseSE2> &path, double radius, int line_width, const cv::Scalar &color) {
-        if (path.empty()) return;
-        for (int i = 0; i < path.size() - 1; i++) {
-            drawCircle(path[i].x(), path[i].y(), radius, line_width, true, color);
-        }
-        drawCircle(path.back().x(), path.back().y(), radius, line_width, true, color);
-    }
 
-    void Canvas::drawPointfs(const std::vector<PoseSE2> &path, const std::vector<double>& time_diffs, double current_time,
-                             const Point2dContainer &polygon, int line_width) {
-        if (path.empty()) return;
-        int color_count = 0;
-        for (int i = 0; i < path.size() - 1; i++) {
-            drawPolygon(path[i].x(), path[i].y(), path[i].theta(), polygon, line_width,
-                        gradation_color_table_[color_count]);
-            color_count++;
-            color_count = color_count % gradation_color_table_.size();
-        }
-        drawPolygon(path.back().x(), path.back().y(), path.back().theta(), polygon, line_width,
-                    gradation_color_table_[color_count]);
-    }
 
-    void Canvas::drawPolygon(double x, double y, double theta, const Point2dContainer &polygon, int line_width,
-                             const cv::Scalar &color) {
-        PoseSE2 pose(x, y, theta);
-        const auto &rotate_matrix = Eigen::Rotation2Dd(pose.theta()).toRotationMatrix();
-//        Point2dContainer global_polygon(polygon.size());
-//        for (int i = 0; i < global_polygon.size(); i++) {
-//            PoseSE2 offset(polygon[i], 0);
-//            offset.rotateGlobal(theta);
-//            global_polygon[i] = pose.position() + offset.position();
-//        }
-        Point2dContainer global_polygon = transformedFrom(polygon, pose);
-        for (int i = 0; i < global_polygon.size() - 1; i++) {
-            drawLine(global_polygon[i].x(), global_polygon[i].y(),
-                     global_polygon[i + 1].x(), global_polygon[i + 1].y(),
-                     line_width, true, color);
-        }
-        drawLine(global_polygon.front().x(), global_polygon.front().y(),
-                 global_polygon.back().x(), global_polygon.back().y(),
-                 line_width, true, color);
-    }
 
     void Canvas::drawGrid(int x, int y, const cv::Vec3b &color) {
         if (x < 0 || x >= canvas_.cols / zoom_ratio_ || y < 0 || y >= canvas_.rows / zoom_ratio_) return;

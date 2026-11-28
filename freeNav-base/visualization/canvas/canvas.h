@@ -10,7 +10,6 @@
 #include "../../dependencies/2d_grid/picture_loader.h"
 #include "../../basic_elements/point.h"
 #include "../../basic_elements/map_down_sampler.h"
-#include "../../basic_elements/pose_se2.h"
 #include "../../basic_elements/distance_calculations.h"
 namespace freeNav {
 
@@ -78,15 +77,7 @@ namespace freeNav {
 
         void drawPointfs(const Pointds<2> &pathd, double radius, int line_width = 1, const cv::Scalar &color = cv::Scalar(0, 0, 0));
 
-        void drawPointfs(const std::vector<PoseSE2> &path,  const std::vector<double>& time_diffs, double current_time, const Point2dContainer &polygon, int line_width = 1);
-
-        void drawPointfs(const std::vector<PoseSE2> &path, double radius, int line_width = 1,
-                         const cv::Scalar &color = cv::Scalar(0, 0, 0));
-
         void drawAxis(double x_range = 5., double y_range = 5., double wing_length = .05);
-
-        void drawPolygon(double x, double y, double theta, const Point2dContainer &polygon, int line_width = 1,
-                         const cv::Scalar &color = cv::Scalar(0, 0, 0));
 
         void drawGrid(int x, int y, const cv::Vec3b &color = cv::Vec3b(0, 0, 0));
 

@@ -1,0 +1,24 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/freeNav-base.dir/basic_elements/fraction_imported.cpp.o"
+  "CMakeFiles/freeNav-base.dir/basic_elements/point.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/2d_grid/picture_loader.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/2d_grid/text_map_loader.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/3d_octomap/octomap_loader.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/3d_textmap/voxel_loader.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/directory_loader.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/environment.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/massive_scene_loader/ScenarioLoader2D.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/massive_scene_loader/ScenarioLoader3D.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/massive_test_interfaces.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/path_planning_interface.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/self_sorted_queue.cpp.o"
+  "CMakeFiles/freeNav-base.dir/dependencies/thread_pool.cpp.o"
+  "CMakeFiles/freeNav-base.dir/visualization/canvas/canvas.cpp.o"
+  "libfreeNav-base.a"
+  "libfreeNav-base.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/freeNav-base.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

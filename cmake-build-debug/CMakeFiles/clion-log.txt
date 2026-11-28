@@ -1,0 +1,5 @@
+/home/yaozhuo/software/CLion-2020.2.5/clion-2020.2.5/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo
+-- Using flag -std=c++17.
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/yaozhuo/code/ros2_ws/src/lamapf_and_gazebo/cmake-build-debug

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcanvas_ex.a  CMakeFiles/canvas_ex.dir/basic_elements/fraction_imported.cpp.o CMakeFiles/canvas_ex.dir/basic_elements/point.cpp.o CMakeFiles/canvas_ex.dir/visualization/canvas/canvas.cpp.o CMakeFiles/canvas_ex.dir/dependencies/2d_grid/picture_loader.cpp.o CMakeFiles/canvas_ex.dir/dependencies/2d_grid/text_map_loader.cpp.o CMakeFiles/canvas_ex.dir/dependencies/massive_scene_loader/ScenarioLoader2D.cpp.o CMakeFiles/canvas_ex.dir/dependencies/massive_scene_loader/ScenarioLoader3D.cpp.o
+/usr/bin/ranlib libcanvas_ex.a
