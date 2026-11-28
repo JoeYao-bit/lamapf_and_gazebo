@@ -51,7 +51,7 @@ int main() {
         std::cout << *instances.first[i] << ": " << instances.second[i].first << "->" << instances.second[i].second << std::endl;
     }
 
-    //启动中央控制器，输入地图和MAPF问题
+    //启动中央控制器，输入地图和MAPF问题,是否开启可视化
     auto ctl = CenteralControllerNew(dim, is_occupied, instances, true);
 
     // 定时周期：500ms，等价于 ROS2 create_timer(500ms, callback)
@@ -73,6 +73,7 @@ int main() {
                         size_t next_pose_id    = ctl.ADG_->paths_[i][ctl.progress_of_agents_[i]+1];
                         PosePtr<int, 2> current_pose = ctl.ADG_->all_poses_[current_pose_id];
                         PosePtr<int, 2> next_pose    = ctl.ADG_->all_poses_[next_pose_id];
+                        //坐标栅格地图坐标，姿态通过orientToRadius(pose.orient_)转为弧度制角度
                         //std::cout << "agent " << i << "'s action " << *current_pose << "->" << *next_pose << std::endl;
                     }
                     ctl.agent_finishes_[i] = true; // 将对应机器人的动作设置为完成
